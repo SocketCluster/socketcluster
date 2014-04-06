@@ -115,25 +115,25 @@ Using SocketCluster with express is simple, you put the code inside your workerC
 
 ```js
 module.exports.run = function (worker) {
-	// Get a reference to our raw Node HTTP server
+    // Get a reference to our raw Node HTTP server
     var httpServer = worker.getHTTPServer();
     // Get a reference to our WebSocket server
     var wsServer = worker.getWSServer();
-	
-	var app = require('express')();
-	
-	// Add whatever express middleware you like...
-	
-	// Make your express app handle all essential requests
-	httpServer.on('req', app);
+    
+    var app = require('express')();
+    
+    // Add whatever express middleware you like...
+    
+    // Make your express app handle all essential requests
+    httpServer.on('req', app);
 }
 ```
 
-## API (Coming soon)
+## API (Documentation coming soon)
 
 ### SocketCluster
 
-    Exposed by `require('socketcluster').SocketCluster`.
+Exposed by `require('socketcluster').SocketCluster`.
 
 ### SocketCluster(opts:Object)
 
@@ -143,16 +143,16 @@ Creates a new SocketCluster, must be invoked with the new keyword.
 var SocketCluster = require('socketcluster').SocketCluster;
 
 var socketCluster = new SocketCluster({
-	workers: [9100, 9101, 9102],
-	stores: [9001, 9002, 9003],
-	port: 8000,
-	appName: 'myapp',
-	workerController: 'worker.js'
+    workers: [9100, 9101, 9102],
+    stores: [9001, 9002, 9003],
+    port: 8000,
+    appName: 'myapp',
+    workerController: 'worker.js'
 });
 ```
 
 Documentation on all supported options is coming soon (there are around 30 of them - Most of them are optional).
-	
+    
 ### SocketWorker
 
 A SocketWorker object is passed as the argument to your workerController's run(worker) function.
@@ -160,7 +160,7 @@ Example - Inside worker.js:
 
 ```js
 module.exports.run = function (worker) {
-	// worker here is an instance of SocketWorker
+    // worker here is an instance of SocketWorker
 }
 ```
 
