@@ -107,15 +107,38 @@ module.exports.run = function (worker) {
         }
     });
     
+    var activeSessions = {};
+    
     /*
         In here we handle our incoming WebSocket connections and listen for events.
-        From here onwards is just like Socket.io.
+        From here onwards is just like Socket.io but with some additional features.
     */
     wsServer.on('connection', function (socket) {
-        setInterval(function () {
-            socket.emit('rand', Math.floor(Math.random() * 100));
-        }, 1000);
+        // Emit a 'greet' event on the current socket with value 'hello world'
+        socket.emit('greet', 'hello world')
+        
+        /*
+            Store that socket's session for later use.
+            We will emit events on it later - Those events will 
+            affect all sockets which belong to that session.
+        */
+        activeSessions[socket.session.id] = socket.session;
     });
+    
+    wsServer.on('disconnect', function (socket) {
+        delete activeSessions[socket.session.id];
+    });
+    
+    setInterval(function () {
+        /*
+            Emit a 'rand' event on each active session.
+            Note that in this case the random number emitted will be the same across all sockets which
+            belong to the same session (I.e. All open tabs within the same browser).
+        */
+        for (var i in activeSessions) {
+            activeSessions[i].emit('rand', Math.floor(Math.random() * 100));
+        }
+    }, 1000);
 };
 ```
 
