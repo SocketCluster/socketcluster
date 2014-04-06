@@ -29,7 +29,8 @@ npm install socketcluster-client
 ```
 
 The socketcluster-client script is called socketcluster.js (located in the main socketcluster-client directory) 
-- You should include it in your HTML page using a <script> tag in order to interact with SocketCluster.
+- You should include it in your HTML page using a &lt;script&gt; tag in order to interact with SocketCluster.
+For more details on how to use socketcluster-client, go to https://github.com/topcloud/socketcluster-client
 
 ## How to use
 
