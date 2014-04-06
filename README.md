@@ -136,33 +136,34 @@ module.exports.run = function (worker) {
     Exposed by `require('socketcluster').SocketCluster`.
 
 ### SocketCluster(opts:Object)
-	Creates a new SocketCluster, must be invoked with the new keyword.
-	
-	```js
-	var SocketCluster = require('socketcluster').SocketCluster;
 
-	var socketCluster = new SocketCluster({
-		workers: [9100, 9101, 9102],
-		stores: [9001, 9002, 9003],
-		port: 8000,
-		appName: 'myapp',
-		workerController: 'worker.js'
-	});
-	```
-	
-	Documentation on all supported options is coming soon (there are around 30 of them - Most of them are optional).
+Creates a new SocketCluster, must be invoked with the new keyword.
+
+```js
+var SocketCluster = require('socketcluster').SocketCluster;
+
+var socketCluster = new SocketCluster({
+	workers: [9100, 9101, 9102],
+	stores: [9001, 9002, 9003],
+	port: 8000,
+	appName: 'myapp',
+	workerController: 'worker.js'
+});
+```
+
+Documentation on all supported options is coming soon (there are around 30 of them - Most of them are optional).
 	
 ### SocketWorker
-	
-	A SocketWorker object is passed as the argument to your workerController's run(worker) function.
-	Example - Inside worker.js:
-	
-	```js
-	module.exports.run = function (worker) {
-		// worker here is an instance of SocketWorker
-	}
-	```
+
+A SocketWorker object is passed as the argument to your workerController's run(worker) function.
+Example - Inside worker.js:
+
+```js
+module.exports.run = function (worker) {
+	// worker here is an instance of SocketWorker
+}
+```
 
 ### ClusterServer
 
-	A ClusterServer instance is returned from worker.getWSServer() - You use it to handle WebSocket connections.
+A ClusterServer instance is returned from worker.getWSServer() - You use it to handle WebSocket connections.
