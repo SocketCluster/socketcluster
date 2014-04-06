@@ -51,8 +51,8 @@ var socketCluster = new SocketCluster({
 ```
 
 The appName option can be any string which uniquely identifies this application.
-This avoids potential issues with having multiple SocketCluster apps run under the same domain
-- It is used internally for various purposes.
+This avoids potential issues with having multiple SocketCluster apps run under the same domain - It is 
+used internally for various purposes.
 
 The workerController option is the path to a file which each SocketCluster worker will use to bootstrap itself.
 This file is a standard Node.js module which must expose a run() function - Inside this run function is where you should
