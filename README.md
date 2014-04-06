@@ -22,6 +22,15 @@ To install, run:
 npm install socketcluster
 ```
 
+Note that to use socketcluster you will also need the client which you an get using the following command:
+
+```bash
+npm install socketcluster-client
+```
+
+The socketcluster-client script is called socketcluster.js (located in the main socketcluster-client directory) 
+- You should include it in your HTML page using a <script> tag in order to interact with SocketCluster.
+
 ## How to use
 
 The following example launches SocketCluster as 7 distinct processes (in addition to the current master process):
