@@ -162,6 +162,64 @@ module.exports.run = function (worker) {
 }
 ```
 
+### Using over HTTPS
+
+In order to run SocketCluster over HTTPS, all you need to do is set the protocol to 'https' and 
+provide your private key and certificate as a start option when you instantiate SocketCluster - Example:
+
+```js
+var socketCluster = new SocketCluster({
+    workers: [9100, 9101, 9102],
+    stores: [9001, 9002, 9003],
+    balancerCount: 1, // Optional
+    port: 8000,
+    appName: 'myapp',
+    workerController: 'worker.js',
+	protocol: 'https',
+	protocolOptions: {
+		key: fs.readFileSync(__dirname + '/keys/enc_key.pem', 'utf8'),
+		cert: fs.readFileSync(__dirname + '/keys/cert.pem', 'utf8'),
+		passphrase: 'passphase4privkey'
+	}
+});
+```
+
+The protocolOptions option is exactly the same as the one you pass to a standard Node HTTPS server:
+http://nodejs.org/api/https.html#https_https_createserver_options_requestlistener
+
+Note that encryption/decryption in SocketCluster happens at the LoadBalancer level (SocketCluster launches one or more 
+lightweight load balancers to distribute traffic evenly between your SocketCluster workers).
+LoadBalancers are responsible for encrypting/decrypting all network traffic. What this means is that your code (which is in the worker layer)
+will only ever deal with raw HTTP traffic.
+
+### Authentication
+
+SocketCluster lets you store session data using the socket.session object. 
+This object gives you access to a cluster of in-memory stores called nData.
+You can effectively invoke any of the methods documented here to store and retrieve session data:
+https://github.com/topcloud/ndata
+
+For example, to authorize a user, you could check their login credentials and upon
+success, you could add an auth token to that session:
+
+```js
+socket.session.set('isUserAuthorized', true, callback);
+```
+
+Then, on subsequent events, you could check for that token before handling the event:
+
+```js
+socket.session.get('isUserAuthorized', function (err, value) {
+	if (value) {
+		// Token is set, therefore this event is authorized
+	}
+});
+```
+
+The session object can also be accessed from the req object that you get from 
+SocketCluster's HTTP server 'req' event (I.e. req.session).
+
+
 ## API (Documentation coming soon)
 
 ### SocketCluster
