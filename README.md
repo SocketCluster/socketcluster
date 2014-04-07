@@ -219,6 +219,14 @@ socket.session.get('isUserAuthorized', function (err, value) {
 The session object can also be accessed from the req object that you get from 
 SocketCluster's HTTP server 'req' event (I.e. req.session).
 
+## Contribute to SocketCluster
+
+- Tests needed - While some of the underlying modules of SC are well tested, 
+it would be nice to add some higher-level tests to help maintain high code quality.
+- Benchmarks - It would be nice to have some formal benchmarks comparing SocketCluster's performance with alternatives to 
+get a better view of its strengths and weaknesses. Also having some graphs to prove that SocketCluster scales linearly as
+you add more workers/CPUs would be nice. This has been verified informally with a few CPU cores, but more thorough testing would be welcome!
+- Speed - More speed is always better!
 
 ## API (Documentation coming soon)
 
