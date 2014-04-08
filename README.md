@@ -2,7 +2,7 @@ SocketCluster
 ======
 
 SocketCluster is a WebSocket server cluster (with HTTP long-polling fallback) based on engine.io.
-Unlike other realtime engines, SocketCluster deploys itself as cluster in order to make use of all CPUs/cores on
+Unlike other realtime engines, SocketCluster deploys itself as a cluster in order to make use of all CPUs/cores on
 a machine/instance - This offers a more consistent performance for users and lets you scale vertically without limits.
 SocketCluster workers are highly parallelized - Asymptotically speaking, SocketCluster is N times faster than any other 
 available WebSocket server (where N is the number of CPUs/cores available on your machine).
