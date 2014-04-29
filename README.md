@@ -126,9 +126,13 @@ module.exports.run = function (worker) {
         */
         activeSessions[socket.session.id] = socket.session;
     });
-    
+	
     wsServer.on('disconnection', function (socket) {
-        delete activeSessions[socket.session.id];
+        console.log('Socket ' + socket.id + ' was disconnected');
+    });
+    
+    wsServer.on('sessiondestroy', function (ssid) {
+        delete activeSessions[ssid];
     });
     
     setInterval(function () {
