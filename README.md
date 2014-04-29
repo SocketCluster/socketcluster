@@ -48,7 +48,8 @@ var socketCluster = new SocketCluster({
     balancerCount: 1, // Optional
     port: 8000,
     appName: 'myapp',
-    workerController: 'worker.js'
+    workerController: 'worker.js',
+    balancerController: 'firewall.js' // Optional
 });
 ```
 
@@ -57,8 +58,14 @@ This avoids potential issues with having multiple SocketCluster apps run under t
 used internally for various purposes.
 
 The workerController option is the path to a file which each SocketCluster worker will use to bootstrap itself.
-This file is a standard Node.js module which must expose a run() function - Inside this run function is where you should
+This file is a standard Node.js module which must expose a run(worker) function - Inside this run function is where you should
 put all your application logic.
+
+The balancerController option is optional and represents the path to a file which each load balancer will use to bootstrap itself.
+This file is a standard Node.js module which must expose a run(loadBalancer) function. This run function receives a LoadBalancer instance as argument.
+You can use the loadBalancer.addMiddleware(middlewareType, middlewareFunction) function to specify middleware functions to 
+preprocess/filter out various requests before they reach your workers - The middlewareType argument can be either loadBalancer.MIDDLEWARE_REQUEST 
+or loadBalancer.MIDDLEWARE_UPGRADE.
 
 Example 'worker.js':
 

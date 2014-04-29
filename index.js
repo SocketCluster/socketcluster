@@ -63,6 +63,7 @@ SocketCluster.prototype._init = function (options) {
 		host: 'localhost',
 		balancerCount: null,
 		workerController: null,
+		balancerController: null,
 		clusterEngine: 'iocluster'
 	};
 	
@@ -89,6 +90,12 @@ SocketCluster.prototype._init = function (options) {
 		statusURL: '/~status',
 		appWorkerControllerPath: path.resolve(self.options.workerController)
 	};
+	
+	if (self.options.balancerController) {
+		self._paths.appBalancerControllerPath = path.resolve(self.options.balancerController);
+	} else {
+		self._paths.appBalancerControllerPath = null;
+	}
 	
 	if (self.options.logLevel > 3) {
 		process.env.DEBUG = 'engine*';
@@ -286,7 +293,8 @@ SocketCluster.prototype._start = function () {
 				protocolOptions: self.options.protocolOptions,
 				checkStatusTimeout: self.options.connectTimeout * 1000,
 				statusURL: self._paths.statusURL,
-				statusCheckInterval: self.options.workerStatusInterval * 1000
+				statusCheckInterval: self.options.workerStatusInterval * 1000,
+				appBalancerControllerPath: self._paths.appBalancerControllerPath
 			}
 		});
 	};
