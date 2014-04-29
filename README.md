@@ -40,6 +40,8 @@ The following example launches SocketCluster as 7 distinct processes (in additio
 - 1 load balancer on port 8000 which distributes requests evenly between the 3 workers
 
 ```js
+var SocketCluster = require('socketcluster').SocketCluster;
+
 var socketCluster = new SocketCluster({
     workers: [9100, 9101, 9102],
     stores: [9001, 9002, 9003],
@@ -125,7 +127,7 @@ module.exports.run = function (worker) {
         activeSessions[socket.session.id] = socket.session;
     });
     
-    wsServer.on('disconnect', function (socket) {
+    wsServer.on('disconnection', function (socket) {
         delete activeSessions[socket.session.id];
     });
     
