@@ -32,6 +32,8 @@ The socketcluster-client script is called socketcluster.js (located in the main 
 - You should include it in your HTML page using a &lt;script&gt; tag in order to interact with SocketCluster.
 For more details on how to use socketcluster-client, go to https://github.com/topcloud/socketcluster-client
 
+**Scroll to the bottom of this README for results of benchmark tests.**
+
 ## How to use
 
 The following example launches SocketCluster as 7 distinct processes (in addition to the current master process):
@@ -279,3 +281,28 @@ module.exports.run = function (worker) {
 ### ClusterServer
 
 A ClusterServer instance is returned from worker.getWSServer() - You use it to handle WebSocket connections.
+
+## Benchmarks
+
+### Method
+
+For this CPU benchmark, we compared Socket.io with SocketCluster on an 8-core Amazon EC2 m3.2xlarge instance running Linux.
+For this test, a new client (connection) was opened every 5 seconds - As soon as the connection was established, 
+each new client immediately started sending messages at a rate of 1000 messages per second to the server.
+These messages were dispatched through a 'ping' event which had an object {param: 'pong'} as payload.
+The server's logic in handling the message was pretty basic - It would simply count the number of such messages received and log the value every 10 seconds.
+
+### Observations
+
+* When run as a single process on a single CPU core, SocketCluster performs worse than Socket.io.
+* As you add more CPU cores and more processes (proportional to the number of cores), SocketCluster quickly catches up. SocketCluster became worthwhile as soon as you added a second CPU core.
+* Until a certain point, traffic was not distributed exactly evenly between the SocketCluster load balancers - Initially, one of the load balancer processes was handling more than 2 times
+as much load as the next one.
+* As the strain on that load balancer increased to around the 50% CPU mark, other load balancers started picking up the slack... This must have something to do with way the OS does
+its round robin balancing.
+* The test was only set to reach up to 100 concurrent connections (each sending 1000 messages per second) - Total of 100K messages per second. SocketCluster was still in decent shape.
+
+### Screenshots
+
+![alt tag](https://raw.github.com/topcloud/socketcluster/master/benchmarks/socketcluster_socket_io_test_1.png)
+
