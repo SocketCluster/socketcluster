@@ -15,9 +15,6 @@
 		"ndata": ">=0.9.33",
 		"socketcluster-server": ">=0.9.16"
 	},
-	"bundleDependencies": [
-		"json"
-	],
 	"keywords": [
 		"websocket",
 		"server",
