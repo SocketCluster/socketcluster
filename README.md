@@ -126,7 +126,7 @@ module.exports.run = function (worker) {
     */
     wsServer.on('connection', function (socket) {
         // Emit a 'greet' event on the current socket with value 'hello world'
-        socket.emit('greet', 'hello world')
+        socket.emit('greet', 'hello world');
         
         /*
             Store that socket's session for later use.
@@ -174,7 +174,7 @@ module.exports.run = function (worker) {
     
     // Make your express app handle all essential requests
     httpServer.on('req', app);
-}
+};
 ```
 
 ### Using over HTTPS
@@ -275,7 +275,7 @@ Example - Inside worker.js:
 ```js
 module.exports.run = function (worker) {
     // worker here is an instance of SocketWorker
-}
+};
 ```
 
 ### ClusterServer
