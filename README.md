@@ -8,6 +8,12 @@ SocketCluster workers are highly parallelized - Asymptotically speaking, SocketC
 available WebSocket server (where N is the number of CPUs/cores available on your machine).
 SocketCluster was designed to be lightweight and its API is almost identical to Socket.io.
 
+Latest benchmark results (v0.9.8, 12/05/2014)
+
+![alt tag](https://raw.github.com/topcloud/socketcluster/master/benchmarks/socketcluster_v0.9.8.png)
+
+See bottom of page for details (Benchmark #2).
+
 Other advantages of SocketCluster include:
 - Sockets which are bound to the same browser (for example, across multiple tabs) share the same session.
 - You can emit an event on a session to notify all sockets that belong to it.
@@ -284,7 +290,9 @@ A ClusterServer instance is returned from worker.getWSServer() - You use it to h
 
 ## Benchmarks
 
-### Method
+### Benchmark #1 (v0.9.6, 08/05/2014)
+
+#### Procedure
 
 For this CPU benchmark, we compared Socket.io with SocketCluster on an 8-core Amazon EC2 m3.2xlarge instance running Linux.
 For this test, a new client (connection) was opened every 5 seconds - As soon as the connection was established, 
@@ -292,7 +300,7 @@ each new client immediately started sending messages at a rate of 1000 messages 
 These messages were dispatched through a 'ping' event which had an object {param: 'pong'} as payload.
 The server's logic in handling the message was pretty basic - It would simply count the number of such messages received and log the value every 10 seconds.
 
-### Observations
+#### Observations
 
 * When run as a single process on a single CPU core, SocketCluster performs worse than Socket.io.
 * As you add more CPU cores and more processes (proportional to the number of cores), SocketCluster quickly catches up. SocketCluster became worthwhile as soon as you added a second CPU core.
@@ -302,7 +310,28 @@ as much load as the next one.
 its round robin balancing.
 * The test was only set to reach up to 100 concurrent connections (each sending 1000 messages per second) - Total of 100K messages per second. SocketCluster was still in decent shape.
 
-### Screenshots
+#### Screenshots
 
 ![alt tag](https://raw.github.com/topcloud/socketcluster/master/benchmarks/socketcluster_socket_io_test_1.png)
 
+
+### Benchmark #2 (v0.9.8, 12/05/2014)
+
+#### Procedure
+
+For this CPU benchmark, we tested SocketCluster on an 8-core Amazon EC2 m3.2xlarge instance running Linux.
+The test procedure here was similar to Benchmark #1 with a few changes:
+* Instead of connecting a new client every 5 seconds, we created a new one every second.
+* The maximum number of connections created was set at 170K.
+* The messages were fully bidirectional this time - The client sent a 'ping' event containing a JavaScript object (cast to JSON) like in Benchmark #1 but instead of just counting it,
+the server responded to that ping event with a 'pong' event.
+* Fewer processes were used this time: 5 load balancers, 5 workers and 2 stores.
+
+#### Observations
+
+* An upgrade to the loadbalancer module to v0.9.12 resulted in much more even distribution between workers.
+Older versions of loadbalancer tended to not respond as well to large, sudden traffic spikes.
+The new version of loadbalancer uses an algorithm which leverages random probability with deterministic 'bad luck' correction to make sure that the load is spread evenly between workers.
+* The processes settings were poorly tuned in the previous benchmark - It's wasteful to use many more processes than you have CPU cores.
+* Using fewer processes resulted in a very healthy load average of 3.33 (out of a possible 8). We could probably have pushed well past 200K connections with our current setup.
+The setup of 5 load balancer, 5 workers and 2 stores is still not ideal - Maybe one more worker process would have brought the perfect balance?
