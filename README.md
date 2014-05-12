@@ -172,7 +172,7 @@ On the socket:
 socket.emit('foo', eventData, callback);
 ```
 
-On the current session:
+On the current session (this is the recommended way in case user has multiple open tabs):
 ```js
 socket.session.emit('foo', eventData, callback);
 ```
