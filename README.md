@@ -167,11 +167,6 @@ module.exports.run = function (worker) {
 
 SocketCluster lets you emit events in several ways:
 
-On the socket:
-```js
-socket.emit('foo', eventData, callback);
-```
-
 On the current session (this is the recommended way in case user has multiple open tabs):
 ```js
 socket.session.emit('foo', eventData, callback);
@@ -186,6 +181,11 @@ socket.global.emit('localhost_9101_8000_0_47kR_u7W4LGk56rSAAAA', 'foo', eventDat
 Broadcast to all sessions (on all worker processes):
 ```js
 socket.global.broadcast('foo', eventData, callback);
+```
+
+On the socket (only use this one if you know what you're doing; generally, it's better to emit on a session):
+```js
+socket.emit('foo', eventData, callback);
 ```
 
 ### Using with Express
