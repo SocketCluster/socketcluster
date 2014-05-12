@@ -163,6 +163,31 @@ module.exports.run = function (worker) {
 };
 ```
 
+### Emitting events
+
+SocketCluster lets you emit events in several ways:
+
+On the socket:
+```js
+socket.emit('foo', eventData, callback);
+```
+
+On the current session:
+```js
+socket.session.emit('foo', eventData, callback);
+```
+
+On a specific session (possibly hosted on a different worker process):
+```js
+// Function signature: emit(sessionId, event, data, callback)
+socket.global.emit('localhost_9101_8000_0_47kR_u7W4LGk56rSAAAA', 'foo', eventData, callback);
+```
+
+Broadcast to all sessions (on all worker processes):
+```js
+socket.global.broadcast('foo', eventData, callback);
+```
+
 ### Using with Express
 
 Using SocketCluster with express is simple, you put the code inside your workerController:
@@ -212,31 +237,6 @@ Note that encryption/decryption in SocketCluster happens at the LoadBalancer lev
 lightweight load balancers to distribute traffic evenly between your SocketCluster workers).
 LoadBalancers are responsible for encrypting/decrypting all network traffic. What this means is that your code (which is in the worker layer)
 will only ever deal with raw HTTP traffic.
-
-### Emitting events
-
-SocketCluster lets you emit events in several ways:
-
-On the socket:
-```js
-socket.emit('foo', eventData, callback);
-```
-
-On the current session:
-```js
-socket.session.emit('foo', eventData, callback);
-```
-
-On a specific session (possibly hosted on a different worker process):
-```js
-// Function signature: emit(sessionId, event, data, callback)
-socket.global.emit('localhost_9101_8000_0_47kR_u7W4LGk56rSAAAA', 'foo', eventData, callback);
-```
-
-Broadcast to all sessions (on all worker processes):
-```js
-socket.global.broadcast('foo', eventData, callback);
-```
 
 ### Authentication
 
