@@ -213,6 +213,31 @@ lightweight load balancers to distribute traffic evenly between your SocketClust
 LoadBalancers are responsible for encrypting/decrypting all network traffic. What this means is that your code (which is in the worker layer)
 will only ever deal with raw HTTP traffic.
 
+### Emitting events
+
+SocketCluster lets you emit events in several ways:
+
+On the socket:
+```js
+socket.emit('foo', eventData, callback);
+```
+
+On the current session:
+```js
+socket.session.emit('foo', eventData, callback);
+```
+
+On a specific session (possibly hosted on a different worker process):
+```js
+// Function signature: emit(sessionId, event, data, callback)
+socket.global.emit('localhost_9101_8000_0_47kR_u7W4LGk56rSAAAA', 'foo', eventData, callback);
+```
+
+Broadcast to all sessions (on all worker processes):
+```js
+socket.global.broadcast('foo', eventData, callback);
+```
+
 ### Authentication
 
 SocketCluster lets you store session data using the socket.session object. 
