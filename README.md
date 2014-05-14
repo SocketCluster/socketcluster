@@ -84,7 +84,7 @@ module.exports.run = function (worker) {
     // Get a reference to our raw Node HTTP server
     var httpServer = worker.getHTTPServer();
     // Get a reference to our WebSocket server
-    var wsServer = worker.getWSServer();
+    var wsServer = worker.getSCServer();
     
     /*
         We're going to read our main HTML file and the socketcluster-client
@@ -197,7 +197,7 @@ module.exports.run = function (worker) {
     // Get a reference to our raw Node HTTP server
     var httpServer = worker.getHTTPServer();
     // Get a reference to our WebSocket server
-    var wsServer = worker.getWSServer();
+    var wsServer = worker.getSCServer();
     
     var app = require('express')();
     
@@ -298,20 +298,20 @@ var socketCluster = new SocketCluster({
 
 Documentation on all supported options is coming soon (there are around 30 of them - Most of them are optional).
     
-### SocketWorker
+### SCWorker
 
-A SocketWorker object is passed as the argument to your workerController's run(worker) function.
+A SCWorker object is passed as the argument to your workerController's run(worker) function.
 Example - Inside worker.js:
 
 ```js
 module.exports.run = function (worker) {
-    // worker here is an instance of SocketWorker
+    // worker here is an instance of SCWorker
 };
 ```
 
-### ClusterServer
+### SCServer
 
-A ClusterServer instance is returned from worker.getWSServer() - You use it to handle WebSocket connections.
+An SCServer instance is returned from worker.getSCServer() - You use it to handle WebSocket connections.
 
 ## Benchmarks
 

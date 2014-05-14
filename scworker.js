@@ -4,7 +4,7 @@ var crypto = require('crypto');
 var domain = require('domain');
 var http = require('http');
 
-var SocketWorker = function (options) {
+var SCWorker = function (options) {
   var self = this;
 
   this._errorDomain = domain.create();
@@ -21,9 +21,9 @@ var SocketWorker = function (options) {
   });
 };
 
-SocketWorker.prototype = Object.create(EventEmitter.prototype);
+SCWorker.prototype = Object.create(EventEmitter.prototype);
 
-SocketWorker.prototype._init = function (options) {
+SCWorker.prototype._init = function (options) {
   var self = this;
 
   this._options = {
@@ -91,11 +91,11 @@ SocketWorker.prototype._init = function (options) {
   });
 };
 
-SocketWorker.prototype.getSocketURL = function () {
+SCWorker.prototype.getSocketURL = function () {
   return this._socketURL;
 };
 
-SocketWorker.prototype._start = function () {
+SCWorker.prototype._start = function () {
   this._httpRequestCount = 0;
   this._ioRequestCount = 0;
   this._httpRPM = 0;
@@ -109,7 +109,7 @@ SocketWorker.prototype._start = function () {
   this._server.listen(this._options.workerPort);
 };
 
-SocketWorker.prototype._httpRequestHandler = function (req, res) {
+SCWorker.prototype._httpRequestHandler = function (req, res) {
   this._httpRequestCount++;
   if (req.url == this._paths.statusURL) {
     this._handleStatusRequest(req, res);
@@ -118,7 +118,7 @@ SocketWorker.prototype._httpRequestHandler = function (req, res) {
   }
 };
 
-SocketWorker.prototype._handleStatusRequest = function (req, res) {
+SCWorker.prototype._handleStatusRequest = function (req, res) {
   var self = this;
 
   var isOpen = true;
@@ -163,15 +163,15 @@ SocketWorker.prototype._handleStatusRequest = function (req, res) {
   });
 };
 
-SocketWorker.prototype.getWSServer = function () {
+SCWorker.prototype.getSCServer = function () {
   return this._socketServer;
 };
 
-SocketWorker.prototype.getHTTPServer = function () {
+SCWorker.prototype.getHTTPServer = function () {
   return this._server;
 };
 
-SocketWorker.prototype._calculateStatus = function () {
+SCWorker.prototype._calculateStatus = function () {
   var perMinuteFactor = 60 / this._options.workerStatusInterval;
   this._httpRPM = this._httpRequestCount * perMinuteFactor;
   this._ioRPM = this._ioRequestCount * perMinuteFactor;
@@ -179,7 +179,7 @@ SocketWorker.prototype._calculateStatus = function () {
   this._ioRequestCount = 0;
 };
 
-SocketWorker.prototype.getStatus = function () {
+SCWorker.prototype.getStatus = function () {
   return {
     clientCount: this._socketServer.clientsCount,
     httpRPM: this._httpRPM,
@@ -187,19 +187,19 @@ SocketWorker.prototype.getStatus = function () {
   };
 };
 
-SocketWorker.prototype.handleMasterEvent = function () {
+SCWorker.prototype.handleMasterEvent = function () {
   this.emit.apply(this, arguments);
 };
 
-SocketWorker.prototype.errorHandler = function (err) {
+SCWorker.prototype.errorHandler = function (err) {
   this.emit('error', err);
 };
 
-SocketWorker.prototype.noticeHandler = function (notice) {
+SCWorker.prototype.noticeHandler = function (notice) {
   if (notice.message != null) {
     notice = notice.message;
   }
   this.emit('notice', notice);
 };
 
-module.exports = SocketWorker;
+module.exports = SCWorker;

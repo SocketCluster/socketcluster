@@ -1,4 +1,4 @@
-var SocketWorker = require('./socketworker');
+var SCWorker = require('./scworker');
 var worker;
 
 var handleError = function (err) {
@@ -31,7 +31,7 @@ var handleExit = function () {
 
 process.on('message', function (m) {
   if (m.type == 'init') {
-    worker = new SocketWorker(m.data);
+    worker = new SCWorker(m.data);
 
     if (m.data.propagateErrors) {
       worker.on('error', handleError);
