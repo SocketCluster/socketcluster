@@ -6,12 +6,23 @@ var http = require('http');
 
 var SCWorker = function (options) {
   var self = this;
+  
+  self.EVENT_ERROR = 'error';
+  self.EVENT_NOTICE = 'notice';
+  self.EVENT_EXIT = 'exit';
+  self.EVENT_READY = 'ready';
+  self.EVENT_CONNECTION = 'connection';
+  
+  /*
+    This event comes from the SocketCluster master process
+  */
+  self.EVENT_LEADER_START = 'leaderstart';
 
   this._errorDomain = domain.create();
   this._errorDomain.on('error', function () {
     self.errorHandler.apply(self, arguments);
     if (self._options.rebootWorkerOnError) {
-      self.emit('exit');
+      self.emit(self.EVENT_EXIT);
     }
   });
 
@@ -78,7 +89,7 @@ SCWorker.prototype._init = function (options) {
     socket.on('message', function () {
       self._ioRequestCount++;
     });
-    self.emit('connection', socket);
+    self.emit(self.EVENT_CONNECTION, socket);
   });
 
   this._socketURL = this._socketServer.getURL();
@@ -87,7 +98,7 @@ SCWorker.prototype._init = function (options) {
   this._errorDomain.add(this._socketServer);
   this._socketServer.on('ready', function () {
     self._server.on('request', self._httpRequestHandler.bind(self));
-    self.emit('ready');
+    self.emit(self.EVENT_READY);
   });
 };
 
@@ -192,14 +203,14 @@ SCWorker.prototype.handleMasterEvent = function () {
 };
 
 SCWorker.prototype.errorHandler = function (err) {
-  this.emit('error', err);
+  this.emit(self.EVENT_ERROR, err);
 };
 
 SCWorker.prototype.noticeHandler = function (notice) {
   if (notice.message != null) {
     notice = notice.message;
   }
-  this.emit('notice', notice);
+  this.emit(this.EVENT_NOTICE, notice);
 };
 
 module.exports = SCWorker;

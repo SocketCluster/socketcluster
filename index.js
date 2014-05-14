@@ -6,9 +6,12 @@ var fork = require('child_process').fork;
 
 var SocketCluster = function (options) {
   var self = this;
-
+  
   self.EVENT_FAIL = 'fail';
   self.EVENT_NOTICE = 'notice';
+  self.EVENT_READY = 'ready';
+  
+  // These events don't get triggered on SocketCluster (yet)
   self.EVENT_INFO = 'info';
   self.EVENT_LEADER_START = 'leaderstart';
 
@@ -372,6 +375,8 @@ SocketCluster.prototype._start = function () {
               self._workers[i].kill();
             }
           });
+
+      self.emit(self.EVENT_READY);
         } else {
           var workersData = [];
           var i;
