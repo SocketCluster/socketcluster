@@ -370,12 +370,6 @@ SocketCluster.prototype._start = function () {
             workersActive = true;
           }
 
-          process.on('SIGUSR2', function () {
-            for (var i in self._workers) {
-              self._workers[i].kill();
-            }
-          });
-
       self.emit(self.EVENT_READY);
         } else {
           var workersData = [];
@@ -509,6 +503,12 @@ SocketCluster.prototype._start = function () {
 
   launchIOCluster();
   self._ioCluster.on('ready', ioClusterReady);
+};
+
+SocketCluster.prototype.killWorkers = function () {
+  for (var i in this._workers) {
+    this._workers[i].kill();
+  }
 };
 
 SocketCluster.prototype.log = function (message, time) {
