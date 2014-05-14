@@ -404,7 +404,7 @@ SocketCluster.prototype._start = function () {
         self.noticeHandler(noticeMessage, origin);
       };
 
-      var worker = fork(__dirname + '/worker-bootstrap.js');
+      var worker = fork(__dirname + '/workerbootstrap.js');
       worker.on('error', workerErrorHandler);
 
       if (!workerData.id) {
