@@ -9,6 +9,10 @@
 			"email": "grosjona@yahoo.com.au"
 		}
 	],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/topcloud/socketcluster.git"
+  },
 	"dependencies": {
 		"iocluster": ">=0.9.17",
 		"loadbalancer": ">=0.9.12",
