@@ -91,6 +91,10 @@ SCWorker.prototype._init = function (options) {
     });
     self.emit(self.EVENT_CONNECTION, socket);
   });
+  
+  this._socketServer.on('notice', function () {
+    self.noticeHandler.apply(self, arguments);
+  });
 
   this._socketURL = this._socketServer.getURL();
   this._socketURLRegex = new RegExp('^' + this._socketURL);

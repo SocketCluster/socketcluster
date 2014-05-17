@@ -250,6 +250,10 @@ SocketCluster.prototype.noticeHandler = function (notice, origin) {
   notice.time = Date.now();
 
   this.emit(this.EVENT_NOTICE, notice);
+  
+  if (this.options.logLevel > 1) {
+    this.log(notice.stack);
+  }
 };
 
 SocketCluster.prototype.triggerInfo = function (info, origin) {
