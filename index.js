@@ -67,6 +67,7 @@ SocketCluster.prototype._init = function (options) {
     balancerCount: null,
     workerController: null,
     balancerController: null,
+    rebootOnSignal: true,
     clusterEngine: 'iocluster'
   };
 
@@ -373,7 +374,12 @@ SocketCluster.prototype._start = function () {
             initLoadBalancer();
             workersActive = true;
           }
-
+          
+          if (self.options.rebootOnSignal) {
+            process.on('SIGUSR2', function () {
+              self.killWorkers();
+            }
+          }
       self.emit(self.EVENT_READY);
         } else {
           var workersData = [];
