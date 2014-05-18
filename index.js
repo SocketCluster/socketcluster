@@ -378,7 +378,7 @@ SocketCluster.prototype._start = function () {
           if (self.options.rebootOnSignal) {
             process.on('SIGUSR2', function () {
               self.killWorkers();
-            }
+            });
           }
       self.emit(self.EVENT_READY);
         } else {
