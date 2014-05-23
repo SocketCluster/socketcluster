@@ -58,6 +58,7 @@ SocketCluster.prototype._init = function (options) {
     origins: '*:*',
     matchOriginProtocol: true,
     addressSocketLimit: null,
+    socketEventLimit: 100,
     pollingDuration: 30,
     heartbeatInterval: 25,
     heartbeatTimeout: 60,

@@ -21,7 +21,7 @@ var SCWorker = function (options) {
   this._errorDomain = domain.create();
   this._errorDomain.on('error', function () {
     self.errorHandler.apply(self, arguments);
-    if (self._options.rebootWorkerOnError) {
+    if (self.options.rebootWorkerOnError) {
       self.emit(self.EVENT_EXIT);
     }
   });
@@ -37,20 +37,20 @@ SCWorker.prototype = Object.create(EventEmitter.prototype);
 SCWorker.prototype._init = function (options) {
   var self = this;
 
-  this._options = {
+  this.options = {
     transports: ['polling', 'websocket'],
     host: 'localhost'
   };
 
   for (var i in options) {
-    this._options[i] = options[i];
+    this.options[i] = options[i];
   }
 
-  if (this._options.dataKey == null) {
-    this._options.dataKey = crypto.randomBytes(32).toString('hex');
+  if (this.options.dataKey == null) {
+    this.options.dataKey = crypto.randomBytes(32).toString('hex');
   }
 
-  this._clusterEngine = require(this._options.clusterEngine);
+  this._clusterEngine = require(this.options.clusterEngine);
 
   this._paths = options.paths;
 
@@ -60,29 +60,33 @@ SCWorker.prototype._init = function (options) {
   this._ioRPM = 0;
 
   this._ioClusterClient = new this._clusterEngine.IOClusterClient({
-    stores: this._options.stores,
-    dataKey: this._options.dataKey,
-    connectTimeout: this._options.connectTimeout,
-    dataExpiry: this._options.sessionTimeout,
-    heartRate: this._options.sessionHeartRate,
-    addressSocketLimit: this._options.addressSocketLimit
+    stores: this.options.stores,
+    dataKey: this.options.dataKey,
+    connectTimeout: this.options.connectTimeout,
+    dataExpiry: this.options.sessionTimeout,
+    heartRate: this.options.sessionHeartRate,
+    addressSocketLimit: this.options.addressSocketLimit,
+    socketEventLimit: this.options.socketEventLimit
   });
 
   this._errorDomain.add(this._ioClusterClient);
+  this._ioClusterClient.on('notice', function () {
+    self.noticeHandler.apply(self, arguments);
+  });
 
   this._server = http.createServer();
   this._errorDomain.add(this._server);
 
   this._socketServer = socketClusterServer.attach(this._server, {
-    sourcePort: this._options.sourcePort,
+    sourcePort: this.options.sourcePort,
     ioClusterClient: this._ioClusterClient,
-    transports: this._options.transports,
-    pingTimeout: this._options.heartbeatTimeout,
-    pingInterval: this._options.heartbeatInterval,
-    upgradeTimeout: this._options.connectTimeout,
-    host: this._options.host,
-    secure: this._options.protocol == 'https',
-    appName: this._options.appName
+    transports: this.options.transports,
+    pingTimeout: this.options.heartbeatTimeout,
+    pingInterval: this.options.heartbeatInterval,
+    upgradeTimeout: this.options.connectTimeout,
+    host: this.options.host,
+    secure: this.options.protocol == 'https',
+    appName: this.options.appName
   });
 
   this._socketServer.on('connection', function (socket) {
@@ -119,9 +123,9 @@ SCWorker.prototype._start = function () {
   if (this._statusInterval != null) {
     clearInterval(this._statusInterval);
   }
-  this._statusInterval = setInterval(this._calculateStatus.bind(this), this._options.workerStatusInterval * 1000);
+  this._statusInterval = setInterval(this._calculateStatus.bind(this), this.options.workerStatusInterval * 1000);
 
-  this._server.listen(this._options.workerPort);
+  this._server.listen(this.options.workerPort);
 };
 
 SCWorker.prototype._httpRequestHandler = function (req, res) {
@@ -146,7 +150,7 @@ SCWorker.prototype._handleStatusRequest = function (req, res) {
       res.end();
       isOpen = false;
     }
-  }, this._options.connectTimeout * 1000);
+  }, this.options.connectTimeout * 1000);
 
   var buffers = [];
   req.on('data', function (chunk) {
@@ -161,7 +165,7 @@ SCWorker.prototype._handleStatusRequest = function (req, res) {
         statusReq = JSON.parse(Buffer.concat(buffers).toString());
       } catch (e) {}
 
-      if (statusReq && statusReq.dataKey == self._options.dataKey) {
+      if (statusReq && statusReq.dataKey == self.options.dataKey) {
         var status = JSON.stringify(self.getStatus());
         res.writeHead(200, {
           'Content-Type': 'application/json'
@@ -187,7 +191,7 @@ SCWorker.prototype.getHTTPServer = function () {
 };
 
 SCWorker.prototype._calculateStatus = function () {
-  var perMinuteFactor = 60 / this._options.workerStatusInterval;
+  var perMinuteFactor = 60 / this.options.workerStatusInterval;
   this._httpRPM = this._httpRequestCount * perMinuteFactor;
   this._ioRPM = this._ioRequestCount * perMinuteFactor;
   this._httpRequestCount = 0;
