@@ -14,7 +14,7 @@ It removes the limitations of having to run your Node.js server as a single thre
 SocketCluster was designed to be modular so that you can run other frameworks like express on top of it (or build your own!)
 
 Unlike other realtime engines, SocketCluster deploys itself as a cluster of processes in order to make use of all CPUs/cores on
-a machine/instance - This offers a more consistent performance for users and lets you scale vertically without limits.
+a machine/instance - This offers a more consistent performance for users and lets you scale vertically without theoretical limits (so long as you can throw more CPU cores at it).
 SocketCluster workers are highly parallelized - Asymptotically speaking, SocketCluster is N times faster than any comparable 
 single-threaded WebSocket/HTTP server (where N is the number of CPUs/cores available on your machine).
 
