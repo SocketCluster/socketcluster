@@ -7,7 +7,7 @@ Latest benchmark results (v0.9.8, 12/05/2014)
 
 See bottom of page for details (Benchmark #2).
 
-SoketCluster is a fast, highly scalable HTTP + WebSocket (engine.io) server which lets you build multi-process 
+SocketCluster is a fast, highly scalable HTTP + WebSocket (engine.io) server which lets you build multi-process 
 realtime systems/apps that make use of all CPU cores on a machine/instance.
 It removes the limitations of having to run your Node.js server as a single thread.
 
