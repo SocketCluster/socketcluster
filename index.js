@@ -479,10 +479,12 @@ SocketCluster.prototype._start = function () {
         leaderId = -1;
         self.errorHandler(new Error(message), {type: 'master'});
 
-        if (self.options.logLevel > 0) {
-          self.log('Respawning worker ' + worker.id);
+        if (self.options.rebootWorkerOnError) {
+          if (self.options.logLevel > 0) {
+            self.log('Respawning worker ' + worker.id);
+          }
+          launchWorker(workerData, lead);
         }
-        launchWorker(workerData, lead);
       });
 
       return worker;

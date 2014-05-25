@@ -73,7 +73,8 @@ var socketCluster = new SocketCluster({
     port: 8000,
     appName: 'myapp',
     workerController: 'worker.js',
-    balancerController: 'firewall.js' // Optional
+    balancerController: 'firewall.js', // Optional,
+    rebootWorkerOnError: false // Optional, makes debugging easier
 });
 ```
 
@@ -197,6 +198,11 @@ socket.global.emit('localhost_9101_8000_0_47kR_u7W4LGk56rSAAAA', 'foo', eventDat
 Broadcast to all sessions (on all worker processes):
 ```js
 socket.global.broadcast('foo', eventData, callback);
+```
+
+Broadcast to all sessions (get the global object directly from the SCServer instance):
+```js
+wsServer.global.broadcast('foo', eventData, callback);
 ```
 
 On the socket (only use this one if you know what you're doing; generally, it's better to emit on a session):
