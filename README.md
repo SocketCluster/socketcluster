@@ -22,8 +22,8 @@ SocketCluster was designed to be lightweight and its realtime API is almost iden
 
 
 ## Our goals
-- For developers: To make it easy to build fast and resilient Node.js servers/frameworks/apps.
-- For startups: To buy you more time to deal with your application's growth by enabling you to choose a scale up-and-out approach.
+- For developers: To make it easy to build fast and resilient Node.js servers, frameworks and apps.
+- For startups: To buy you more time to deal with your traffic growth by enabling you to choose a scale up-and-out approach.
 - For big companies: To allow you to use fewer, more powerful servers to handle your traffic to reduce management complexity, data center space use, power consumption and carbon footprint.
 
 
@@ -74,7 +74,7 @@ var socketCluster = new SocketCluster({
     appName: 'myapp',
     workerController: 'worker.js',
     balancerController: 'firewall.js', // Optional,
-    rebootWorkerOnError: false // Optional, makes debugging easier
+    rebootWorkerOnError: false // Optional, makes debugging easier - Defaults to true (should be true in production)
 });
 ```
 
@@ -200,7 +200,7 @@ Broadcast to all sessions (on all worker processes):
 socket.global.broadcast('foo', eventData, callback);
 ```
 
-Broadcast to all sessions (get the global object directly from the SCServer instance):
+Broadcast to all sessions (getting the global object directly from the SCServer instance):
 ```js
 wsServer.global.broadcast('foo', eventData, callback);
 ```
@@ -291,10 +291,11 @@ SocketCluster's HTTP server 'req' event (I.e. req.session).
 
 - Tests needed - While some of the underlying modules of SC are well tested, 
 it would be nice to add some higher-level tests to help maintain high code quality.
-- Benchmarks - It would be nice to have some formal benchmarks comparing SocketCluster's performance with alternatives to 
-get a better view of its strengths and weaknesses. Also having some graphs to prove that SocketCluster scales linearly as
-you add more workers/CPUs would be nice. This has been verified informally with a few CPU cores, but more thorough testing would be welcome!
-- Speed - More speed is always better!
+- Documentation - Inline source documentation is needed.
+- Benchmarks - More benchmarks - Particularly, it would be nice to get an idea of how many concurrent connections SocketCluster can handle on a big machine.
+- Efficiency/speed - faster is better!
+
+To contribute; clone this repo, then cd inside it and then run npm install to install all dependencies.
 
 ## API (Documentation coming soon)
 
