@@ -158,7 +158,7 @@ module.exports.run = function (worker) {
         */
         activeSessions[socket.session.id] = socket.session;
     });
-	
+  
     wsServer.on('disconnection', function (socket) {
         console.log('Socket ' + socket.id + ' was disconnected');
     });
@@ -243,12 +243,12 @@ var socketCluster = new SocketCluster({
     port: 8000,
     appName: 'myapp',
     workerController: 'worker.js',
-	protocol: 'https',
-	protocolOptions: {
-		key: fs.readFileSync(__dirname + '/keys/enc_key.pem', 'utf8'),
-		cert: fs.readFileSync(__dirname + '/keys/cert.pem', 'utf8'),
-		passphrase: 'passphase4privkey'
-	}
+  protocol: 'https',
+  protocolOptions: {
+    key: fs.readFileSync(__dirname + '/keys/enc_key.pem', 'utf8'),
+    cert: fs.readFileSync(__dirname + '/keys/cert.pem', 'utf8'),
+    passphrase: 'passphase4privkey'
+  }
 });
 ```
 
@@ -278,14 +278,40 @@ Then, on subsequent events, you could check for that token before handling the e
 
 ```js
 socket.session.get('isUserAuthorized', function (err, value) {
-	if (value) {
-		// Token is set, therefore this event is authorized
-	}
+  if (value) {
+    // Token is set, therefore this event is authorized
+  }
 });
 ```
 
 The session object can also be accessed from the req object that you get from 
 SocketCluster's HTTP server 'req' event (I.e. req.session).
+
+SocketCluster provides two middleware lines for filtering out sockets and events.
+
+MIDDLEWARE_HANDSHAKE middleware for filtering out sockets based on session data:
+```js
+wsServer.addMiddleware(wsServer.MIDDLEWARE_HANDSHAKE, function (req, next) {
+  req.session.get('isUserAuthorized', function (err, value) {
+    if (value) {
+      next();
+    } else {
+      next('Session ' + req.session.id + ' was not authorized');
+    }
+  });
+});
+```
+
+MIDDLEWARE_EVENT middleware for filtering out individual events:
+```js
+wsServer.addMiddleware(wsServer.MIDDLEWARE_EVENT, function (socket, event, data, next) {
+  if (event == 'bla') {
+    next(new Error('bla event is not allowed for socket ' + socket.id + ' on session ' + socket.session.id));
+  } else {
+    next();
+  }
+});
+```
 
 ## Contribute to SocketCluster
 
