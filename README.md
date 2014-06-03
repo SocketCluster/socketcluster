@@ -23,8 +23,8 @@ SocketCluster was designed to be lightweight and its realtime API is almost iden
 
 ## Our goals
 - For developers: To make it easy to build fast and resilient Node.js servers, frameworks and apps.
-- For startups: To buy you more time to deal with your traffic growth by enabling you to choose a scale up-and-out approach.
-- For big companies: To allow you to use fewer, more powerful servers to handle your traffic to reduce management complexity, data center space use, power consumption and carbon footprint.
+- For startups: To buy more time to deal with traffic growth by facilitating a scale up-and-out approach.
+- For big companies: To encourage the use of fewer, more powerful servers to handle traffic. The hope there is to reduce management complexity, data center space use, power consumption and carbon footprint.
 
 
 ## Details
@@ -44,7 +44,7 @@ To install, run:
 npm install socketcluster
 ```
 
-Note that to use socketcluster you will also need the client which you an get using the following command:
+Note that to use socketcluster you will also need the client which you can get using the following command:
 
 ```bash
 npm install socketcluster-client
