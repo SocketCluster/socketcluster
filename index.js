@@ -183,7 +183,7 @@ SocketCluster.prototype._init = function (options) {
   self._slashSequenceRegex = /\/+/g;
   self._startSlashRegex = /^\//;
 
-  self._minAddressSocketLimit = 20;
+  self._minAddressSocketLimit = 30;
   self._dataExpiryAccuracy = 5000;
 
   if (self.options.addressSocketLimit == null) {
