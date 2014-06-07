@@ -1,30 +1,31 @@
 {
-	"name": "socketcluster",
-	"description": "SocketCluster - A Highly parallelized WebSocket server cluster to make the most of multi-core machines/instances.",
-	"version": "0.9.17",
-	"homepage": "https://github.com/topcloud/socketcluster",
-	"contributors": [
-		{
-			"name": "Jonathan Gros-Dubois",
-			"email": "grosjona@yahoo.com.au"
-		}
-	],
+  "name": "socketcluster",
+  "description": "SocketCluster - A Highly parallelized WebSocket server cluster to make the most of multi-core machines/instances.",
+  "version": "0.9.17",
+  "homepage": "https://github.com/topcloud/socketcluster",
+  "contributors": [
+    {
+      "name": "Jonathan Gros-Dubois",
+      "email": "grosjona@yahoo.com.au"
+    }
+  ],
   "repository": {
     "type": "git",
     "url": "git://github.com/topcloud/socketcluster.git"
   },
-	"dependencies": {
-		"iocluster": ">=0.9.21",
-		"loadbalancer": ">=0.9.12",
-		"socketcluster-server": ">=0.9.24"
-	},
-	"keywords": [
-		"websocket",
-		"server",
-		"engine.io",
-		"cluster",
-		"distributed",
-		"parallelized"
-	],
-	"readmeFilename": "README.md"
+  "dependencies": {
+    "iocluster": ">=0.9.21",
+    "loadbalancer": ">=0.9.12",
+    "socketcluster-server": ">=0.9.24"
+  },
+  "keywords": [
+    "websocket",
+    "server",
+    "engine.io",
+    "cluster",
+    "distributed",
+    "parallelized"
+  ],
+  "license": "MIT",
+  "readmeFilename": "README.md"
 }

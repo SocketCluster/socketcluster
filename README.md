@@ -1,11 +1,7 @@
 SocketCluster
 ======
 
-Latest benchmark results (v0.9.8, 12/05/2014)
-
-![alt tag](https://raw.github.com/topcloud/socketcluster/master/benchmarks/socketcluster_v0.9.8.png)
-
-See bottom of page for details (Benchmark #2).
+**See bottom of this page for benchmark results.**
 
 SocketCluster is a fast, highly scalable HTTP + WebSocket (engine.io) server which lets you build multi-process 
 realtime systems/apps that make use of all CPU cores on a machine/instance.
@@ -20,11 +16,17 @@ single-threaded WebSocket/HTTP server (where N is the number of CPUs/cores avail
 
 SocketCluster was designed to be lightweight and its realtime API is almost identical to Socket.io.
 
+### Memory leak profile
+SocketCluster has been tested for memory leaks.
+The last full memory profiling was done on SocketCluster v0.9.17 (Node.js v0.10.28) and included checks on load balancer, worker and store processes.
 
-## Our goals
+No memory leaks were detected when using the latest Node.js version.
+Note that leaks were found when using Node.js versions below v0.10.22 - This is probably the Node.js 'Walmart' memory leak - Not a SocketCluster issue.
+
+## SocketCluster goals
 - For developers: To make it easy to build fast and resilient Node.js servers, frameworks and apps.
 - For startups: To buy more time to deal with traffic growth by facilitating a scale up-and-out approach.
-- For big companies: To encourage the use of fewer, more powerful servers to handle traffic. The hope there is to reduce management complexity, data center space use, power consumption and carbon footprint.
+- For big companies: To encourage the use of fewer, more powerful servers to handle traffic. The hope there is to reduce management complexity, data center space use and power consumption (carbon footprint).
 
 
 ## Details
@@ -54,7 +56,7 @@ The socketcluster-client script is called socketcluster.js (located in the main 
 - You should include it in your HTML page using a &lt;script&gt; tag in order to interact with SocketCluster.
 For more details on how to use socketcluster-client, go to https://github.com/topcloud/socketcluster-client
 
-**Scroll to the bottom of this README for results of benchmark tests.**
+It is recommended that you use Node.js version >=0.10.22 due to memory leaks present in older versions.
 
 ## How to use
 
@@ -365,33 +367,6 @@ An SCServer instance is returned from worker.getSCServer() - You use it to handl
 
 ## Benchmarks
 
-### Benchmark #1 (v0.9.6, 08/05/2014)
-
-#### Procedure
-
-For this CPU benchmark, we compared Socket.io with SocketCluster on an 8-core Amazon EC2 m3.2xlarge instance running Linux.
-For this test, a new client (connection) was opened every 5 seconds - As soon as the connection was established, 
-each new client immediately started sending messages at a rate of 1000 messages per second to the server.
-These messages were dispatched through a 'ping' event which had an object {param: 'pong'} as payload.
-The server's logic in handling the message was pretty basic - It would simply count the number of such messages received and log the value every 10 seconds.
-
-#### Observations
-
-* When run as a single process on a single CPU core, SocketCluster performs worse than Socket.io.
-* As you add more CPU cores and more processes (proportional to the number of cores), SocketCluster quickly catches up. SocketCluster became worthwhile as soon as you added a second CPU core.
-* Until a certain point, traffic was not distributed exactly evenly between the SocketCluster load balancers - Initially, one of the load balancer processes was handling more than 2 times
-as much load as the next one.
-* As the strain on that load balancer increased to around the 50% CPU mark, other load balancers started picking up the slack... This must have something to do with way the OS does
-its round robin balancing.
-* The test was only set to reach up to 100 concurrent connections (each sending 1000 messages per second) - Total of 100K messages per second. SocketCluster was still in decent shape.
-
-#### Screenshots
-
-![alt tag](https://raw.github.com/topcloud/socketcluster/master/benchmarks/socketcluster_socket_io_test_1.png)
-
-
-### Benchmark #2 (v0.9.8, 12/05/2014)
-
 #### Procedure
 
 For this CPU benchmark, we tested SocketCluster on an 8-core Amazon EC2 m3.2xlarge instance running Linux.
@@ -410,3 +385,7 @@ The new version of loadbalancer uses an algorithm which leverages random probabi
 * The processes settings were poorly tuned in the previous benchmark - It's wasteful to use many more processes than you have CPU cores.
 * Using fewer processes resulted in a very healthy load average of 3.33 (out of a possible 8). We could probably have pushed well past 200K connections with our current setup.
 The setup of 5 load balancer, 5 workers and 2 stores is still not ideal - Maybe one more worker process would have brought the perfect balance?
+
+#### Screenshots
+
+![alt tag](https://raw.github.com/topcloud/socketcluster/master/benchmarks/socketcluster_v0.9.8.png)
