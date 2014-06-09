@@ -39,7 +39,6 @@ SocketCluster.prototype._init = function (options) {
     workers: null,
     stores: null,
     appName: null,
-    workerController: null,
     dataKey: null,
     rebootWorkerOnError: true,
     protocol: 'http',
@@ -68,6 +67,7 @@ SocketCluster.prototype._init = function (options) {
     balancerCount: null,
     workerController: null,
     balancerController: null,
+    storeController: null,
     rebootOnSignal: true,
     clusterEngine: 'iocluster'
   };
@@ -100,6 +100,12 @@ SocketCluster.prototype._init = function (options) {
     self._paths.appBalancerControllerPath = path.resolve(self.options.balancerController);
   } else {
     self._paths.appBalancerControllerPath = null;
+  }
+  
+  if (self.options.storeController) {
+    self._paths.appStoreControllerPath = path.resolve(self.options.storeController);
+  } else {
+    self._paths.appStoreControllerPath = null;
   }
 
   if (self.options.logLevel > 3) {
@@ -506,6 +512,7 @@ SocketCluster.prototype._start = function () {
     self._ioCluster = new self._clusterEngine.IOCluster({
       stores: stores,
       dataKey: pass,
+      appStoreControllerPath: self._paths.appStoreControllerPath,
       expiryAccuracy: self._dataExpiryAccuracy
     });
 

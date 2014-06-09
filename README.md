@@ -75,7 +75,8 @@ var socketCluster = new SocketCluster({
     port: 8000,
     appName: 'myapp',
     workerController: 'worker.js',
-    balancerController: 'firewall.js', // Optional,
+    // balancerController: 'firewall.js', // Optional
+    // storeController: 'store.js', // Optional
     rebootWorkerOnError: false, // Optional, makes debugging easier - Defaults to true (should be true in production),
     addressSocketLimit: 50 // Optional, prevents malicious clients from hogging up unlimited sockets (memory) on your server - Defaults to 30
 });
