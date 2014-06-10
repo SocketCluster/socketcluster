@@ -2,10 +2,9 @@ SocketCluster
 ======
 
 ### Latest benchmark (concurrency) v0.9.20:
-This is on an 8-core machine:
-![alt tag](https://raw.github.com/topcloud/socketcluster/master/benchmarks/sc_42k_clients.png)
 
-**See bottom of the page under 'Benchmarks > Concurrency' for more details.**
+**This is on an 8-core machine. See bottom of page under 'Benchmarks > Concurrency' for more details.**
+![alt tag](https://raw.github.com/topcloud/socketcluster/master/benchmarks/sc_42k_clients.png)
 
 SocketCluster is a fast, highly scalable HTTP + WebSocket (engine.io) server which lets you build multi-process 
 realtime systems/apps that make use of all CPU cores on a machine/instance.
