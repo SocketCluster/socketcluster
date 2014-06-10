@@ -2,7 +2,7 @@ SocketCluster
 ======
 
 ### Latest benchmark (concurrency) v0.9.20:
-
+This is on an 8-core machine:
 ![alt tag](https://raw.github.com/topcloud/socketcluster/master/benchmarks/sc_42k_clients.png)
 
 **See bottom of the page under 'Benchmarks > Concurrency' for more details.**
@@ -418,6 +418,7 @@ The SocketCluster client was run on the largest possible 32-core Amazon EC2 c3.8
 * Once connections settled at 42K, the CPU use of the busiest worker dropped to around 45%
 * The store didn't do much work - In reality only 7 CPU cores were fully exploited.
 * The load average was under 2 (out of a possible 8), so there was plenty of room for more users.
+* Memory usage was negligible when compared to CPU usage.
 * The huge 32-core EC2 client machine could not get very far past 42K connections - CPU usage on the client was approaching 100% on all 32 cores. Past a certain point, the client would start lagging and the load on the server would drop.
 
 #### Screenshots
