@@ -1,7 +1,11 @@
 SocketCluster
 ======
 
-**See bottom of this page for benchmark results.**
+### Latest benchmark (concurrency) v0.9.20:
+
+![alt tag](https://raw.github.com/topcloud/socketcluster/master/benchmarks/sc_42k_clients.png)
+
+**See bottom of the page under 'Benchmarks > Concurrency' for more details.**
 
 SocketCluster is a fast, highly scalable HTTP + WebSocket (engine.io) server which lets you build multi-process 
 realtime systems/apps that make use of all CPU cores on a machine/instance.
@@ -368,15 +372,17 @@ An SCServer instance is returned from worker.getSCServer() - You use it to handl
 
 ## Benchmarks
 
+### Throughput
+
+The goal of this test was to see how many JavaScript (JSON) objects SocketCluster could process each second on a decent machine.
+
 #### Procedure
 
-For this CPU benchmark, we tested SocketCluster on an 8-core Amazon EC2 m3.2xlarge instance running Linux.
-The test procedure here was similar to Benchmark #1 with a few changes:
-* Instead of connecting a new client every 5 seconds, we created a new one every second.
-* The maximum number of connections created was set at 170K.
-* The messages were fully bidirectional this time - The client sent a 'ping' event containing a JavaScript object (cast to JSON) like in Benchmark #1 but instead of just counting it,
-the server responded to that ping event with a 'pong' event.
-* Fewer processes were used this time: 5 load balancers, 5 workers and 2 stores.
+For this CPU benchmark, SocketCluster was tested on an 8-core Amazon EC2 m3.2xlarge instance running Linux.
+* A new client was created every second until there were 100 concurrent clients.
+* The maximum number of messages sent was set to be 170K (1700 messages per second per client).
+* The messages were fully bidirectional - The client sent a 'ping' event containing a JavaScript object (cast to JSON) and the server responded with a 'pong' JavaScript object. That object had a 'count' property to indicate the total number of pings received so far by the current worker.
+* SocketCluster was setup to use 5 load balancers, 5 workers and 2 stores.
 
 #### Observations
 
@@ -390,3 +396,30 @@ The setup of 5 load balancer, 5 workers and 2 stores is still not ideal - Maybe 
 #### Screenshots
 
 ![alt tag](https://raw.github.com/topcloud/socketcluster/master/benchmarks/socketcluster_v0.9.8.png)
+
+
+### Concurrency
+
+The goal of this test was to see how many concurrent clients SocketCluster could comfortably handle.
+
+#### Procedure
+
+SocketCluster was deployed on an 8-core Amazon EC2 m3.2xlarge instance running Linux.
+The SocketCluster client was run on the largest possible 32-core Amazon EC2 c3.8xlarge instance running Linux - This was necessary in order to be able to simulate 42K concurrent users from a single machine.
+
+* Clients were created (connected) at a rate of approximately 160 per second.
+* The maximum number of concurrent clients was set to 42K - This is a limit of the client, not the server.
+* Each client sent a 'ping' message every 6 seconds on average. The payload of the 'ping' event was a JavaScript object (cast to JSON), the response was a 'pong' object containing the total number of pings received by the current worker so far.
+* SocketCluster was setup to run with 4 load balancers, 3 workers and 1 store.
+
+#### Observations
+
+* CPU (of busiest worker) peaked to around 60% near the end while new connections where still being created (at rate of 160 per second).
+* Once connections settled at 42K, the CPU use of the busiest worker dropped to around 45%
+* The store didn't do much work - In reality only 7 CPU cores were fully exploited.
+* The load average was under 2 (out of a possible 8), so there was plenty of room for more users.
+* The huge 32-core EC2 client machine could not get very far past 42K connections - CPU usage on the client was approaching 100% on all 32 cores. Past a certain point, the client would start lagging and the load on the server would drop.
+
+#### Screenshots
+
+**See top of page for screenshot.**
