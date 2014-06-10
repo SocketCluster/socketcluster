@@ -125,6 +125,9 @@ SCWorker.prototype._start = function () {
   }
   this._statusInterval = setInterval(this._calculateStatus.bind(this), this.options.workerStatusInterval * 1000);
 
+  this._workerController = require(this._paths.appWorkerControllerPath);
+  this._workerController.run(this);
+  
   this._server.listen(this.options.workerPort);
 };
 
@@ -211,7 +214,7 @@ SCWorker.prototype.handleMasterEvent = function () {
 };
 
 SCWorker.prototype.errorHandler = function (err) {
-  this.emit(self.EVENT_ERROR, err);
+  this.emit(this.EVENT_ERROR, err);
 };
 
 SCWorker.prototype.noticeHandler = function (notice) {

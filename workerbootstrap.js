@@ -40,9 +40,7 @@ process.on('message', function (m) {
       worker.on('exit', handleExit);
     }
 
-    var workerController = require(m.data.paths.appWorkerControllerPath);
     worker.on('ready', function () {
-      workerController.run(worker);
       worker.start();
     });
   } else if (m.type == 'emit') {

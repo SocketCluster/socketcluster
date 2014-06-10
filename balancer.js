@@ -62,6 +62,7 @@ if (cluster.isMaster) {
       balancer = new LoadBalancer(m.data);
       balancer.on('error', handleError);
       balancer.on('notice', handleNotice);
+      balancer.start();
     } else if (m.type == 'setWorkers') {
       balancer.setWorkers(m.data);
     }
