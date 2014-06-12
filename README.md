@@ -3,8 +3,7 @@ SocketCluster
 
 ### Latest benchmark (concurrency) v0.9.20:
 
-**This is on an 8-core machine. See bottom of page under 'Benchmarks > Concurrency' for more details.**
-![alt tag](https://raw.github.com/topcloud/socketcluster/master/benchmarks/sc_42k_clients.png)
+**See bottom of page for benchmark tests.**
 
 SocketCluster is a fast, highly scalable HTTP + WebSocket (engine.io) server which lets you build multi-process 
 realtime systems/apps that make use of all CPU cores on a machine/instance.
@@ -80,6 +79,7 @@ var socketCluster = new SocketCluster({
     workerController: 'worker.js',
     // balancerController: 'firewall.js', // Optional
     // storeController: 'store.js', // Optional
+    // useSmartBalancing: true, // Optional - If true, load balancing will be based on session id instead of IP address. Defaults to false.
     rebootWorkerOnError: false, // Optional, makes debugging easier - Defaults to true (should be true in production),
     addressSocketLimit: 50 // Optional, prevents malicious clients from hogging up unlimited sockets (memory) on your server - Defaults to 30
 });
@@ -422,4 +422,4 @@ The SocketCluster client was run on the largest possible 32-core Amazon EC2 c3.8
 
 #### Screenshots
 
-**See top of page for screenshot.**
+![alt tag](https://raw.github.com/topcloud/socketcluster/master/benchmarks/sc_42k_clients.png)

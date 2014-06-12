@@ -69,6 +69,7 @@ SocketCluster.prototype._init = function (options) {
     balancerController: null,
     storeController: null,
     rebootOnSignal: true,
+    useSmartBalancing: false,
     clusterEngine: 'iocluster'
   };
 
@@ -306,6 +307,7 @@ SocketCluster.prototype._start = function () {
         balancerCount: self.options.balancerCount,
         protocol: self.options.protocol,
         protocolOptions: self.options.protocolOptions,
+        useSmartBalancing: self.options.useSmartBalancing,
         checkStatusTimeout: self.options.connectTimeout * 1000,
         statusURL: self._paths.statusURL,
         statusCheckInterval: self.options.workerStatusInterval * 1000,
