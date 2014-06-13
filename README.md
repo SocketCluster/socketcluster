@@ -191,7 +191,7 @@ module.exports.run = function (worker) {
 
 SocketCluster lets you emit events in several ways:
 
-On the current session (this is the recommended way in case user has multiple open tabs):
+On the current session (this is the recommended way; accounts for multiple open tabs):
 ```js
 socket.session.emit('foo', eventData, callback);
 ```
@@ -207,7 +207,7 @@ Broadcast to all sessions (on all worker processes):
 socket.global.broadcast('foo', eventData, callback);
 ```
 
-Broadcast to all sessions (getting the global object directly from the SCServer instance):
+Broadcast to all sessions (this time we access the global object directly from the SCServer instance):
 ```js
 wsServer.global.broadcast('foo', eventData, callback);
 ```
@@ -244,12 +244,12 @@ provide your private key and certificate as a start option when you instantiate 
 
 ```js
 var socketCluster = new SocketCluster({
-    workers: [9100, 9101, 9102],
-    stores: [9001, 9002, 9003],
-    balancerCount: 1, // Optional
-    port: 8000,
-    appName: 'myapp',
-    workerController: 'worker.js',
+  workers: [9100, 9101, 9102],
+  stores: [9001, 9002, 9003],
+  balancerCount: 1, // Optional
+  port: 8000,
+  appName: 'myapp',
+  workerController: 'worker.js',
   protocol: 'https',
   protocolOptions: {
     key: fs.readFileSync(__dirname + '/keys/enc_key.pem', 'utf8'),

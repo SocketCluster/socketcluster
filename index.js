@@ -285,235 +285,240 @@ SocketCluster.prototype.triggerInfo = function (info, origin) {
   }
 };
 
+SocketCluster.prototype._initLoadBalancer = function () {
+  this._balancer.send({
+    type: 'init',
+    data: {
+      dataKey: this._dataKey,
+      sourcePort: this.options.port,
+      workers: this.options.workers,
+      host: this.options.host,
+      balancerCount: this.options.balancerCount,
+      protocol: this.options.protocol,
+      protocolOptions: this.options.protocolOptions,
+      useSmartBalancing: this.options.useSmartBalancing,
+      checkStatusTimeout: this.options.connectTimeout * 1000,
+      statusURL: this._paths.statusURL,
+      statusCheckInterval: this.options.workerStatusInterval * 1000,
+      appBalancerControllerPath: this._paths.appBalancerControllerPath
+    }
+  });
+};
+
+SocketCluster.prototype._launchLoadBalancer = function () {
+  var self = this;
+  
+  if (self._balancer) {
+    self._errorDomain.remove(self._balancer);
+  }
+
+  var balancerErrorHandler = function (err) {
+    self.errorHandler(err, {type: 'balancer'});
+  };
+
+  var balancerNoticeHandler = function (noticeMessage) {
+    self.noticeHandler(noticeMessage, {type: 'balancer'});
+  };
+
+  self._balancer = fork(__dirname + '/balancer.js');
+  self._balancer.on('error', balancerErrorHandler);
+  self._balancer.on('notice', balancerNoticeHandler);
+
+  self._balancer.on('exit', self._launchLoadBalancer.bind(self));
+  self._balancer.on('message', function (m) {
+    if (m.type == 'error') {
+      balancerErrorHandler(m.data);
+    } else if (m.type == 'notice') {
+      balancerNoticeHandler(m.data);
+    }
+  });
+
+  if (self._workersActive) {
+    self._initLoadBalancer();
+  }
+};
+
+SocketCluster.prototype._workerErrorHandler = function (worker, err) {
+  var origin = {
+    type: 'worker',
+    pid: worker.pid
+  };
+  this.errorHandler(err, origin);
+};
+
+SocketCluster.prototype._workerNoticeHandler = function (worker, noticeMessage) {
+  var origin = {
+    type: 'worker',
+    pid: worker.pid
+  };
+  this.noticeHandler(noticeMessage, origin);
+};
+
+SocketCluster.prototype._workerReadyHandler = function (worker, data) {
+  var self = this;
+  
+  self._workers.push(worker);
+  
+  if (worker.id == self._leaderId) {
+    worker.send({
+      type: 'emit',
+      event: self.EVENT_LEADER_START
+    });
+  }
+
+  if (self._active && self.options.logLevel > 0) {
+    self.log('Worker ' + worker.data.id + ' was respawned on port ' + worker.data.port);
+  }
+
+  if (self._workers.length >= self.options.workers.length) {
+    if (self._firstTime) {
+      if (self.options.logLevel > 0) {
+        console.log('   ' + self.colorText('[Active]', 'green') + ' SocketCluster started');
+        console.log('            Port: ' + self.options.port);
+        console.log('            Master PID: ' + process.pid);
+        console.log('            Balancer count: ' + self.options.balancerCount);
+        console.log('            Worker count: ' + self.options.workers.length);
+        console.log('            Store count: ' + self.options.stores.length);
+        console.log();
+      }
+      self._firstTime = false;
+
+      if (!self._workersActive) {
+        self._initLoadBalancer();
+        self._workersActive = true;
+      }
+      
+      if (self.options.rebootOnSignal) {
+        process.on('SIGUSR2', function () {
+          self.killWorkers();
+        });
+      }
+      self.emit(self.EVENT_READY);
+    } else {
+      var workersData = [];
+      for (var i in self._workers) {
+        workersData.push(self._workers[i].data);
+      }
+      self._balancer.send({
+        type: 'setWorkers',
+        data: workersData
+      });
+    }
+    self._active = true;
+  }
+};
+
+SocketCluster.prototype._handleWorkerExit = function (worker, code, signal) {
+  this._errorDomain.remove(worker);
+  var message = '   Worker ' + worker.id + ' died - Exit code: ' + code;
+
+  if (signal) {
+    message += ', signal: ' + signal;
+  }
+
+  var workersData = [];
+  var newWorkers = [];
+  for (var i in this._workers) {
+    if (this._workers[i].id != worker.id) {
+      newWorkers.push(this._workers[i]);
+      workersData.push(this._workers[i].data);
+    }
+  }
+
+  this._workers = newWorkers;
+  this._balancer.send({
+    type: 'setWorkers',
+    data: workersData
+  });
+
+  var lead = worker.id == this._leaderId;
+  this._leaderId = -1;
+  this.errorHandler(new Error(message), {type: 'master'});
+
+  if (this.options.rebootWorkerOnError) {
+    if (this.options.logLevel > 0) {
+      this.log('Respawning worker ' + worker.id);
+    }
+    this._launchWorker(worker.data, lead, true);
+  }
+};
+
+SocketCluster.prototype._launchWorker = function (workerData, lead, respawn) {
+  var self = this;
+  
+  var worker = fork(__dirname + '/worker.js');
+  worker.on('error', self._workerErrorHandler.bind(self, worker));
+
+  if (!workerData.id) {
+    workerData.id = self._workerIdCounter++;
+  }
+
+  worker.id = workerData.id;
+  worker.data = workerData;
+
+  var workerOpts = self._cloneObject(self.options);
+  workerOpts.paths = self._paths;
+  workerOpts.workerId = worker.id;
+  workerOpts.sourcePort = self.options.port;
+  workerOpts.workerPort = workerData.port;
+  workerOpts.stores = self.options.stores;
+  workerOpts.dataKey = self._dataKey;
+  workerOpts.lead = lead ? 1 : 0;
+
+  worker.send({
+    type: 'init',
+    data: workerOpts
+  });
+
+  worker.on('message', function workerHandler(m) {
+    if (m.type == 'ready') {
+      if (lead) {
+        self._leaderId = worker.id;
+      }
+      if (self._firstTime || respawn) {
+        self._workerReadyHandler(worker, m);
+      }
+    } else if (m.type == 'error') {
+      self._workerErrorHandler(worker, m.data);
+    } else if (m.type == 'notice') {
+      self._workerNoticeHandler(worker, m.data);
+    }
+  });
+
+  worker.on('exit', self._handleWorkerExit.bind(self, worker));
+};
+
 SocketCluster.prototype._start = function () {
   var self = this;
+  
+  self._dataKey = crypto.randomBytes(32).toString('hex');
 
   self._workers = [];
   self._active = false;
 
-  var leaderId = -1;
-  var firstTime = true;
+  self._leaderId = -1;
+  self._firstTime = true;
+  self._workersActive = false;
 
-  var workersActive = false;
-
-  var initLoadBalancer = function () {
-    self._balancer.send({
-      type: 'init',
-      data: {
-        dataKey: pass,
-        sourcePort: self.options.port,
-        workers: self.options.workers,
-        host: self.options.host,
-        balancerCount: self.options.balancerCount,
-        protocol: self.options.protocol,
-        protocolOptions: self.options.protocolOptions,
-        useSmartBalancing: self.options.useSmartBalancing,
-        checkStatusTimeout: self.options.connectTimeout * 1000,
-        statusURL: self._paths.statusURL,
-        statusCheckInterval: self.options.workerStatusInterval * 1000,
-        appBalancerControllerPath: self._paths.appBalancerControllerPath
-      }
-    });
-  };
-
-  var launchLoadBalancer = function () {
-    if (self._balancer) {
-      self._errorDomain.remove(self._balancer);
-    }
-
-    var balancerErrorHandler = function (err) {
-      self.errorHandler(err, {type: 'balancer'});
-    };
-
-    var balancerNoticeHandler = function (noticeMessage) {
-      self.noticeHandler(noticeMessage, {type: 'balancer'});
-    };
-
-    self._balancer = fork(__dirname + '/balancer.js');
-    self._balancer.on('error', balancerErrorHandler);
-    self._balancer.on('notice', balancerNoticeHandler);
-
-    self._balancer.on('exit', launchLoadBalancer);
-    self._balancer.on('message', function (m) {
-      if (m.type == 'error') {
-        balancerErrorHandler(m.data);
-      } else if (m.type == 'notice') {
-        balancerNoticeHandler(m.data);
-      }
-    });
-
-    if (workersActive) {
-      initLoadBalancer();
-    }
-  };
-
-  launchLoadBalancer();
-
-  var workerIdCounter = 1;
+  self._launchLoadBalancer();
+  self._workerIdCounter = 1;
 
   var ioClusterReady = function () {
-    var i;
-    var workerReadyHandler = function (data, worker) {
-      self._workers.push(worker);
-      if (worker.id == leaderId) {
-        worker.send({
-          type: 'emit',
-          event: self.EVENT_LEADER_START
-        });
-      }
-
-      if (self._active && self.options.logLevel > 0) {
-        self.log('Worker ' + worker.data.id + ' was respawned on port ' + worker.data.port);
-      }
-
-      if (self._workers.length >= self.options.workers.length) {
-        if (firstTime) {
-          if (self.options.logLevel > 0) {
-            console.log('   ' + self.colorText('[Active]', 'green') + ' SocketCluster started');
-            console.log('            Port: ' + self.options.port);
-            console.log('            Master PID: ' + process.pid);
-            console.log('            Balancer count: ' + self.options.balancerCount);
-            console.log('            Worker count: ' + self.options.workers.length);
-            console.log('            Store count: ' + self.options.stores.length);
-            console.log();
-          }
-          firstTime = false;
-
-          if (!workersActive) {
-            initLoadBalancer();
-            workersActive = true;
-          }
-          
-          if (self.options.rebootOnSignal) {
-            process.on('SIGUSR2', function () {
-              self.killWorkers();
-            });
-          }
-      self.emit(self.EVENT_READY);
-        } else {
-          var workersData = [];
-          var i;
-          for (i in self._workers) {
-            workersData.push(self._workers[i].data);
-          }
-          self._balancer.send({
-            type: 'setWorkers',
-            data: workersData
-          });
-        }
-        self._active = true;
-      }
-    };
-
-    var launchWorker = function (workerData, lead) {
-      var workerErrorHandler = function (err) {
-        var origin = {
-          type: 'worker',
-          pid: worker.pid
-        };
-        self.errorHandler(err, origin);
-      };
-
-      var workerNoticeHandler = function (noticeMessage) {
-        var origin = {
-          type: 'worker',
-          pid: worker.pid
-        };
-        self.noticeHandler(noticeMessage, origin);
-      };
-
-      var worker = fork(__dirname + '/workerbootstrap.js');
-      worker.on('error', workerErrorHandler);
-
-      if (!workerData.id) {
-        workerData.id = workerIdCounter++;
-      }
-
-      worker.id = workerData.id;
-      worker.data = workerData;
-
-      var workerOpts = self._cloneObject(self.options);
-      workerOpts.paths = self._paths;
-      workerOpts.workerId = worker.id;
-      workerOpts.sourcePort = self.options.port;
-      workerOpts.workerPort = workerData.port;
-      workerOpts.stores = stores;
-      workerOpts.dataKey = pass;
-      workerOpts.lead = lead ? 1 : 0;
-
-      worker.send({
-        type: 'init',
-        data: workerOpts
-      });
-
-      worker.on('message', function workerHandler(m) {
-        if (m.type == 'ready') {
-          if (lead) {
-            leaderId = worker.id;
-          }
-          workerReadyHandler(m, worker);
-        } else if (m.type == 'error') {
-          workerErrorHandler(m.data);
-        } else if (m.type == 'notice') {
-          workerNoticeHandler(m.data);
-        }
-      });
-
-      worker.on('exit', function (code, signal) {
-        self._errorDomain.remove(worker);
-        var message = '   Worker ' + worker.id + ' died - Exit code: ' + code;
-
-        if (signal) {
-          message += ', signal: ' + signal;
-        }
-
-        var workersData = [];
-        var newWorkers = [];
-        var i;
-        for (i in self._workers) {
-          if (self._workers[i].id != worker.id) {
-            newWorkers.push(self._workers[i]);
-            workersData.push(self._workers[i].data);
-          }
-        }
-
-        self._workers = newWorkers;
-        self._balancer.send({
-          type: 'setWorkers',
-          data: workersData
-        });
-
-        var lead = worker.id == leaderId;
-        leaderId = -1;
-        self.errorHandler(new Error(message), {type: 'master'});
-
-        if (self.options.rebootWorkerOnError) {
-          if (self.options.logLevel > 0) {
-            self.log('Respawning worker ' + worker.id);
-          }
-          launchWorker(workerData, lead);
-        }
-      });
-
-      return worker;
-    };
+    self._ioCluster.removeListener('ready', ioClusterReady);
 
     var len = self.options.workers.length;
     if (len > 0) {
-      launchWorker(self.options.workers[0], true);
-      for (i = 1; i < len; i++) {
-        launchWorker(self.options.workers[i]);
+      self._launchWorker(self.options.workers[0], true);
+      for (var j = 1; j < len; j++) {
+        self._launchWorker(self.options.workers[j]);
       }
     }
   };
 
-  var stores = self.options.stores;
-  var pass = crypto.randomBytes(32).toString('hex');
-
   var launchIOCluster = function () {
     self._ioCluster = new self._clusterEngine.IOCluster({
-      stores: stores,
-      dataKey: pass,
+      stores: self.options.stores,
+      dataKey: self._dataKey,
       appStoreControllerPath: self._paths.appStoreControllerPath,
       expiryAccuracy: self._dataExpiryAccuracy
     });
