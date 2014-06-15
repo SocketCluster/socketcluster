@@ -390,7 +390,7 @@ The new version of loadbalancer uses an algorithm which leverages random probabi
 * Using fewer processes resulted in a very healthy load average of 3.33 (out of a possible 8). We could probably have pushed well past 200K connections with our current setup.
 The setup of 5 load balancer, 5 workers and 2 stores is still not ideal - Maybe one more worker process would have brought the perfect balance?
 
-#### Screenshots
+#### Screenshot
 
 ![alt tag](https://raw.github.com/topcloud/socketcluster/master/benchmarks/socketcluster_v0.9.8.png)
 
@@ -418,6 +418,6 @@ The SocketCluster client was run on the largest possible 32-core Amazon EC2 c3.8
 * Memory usage was negligible when compared to CPU usage.
 * The huge 32-core EC2 client machine could not get very far past 42K connections - CPU usage on the client was approaching 100% on all 32 cores. Past a certain point, the client would start lagging and the load on the server would drop.
 
-#### Screenshots
+#### Screenshot
 
 ![alt tag](https://raw.github.com/topcloud/socketcluster/master/benchmarks/sc_42k_clients.png)
