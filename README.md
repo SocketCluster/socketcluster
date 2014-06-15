@@ -1,8 +1,6 @@
 SocketCluster
 ======
 
-### Latest benchmark (concurrency) v0.9.20:
-
 **See bottom of page for benchmark tests.**
 
 SocketCluster is a fast, highly scalable HTTP + WebSocket (engine.io) server which lets you build multi-process 
@@ -371,7 +369,7 @@ An SCServer instance is returned from worker.getSCServer() - You use it to handl
 
 ## Benchmarks
 
-### Throughput
+### Throughput (SocketCluster v0.9.8)
 
 The goal of this test was to see how many JavaScript (JSON) objects SocketCluster could process each second on a decent machine.
 
@@ -397,7 +395,7 @@ The setup of 5 load balancer, 5 workers and 2 stores is still not ideal - Maybe 
 ![alt tag](https://raw.github.com/topcloud/socketcluster/master/benchmarks/socketcluster_v0.9.8.png)
 
 
-### Concurrency
+### Concurrency (SocketCluster v0.9.20)
 
 The goal of this test was to see how many concurrent clients SocketCluster could comfortably handle.
 
