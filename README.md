@@ -397,7 +397,7 @@ The setup of 5 load balancer, 5 workers and 2 stores is still not ideal - Maybe 
 
 ### Concurrency (SocketCluster v0.9.20)
 
-The goal of this test was to see how many concurrent clients SocketCluster could comfortably handle.
+The goal of this test was to estimate how many concurrent users SocketCluster could comfortably handle.
 
 #### Procedure
 
