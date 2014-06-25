@@ -23,11 +23,6 @@ The last full memory profiling was done on SocketCluster v0.9.17 (Node.js v0.10.
 No memory leaks were detected when using the latest Node.js version.
 Note that leaks were found when using Node.js versions below v0.10.22 - This is probably the Node.js 'Walmart' memory leak - Not a SocketCluster issue.
 
-## SocketCluster goals
-- For developers: To make it easy to build fast and resilient Node.js servers, frameworks and apps.
-- For startups: To buy more time to deal with traffic growth by facilitating a scale up-and-out approach.
-- For big companies: To encourage the use of fewer, more powerful servers to handle traffic. The hope there is to reduce management complexity, data center space use and power consumption (carbon footprint).
-
 
 ## Details
 
