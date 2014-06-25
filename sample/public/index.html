@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script type="text/javascript" src="/socketcluster.js"></script>
+		<script type="text/javascript">
+			var options = {
+				protocol: location.protocol.replace(/:$/, ''),
+				hostname: location.hostname,
+				port: 8000,
+				autoReconnect: true
+			};
+
+			// Initiate the connection to the server
+			var socket = socketCluster.connect(options);
+      socket.on('error', function (err) {
+        throw 'Socket error - ' + err;
+      });
+      
+			socket.on('connect', function () {
+				console.log('CONNECTED');
+			});
+      
+      socket.on('rand', function (num) {
+        console.log('RANDOM:', num);
+        if (num.rand) {
+          document.body.innerHTML = 'RANDOM: ' + num.rand + '<br />';
+        }
+      });
+      
+      socket.on('pong', function (num) {
+        console.log('PONG:', num);
+      });
+		</script>
+	</head>
+	<body>
+	</body>
+</html>

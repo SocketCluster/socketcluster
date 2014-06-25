@@ -305,7 +305,7 @@ SocketCluster.prototype._initLoadBalancer = function () {
   });
 };
 
-SocketCluster.prototype._launchLoadBalancer = function () {
+SocketCluster.prototype._launchLoadBalancer = function (callback) {
   var self = this;
   
   if (self._balancer) {
@@ -330,6 +330,8 @@ SocketCluster.prototype._launchLoadBalancer = function () {
       balancerErrorHandler(m.data);
     } else if (m.type == 'notice') {
       balancerNoticeHandler(m.data);
+    } else if (m.type == 'ready') {
+      callback && callback();
     }
   });
 
@@ -372,15 +374,6 @@ SocketCluster.prototype._workerReadyHandler = function (worker, data) {
 
   if (self._workers.length >= self.options.workers.length) {
     if (self._firstTime) {
-      if (self.options.logLevel > 0) {
-        console.log('   ' + self.colorText('[Active]', 'green') + ' SocketCluster started');
-        console.log('            Port: ' + self.options.port);
-        console.log('            Master PID: ' + process.pid);
-        console.log('            Balancer count: ' + self.options.balancerCount);
-        console.log('            Worker count: ' + self.options.workers.length);
-        console.log('            Store count: ' + self.options.stores.length);
-        console.log();
-      }
       self._firstTime = false;
 
       if (!self._workersActive) {
@@ -471,17 +464,17 @@ SocketCluster.prototype._launchWorker = function (workerData, lead, respawn) {
   });
 
   worker.on('message', function workerHandler(m) {
-    if (m.type == 'ready') {
+    if (m.type == 'error') {
+      self._workerErrorHandler(worker, m.data);
+    } else if (m.type == 'notice') {
+      self._workerNoticeHandler(worker, m.data);
+    } else if (m.type == 'ready') {
       if (lead) {
         self._leaderId = worker.id;
       }
       if (self._firstTime || respawn) {
         self._workerReadyHandler(worker, m);
       }
-    } else if (m.type == 'error') {
-      self._workerErrorHandler(worker, m.data);
-    } else if (m.type == 'notice') {
-      self._workerNoticeHandler(worker, m.data);
     }
   });
 
@@ -500,7 +493,19 @@ SocketCluster.prototype._start = function () {
   self._firstTime = true;
   self._workersActive = false;
 
-  self._launchLoadBalancer();
+  // Load balancers are last to launch
+  self._launchLoadBalancer(function () {
+    if (self.options.logLevel > 0) {
+      console.log('   ' + self.colorText('[Active]', 'green') + ' SocketCluster started');
+      console.log('            Port: ' + self.options.port);
+      console.log('            Master PID: ' + process.pid);
+      console.log('            Balancer count: ' + self.options.balancerCount);
+      console.log('            Worker count: ' + self.options.workers.length);
+      console.log('            Store count: ' + self.options.stores.length);
+      console.log();
+    }
+  });
+  
   self._workerIdCounter = 1;
 
   var ioClusterReady = function () {

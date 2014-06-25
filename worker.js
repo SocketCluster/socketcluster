@@ -36,12 +36,12 @@ process.on('message', function (m) {
     if (m.data.propagateErrors) {
       worker.on('error', handleError);
       worker.on('notice', handleNotice);
-      worker.on('ready', handleReady);
       worker.on('exit', handleExit);
     }
 
     worker.on('ready', function () {
       worker.start();
+      handleReady();
     });
   } else if (m.type == 'emit') {
     if (m.data) {

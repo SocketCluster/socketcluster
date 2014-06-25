@@ -1,0 +1,27 @@
+{
+  "name": "socketcluster-sample",
+  "description": "A sample SocketCluster app",
+  "version": "0.9.0",
+  "contributors": [
+    {
+      "name": "Jonathan Gros-Dubois",
+      "email": "grosjona@yahoo.com.au"
+    }
+  ],
+  "dependencies": {
+    "connect": "3.0.1",
+    "express": "4.4.4",
+    "serve-static": "1.2.3",
+    "socketcluster": ">= 0.9.24",
+    "socketcluster-client": ">= 0.9.18"
+  },
+  "keywords": [
+    "websocket",
+    "server",
+    "realtime",
+    "engine.io",
+    "cluster",
+    "parallelized"
+  ],
+  "readmeFilename": "README.md"
+}

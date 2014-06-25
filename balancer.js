@@ -8,6 +8,8 @@ if (cluster.isMaster) {
     var balancers;
     if (m.type == 'init') {
       var balancerCount = m.data.balancerCount;
+      var readyCount = 0;
+      var isReady = false;
       balancers = [];
 
       var launchBalancer = function (i) {
@@ -20,7 +22,17 @@ if (cluster.isMaster) {
           });
         });
 
-        balancer.on('message', process.send.bind(process));
+        balancer.on('message', function (m) {
+          if (m.type == 'ready') {
+            if (!isReady && ++readyCount >= balancerCount) {
+              isReady = true;
+              process.send(m);
+            }
+          } else {
+            process.send(m);
+          }
+        });
+        
         balancer.on('exit', function () {
           launchBalancer(i);
         })
@@ -56,6 +68,10 @@ if (cluster.isMaster) {
   var handleNotice = function (err) {
     handleError(err, true);
   };
+  
+  var handleReady = function () {
+    process.send({type: 'ready'});
+  };
 
   process.on('message', function (m) {
     if (m.type == 'init') {
@@ -63,6 +79,7 @@ if (cluster.isMaster) {
       balancer.on('error', handleError);
       balancer.on('notice', handleNotice);
       balancer.start();
+      handleReady();
     } else if (m.type == 'setWorkers') {
       balancer.setWorkers(m.data);
     }
