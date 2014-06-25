@@ -40,13 +40,39 @@ if they lose the connection.
 - It uses a memory store cluster called nData which you can use to store 'volatile' session data which relates to your sockets/sessions.
 
 
-To install, run:
+## Installation
+
+There are two ways to install SocketCluster.
+
+### The easy way (Sets up boilerplate - Ready to run):
+
+Setup the socketcluster command:
+
+```bash
+sudo npm install -g socketcluster
+```
+
+Then:
+
+```bash
+socketcluster create myapp
+```
+
+Once it's installed, go to your new myapp/ directory and launch with:
+
+```bash
+node server
+```
+
+Access at URL http://localhost:8000/
+
+### The hard way (More modular - Separate server and client):
 
 ```bash
 npm install socketcluster
 ```
 
-Note that to use socketcluster you will also need the client which you can get using the following command:
+You will also need to install the client separately which you can get using the following command:
 
 ```bash
 npm install socketcluster-client
@@ -57,6 +83,7 @@ The socketcluster-client script is called socketcluster.js (located in the main 
 For more details on how to use socketcluster-client, go to https://github.com/topcloud/socketcluster-client
 
 It is recommended that you use Node.js version >=0.10.22 due to memory leaks present in older versions.
+
 
 ## How to use
 

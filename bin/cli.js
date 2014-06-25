@@ -145,29 +145,35 @@ var confirmReplaceSetup = function (confirm) {
       createFail();
     }
   } else {
-    errorMessage("SocketCluster 'create' action was aborted");
+    errorMessage("SocketCluster 'create' action was aborted.");
     process.exit();
   }
 };
 
 if (command == 'create') {
-  if (fs.existsSync(destDir)) {
-    if (force) {
-      confirmReplaceSetup(true);
+  if (arg1) {
+    if (fs.existsSync(destDir)) {
+      if (force) {
+        confirmReplaceSetup(true);
+      } else {
+        var message = "There is already a directory at " + destDir + '. Do you want to overwrite it? (y/n)';
+        promptConfirm(message, confirmReplaceSetup);
+      }
     } else {
-      var message = "There is already a directory at " + destDir + '. Do you want to overwrite it? (y/n)';
-      promptConfirm(message, confirmReplaceSetup);
+      setupMessage();
+      if (copyDirRecursive(sampleDir, destDir)) {
+        createSuccess();
+      } else {
+        createFail();
+      }
     }
   } else {
-    setupMessage();
-    if (copyDirRecursive(sampleDir, destDir)) {
-      createSuccess();
-    } else {
-      createFail();
-    }
+    errorMessage("The 'create' command requires a valid <appname> as argument.");
+    showCorrectUsage();
+    process.exit();
   }
 } else {
-	errorMessage("'" + command + "' is not a valid SocketCluster command");
+	errorMessage("'" + command + "' is not a valid SocketCluster command.");
 	showCorrectUsage();
 	process.exit();
 }
