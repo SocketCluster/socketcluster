@@ -44,6 +44,12 @@ There are two ways to install SocketCluster.
 Setup the socketcluster command:
 
 ```bash
+npm install -g socketcluster
+```
+
+OR 
+
+```bash
 sudo npm install -g socketcluster
 ```
 
