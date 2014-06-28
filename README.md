@@ -53,7 +53,7 @@ OR
 sudo npm install -g socketcluster
 ```
 
-Then:
+Then
 
 ```bash
 socketcluster create myapp
