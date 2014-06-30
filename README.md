@@ -17,6 +17,7 @@ single-threaded WebSocket/HTTP server (where N is the number of CPUs/cores avail
 SocketCluster was designed to be lightweight and its realtime API is almost identical to Socket.io.
 
 ### Memory leak profile
+
 SocketCluster has been tested for memory leaks.
 The last full memory profiling was done on SocketCluster v0.9.17 (Node.js v0.10.28) and included checks on load balancer, worker and store processes.
 
@@ -432,9 +433,10 @@ The goal of this test was to estimate how many concurrent users SocketCluster co
 SocketCluster was deployed on an 8-core Amazon EC2 m3.2xlarge instance running Linux.
 The SocketCluster client was run on the largest possible 32-core Amazon EC2 c3.8xlarge instance running Linux - This was necessary in order to be able to simulate 42K concurrent users from a single machine.
 
-* Clients were created (connected) at a rate of approximately 160 per second.
-* The maximum number of concurrent clients was set to 42K - This is a limit of the client, not the server.
-* Each client sent a 'ping' message every 6 seconds on average. The payload of the 'ping' event was a JavaScript object (cast to JSON), the response was a 'pong' object containing the total number of pings received by the current worker so far.
+* Virtual users (on client) were created (connected) at a rate of approximately 160 per second.
+* The maximum number of concurrent virtual users was set to 42K - This is a limit of the client, not the server.
+* Each virtual user sent a 'ping' message every 6 seconds on average. The payload of the 'ping' event was a JavaScript object (cast to JSON), the response was a 'pong' object containing the total number of pings received by the current worker so far.
+* A standard browser (Chrome) was connected to the SC server remotely (sending pings occasionally) to check that the service was still performant in real terms throughout the whole test (also used to check the growing ping count over time).
 * SocketCluster was setup to run with 4 load balancers, 3 workers and 1 store.
 
 #### Observations
