@@ -73,6 +73,12 @@ SocketCluster.prototype._init = function (options) {
   };
 
   self._active = false;
+  
+  self._colorCodes = {
+    red: 31,
+    green: 32,
+    yellow: 33
+  };
 
   var i;
   for (i in options) {
@@ -88,6 +94,13 @@ SocketCluster.prototype._init = function (options) {
     throw new Error("Compulsory option 'workerController' was not specified " +
       "- It needs to be a path to a JavaScript file which will act as the " +
       "boot controller for each worker in the cluster");
+  }
+
+  if (self.options.sessionTimeout < 60) {
+    console.log('   ' + self.colorText('[Warning]', 'yellow') +
+      " The sessionTimeout option should be at least 60 seconds " +
+      "- A low sessionTimeout requires fast heartbeats which may use " +
+      "a lot of CPU at high concurrency levels.");
   }
 
   self._paths = {
@@ -201,12 +214,6 @@ SocketCluster.prototype._init = function (options) {
   }
 
   self._clusterEngine = require(self.options.clusterEngine);
-
-  self._colorCodes = {
-    red: 31,
-    green: 32,
-    yellow: 33
-  };
 
   if (self.options.logLevel > 0) {
     console.log('   ' + self.colorText('[Busy]', 'yellow') + ' Launching SocketCluster');
