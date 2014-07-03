@@ -15,6 +15,7 @@ SocketCluster workers are highly parallelized - Asymptotically speaking, SocketC
 single-threaded WebSocket/HTTP server (where N is the number of CPUs/cores available on your machine).
 
 SocketCluster was designed to be lightweight and its realtime API is almost identical to Socket.io.
+
 Follow the project on Twitter: https://twitter.com/SocketCluster
 
 ### Memory leak profile
