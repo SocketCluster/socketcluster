@@ -222,8 +222,14 @@ SocketCluster.prototype._init = function (options) {
   process.stdin.on('error', function (err) {
     self.noticeHandler(err, {type: 'master'});
   });
-  process.stdin.resume();
-  process.stdin.setEncoding('utf8');
+
+  /*
+    To allow inserting blank lines in console on Windows to aid with debugging.
+  */
+  if (/^win/.test(process.platform)) {
+    process.stdin.resume();
+    process.stdin.setEncoding('utf8');
+  }
 
   self._start();
 };
