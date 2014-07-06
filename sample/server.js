@@ -11,7 +11,6 @@ var socketCluster = new SocketCluster({
   storeController: 'store.js',
   addressSocketLimit: 0,
   socketEventLimit: 100,
-  sessionTimeout: 5,
   rebootWorkerOnError: true,
   useSmartBalancing: false
 });
