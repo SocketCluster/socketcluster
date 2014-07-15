@@ -398,7 +398,6 @@ SocketCluster.prototype._workerReadyHandler = function (worker, data) {
           self.killWorkers();
         });
       }
-      self.emit(self.EVENT_READY);
     } else {
       var workersData = [];
       for (var i in self._workers) {
@@ -516,6 +515,7 @@ SocketCluster.prototype._start = function () {
       console.log('            Store count: ' + self.options.stores.length);
       console.log();
     }
+    self.emit(self.EVENT_READY);
   });
   
   self._workerIdCounter = 1;
