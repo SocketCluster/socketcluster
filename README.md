@@ -1,6 +1,8 @@
 SocketCluster
 ======
 
+![alt tag](https://raw.github.com/topcloud/socketcluster/master/assets/logo.png)
+
 **See bottom of page for benchmark tests.**
 
 SocketCluster is a fast, highly scalable HTTP + WebSocket (engine.io) server which lets you build multi-process 
@@ -423,7 +425,7 @@ The setup of 5 load balancer, 5 workers and 2 stores is still not ideal - Maybe 
 
 #### Screenshot
 
-![alt tag](https://raw.github.com/topcloud/socketcluster/master/benchmarks/socketcluster_v0.9.8.png)
+![alt tag](https://raw.github.com/topcloud/socketcluster/master/assets/benchmarks/socketcluster_v0.9.8.png)
 
 
 ### Concurrency (SocketCluster v0.9.20)
@@ -452,4 +454,4 @@ The SocketCluster client was run on the largest possible 32-core Amazon EC2 c3.8
 
 #### Screenshot
 
-![alt tag](https://raw.github.com/topcloud/socketcluster/master/benchmarks/sc_42k_clients.png)
+![alt tag](https://raw.github.com/topcloud/socketcluster/master/assets/benchmarks/sc_42k_clients.png)
