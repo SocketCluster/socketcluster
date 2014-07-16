@@ -1,6 +1,6 @@
 var fs = require('fs');
 var express = require('express');
-var serveStatic = require('serve-static')
+var serveStatic = require('serve-static');
 
 module.exports.run = function (worker) {
   console.log('   >> Worker PID:', process.pid);
@@ -12,7 +12,7 @@ module.exports.run = function (worker) {
   // Get a reference to our WebSocket server
   var wsServer = worker.getSCServer();
   
-  app.use(serveStatic('public'))
+  app.use(serveStatic('public'));
 
   httpServer.on('req', app);
 
