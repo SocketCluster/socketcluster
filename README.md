@@ -28,6 +28,11 @@ The last full memory profiling was done on SocketCluster v0.9.17 (Node.js v0.10.
 No memory leaks were detected when using the latest Node.js version.
 Note that leaks were found when using Node.js versions below v0.10.22 - This is probably the Node.js 'Walmart' memory leak - Not a SocketCluster issue.
 
+### Main Contributors
+- Jonathan Gros-Dubois
+- Nelson Zheng
+- Gabriel Muller
+
 
 ## Details
 
