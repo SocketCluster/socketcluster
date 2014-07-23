@@ -12,7 +12,7 @@ module.exports.run = function (worker) {
   // Get a reference to our WebSocket server
   var wsServer = worker.getSCServer();
   
-  app.use(serveStatic('public'));
+  app.use(serveStatic(__dirname + '/public'));
 
   httpServer.on('req', app);
 
