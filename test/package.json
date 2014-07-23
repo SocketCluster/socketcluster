@@ -1,0 +1,31 @@
+{
+  "name": "socketcluster-integration-tests",
+  "description": "Integration testing for SocketCluster",
+  "version": "1.0.0",
+  "homepage": "https://github.com/topcloud/socketcluster-integration-tests",
+  "contributors": [
+    {
+      "name": "Jonathan Gros-Dubois",
+      "email": "grosjona@yahoo.com.au"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/topcloud/socketcluster-integration-tests.git"
+  },
+  "dependencies": {
+    "socketcluster": "*",
+    "socketcluster-client": "*",
+    "async": "0.9.0"
+  },
+  "keywords": [
+    "websocket",
+    "server",
+    "realtime",
+    "engine.io",
+    "cluster",
+    "parallelized"
+  ],
+  "license": "MIT",
+  "readmeFilename": "README.md"
+}
