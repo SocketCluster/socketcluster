@@ -3,7 +3,7 @@ var childProcess = require('child_process');
 var scClient = require('socketcluster-client');
 var assert = require('assert');
 
-var scServer = childProcess.fork('./server.js');
+var scServer = childProcess.fork(__dirname + '/server.js');
 
 var options = {
   protocol: 'http',
