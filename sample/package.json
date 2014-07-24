@@ -12,8 +12,8 @@
     "connect": "3.0.1",
     "express": "4.4.4",
     "serve-static": "1.2.3",
-    "socketcluster": ">= 0.9.25",
-    "socketcluster-client": ">= 0.9.18"
+    "socketcluster": ">= 0.9.35",
+    "socketcluster-client": ">= 0.9.21"
   },
   "keywords": [
     "websocket",

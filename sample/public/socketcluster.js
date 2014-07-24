@@ -521,7 +521,7 @@ module.exports = _dereq_('./socket');
  */
 module.exports.parser = _dereq_('engine.io-parser');
 
-},{"./socket":7,"engine.io-parser":18}],7:[function(_dereq_,module,exports){
+},{"./socket":7,"engine.io-parser":19}],7:[function(_dereq_,module,exports){
 (function (global){
 /**
  * Module dependencies.
@@ -782,7 +782,6 @@ Socket.prototype.probe = function (name) {
           self.setTransport(transport);
           transport.send([{ type: 'upgrade' }]);
           self.emit('upgrade', transport);
-          transport = null;
           self.upgrading = false;
           self.flush();
         });
@@ -800,17 +799,14 @@ Socket.prototype.probe = function (name) {
 
     // Any callback called by transport should be ignored since now
     failed = true;
-
     cleanup();
-
     transport.close();
-    transport = null;
   }
 
   //Handle any error that happens while probing
   function onerror(err) {
     var error = new Error('probe error: ' + err);
-    error.transport = transport.name;
+    error.transport = name;
 
     freezeTransport();
 
@@ -1152,7 +1148,7 @@ Socket.prototype.filterUpgrades = function (upgrades) {
 };
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./transport":8,"./transports":9,"component-emitter":15,"debug":17,"engine.io-parser":18,"indexof":27,"parsejson":28,"parseqs":29,"parseuri":30}],8:[function(_dereq_,module,exports){
+},{"./transport":8,"./transports":9,"component-emitter":16,"debug":18,"engine.io-parser":19,"indexof":27,"parsejson":28,"parseqs":29,"parseuri":30}],8:[function(_dereq_,module,exports){
 /**
  * Module dependencies.
  */
@@ -1308,7 +1304,7 @@ Transport.prototype.onClose = function () {
   this.emit('close');
 };
 
-},{"component-emitter":15,"engine.io-parser":18}],9:[function(_dereq_,module,exports){
+},{"component-emitter":16,"engine.io-parser":19}],9:[function(_dereq_,module,exports){
 (function (global){
 /**
  * Module dependencies
@@ -1596,7 +1592,7 @@ JSONPPolling.prototype.doWrite = function (data, fn) {
 };
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./polling":12,"component-inherit":16}],11:[function(_dereq_,module,exports){
+},{"./polling":12,"component-inherit":17}],11:[function(_dereq_,module,exports){
 (function (global){
 /**
  * Module requirements.
@@ -1910,7 +1906,7 @@ function unloadHandler() {
 }
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./polling":12,"component-emitter":15,"component-inherit":16,"debug":17,"xmlhttprequest":14}],12:[function(_dereq_,module,exports){
+},{"./polling":12,"component-emitter":16,"component-inherit":17,"debug":18,"xmlhttprequest":14}],12:[function(_dereq_,module,exports){
 /**
  * Module dependencies.
  */
@@ -2157,7 +2153,7 @@ Polling.prototype.uri = function(){
   return schema + '://' + this.hostname + port + this.path + query;
 };
 
-},{"../transport":8,"component-inherit":16,"debug":17,"engine.io-parser":18,"parseqs":29,"xmlhttprequest":14}],13:[function(_dereq_,module,exports){
+},{"../transport":8,"component-inherit":17,"debug":18,"engine.io-parser":19,"parseqs":29,"xmlhttprequest":14}],13:[function(_dereq_,module,exports){
 /**
  * Module dependencies.
  */
@@ -2388,7 +2384,7 @@ WS.prototype.check = function(){
   return !!WebSocket && !('__initialize' in WebSocket && this.name === WS.prototype.name);
 };
 
-},{"../transport":8,"component-inherit":16,"debug":17,"engine.io-parser":18,"parseqs":29,"ws":31}],14:[function(_dereq_,module,exports){
+},{"../transport":8,"component-inherit":17,"debug":18,"engine.io-parser":19,"parseqs":29,"ws":31}],14:[function(_dereq_,module,exports){
 // browser shim for xmlhttprequest module
 var hasCORS = _dereq_('has-cors');
 
@@ -2410,6 +2406,59 @@ module.exports = function(opts) {
 }
 
 },{"has-cors":25}],15:[function(_dereq_,module,exports){
+(function (global){
+/**
+ * Create a blob builder even when vendor prefixes exist
+ */
+
+var BlobBuilder = global.BlobBuilder
+  || global.WebKitBlobBuilder
+  || global.MSBlobBuilder
+  || global.MozBlobBuilder;
+
+/**
+ * Check if Blob constructor is supported
+ */
+
+var blobSupported = (function() {
+  try {
+    var b = new Blob(['hi']);
+    return b.size == 2;
+  } catch(e) {
+    return false;
+  }
+})();
+
+/**
+ * Check if BlobBuilder is supported
+ */
+
+var blobBuilderSupported = BlobBuilder
+  && BlobBuilder.prototype.append
+  && BlobBuilder.prototype.getBlob;
+
+function BlobBuilderConstructor(ary, options) {
+  options = options || {};
+
+  var bb = new BlobBuilder();
+  for (var i = 0; i < ary.length; i++) {
+    bb.append(ary[i]);
+  }
+  return (options.type) ? bb.getBlob(options.type) : bb.getBlob();
+};
+
+module.exports = (function() {
+  if (blobSupported) {
+    return global.Blob;
+  } else if (blobBuilderSupported) {
+    return BlobBuilderConstructor;
+  } else {
+    return undefined;
+  }
+})();
+
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],16:[function(_dereq_,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -2575,7 +2624,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],16:[function(_dereq_,module,exports){
+},{}],17:[function(_dereq_,module,exports){
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -2583,7 +2632,7 @@ module.exports = function(a, b){
   a.prototype = new fn;
   a.prototype.constructor = a;
 };
-},{}],17:[function(_dereq_,module,exports){
+},{}],18:[function(_dereq_,module,exports){
 
 /**
  * Expose `debug()` as the module.
@@ -2722,7 +2771,7 @@ try {
   if (window.localStorage) debug.enable(localStorage.debug);
 } catch(e){}
 
-},{}],18:[function(_dereq_,module,exports){
+},{}],19:[function(_dereq_,module,exports){
 (function (global){
 /**
  * Module dependencies.
@@ -3269,7 +3318,7 @@ exports.decodePayloadAsBinary = function (data, binaryType, callback) {
 };
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./keys":19,"after":20,"arraybuffer.slice":21,"base64-arraybuffer":22,"blob":23,"utf8":24}],19:[function(_dereq_,module,exports){
+},{"./keys":20,"after":21,"arraybuffer.slice":22,"base64-arraybuffer":23,"blob":15,"utf8":24}],20:[function(_dereq_,module,exports){
 
 /**
  * Gets the keys for an object.
@@ -3290,7 +3339,7 @@ module.exports = Object.keys || function keys (obj){
   return arr;
 };
 
-},{}],20:[function(_dereq_,module,exports){
+},{}],21:[function(_dereq_,module,exports){
 module.exports = after
 
 function after(count, callback, err_cb) {
@@ -3320,7 +3369,7 @@ function after(count, callback, err_cb) {
 
 function noop() {}
 
-},{}],21:[function(_dereq_,module,exports){
+},{}],22:[function(_dereq_,module,exports){
 /**
  * An abstraction for slicing an arraybuffer even when
  * ArrayBuffer.prototype.slice is not supported
@@ -3351,7 +3400,7 @@ module.exports = function(arraybuffer, start, end) {
   return result.buffer;
 };
 
-},{}],22:[function(_dereq_,module,exports){
+},{}],23:[function(_dereq_,module,exports){
 /*
  * base64-arraybuffer
  * https://github.com/niklasvh/base64-arraybuffer
@@ -3412,59 +3461,6 @@ module.exports = function(arraybuffer, start, end) {
   };
 })("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
 
-},{}],23:[function(_dereq_,module,exports){
-(function (global){
-/**
- * Create a blob builder even when vendor prefixes exist
- */
-
-var BlobBuilder = global.BlobBuilder
-  || global.WebKitBlobBuilder
-  || global.MSBlobBuilder
-  || global.MozBlobBuilder;
-
-/**
- * Check if Blob constructor is supported
- */
-
-var blobSupported = (function() {
-  try {
-    var b = new Blob(['hi']);
-    return b.size == 2;
-  } catch(e) {
-    return false;
-  }
-})();
-
-/**
- * Check if BlobBuilder is supported
- */
-
-var blobBuilderSupported = BlobBuilder
-  && BlobBuilder.prototype.append
-  && BlobBuilder.prototype.getBlob;
-
-function BlobBuilderConstructor(ary, options) {
-  options = options || {};
-
-  var bb = new BlobBuilder();
-  for (var i = 0; i < ary.length; i++) {
-    bb.append(ary[i]);
-  }
-  return (options.type) ? bb.getBlob(options.type) : bb.getBlob();
-};
-
-module.exports = (function() {
-  if (blobSupported) {
-    return global.Blob;
-  } else if (blobBuilderSupported) {
-    return BlobBuilderConstructor;
-  } else {
-    return undefined;
-  }
-})();
-
-}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],24:[function(_dereq_,module,exports){
 (function (global){
 /*! http://mths.be/utf8js v2.0.0 by @mathias */
@@ -4046,6 +4042,8 @@ var SCSocket = function (options) {
     'fail': 1
   };
   
+  this._connectAttempts = 0;
+  
   this._cid = 1;
   this._callbackMap = {};
   this._destId = null;
@@ -4069,17 +4067,32 @@ var SCSocket = function (options) {
     Socket.call(this, this.options.url, this.options);
   }
   
-  this._sortWeights = {
-    subscribe: -2,
-    start: -1
-  };
-  
   this.connected = false;
   this.connecting = true;
+  
+  Socket.prototype.on.call(this, 'open', function () {
+    self._connectAttempts = 0;
+  });
   
   Socket.prototype.on.call(this, 'error', function (err) {
     self.connecting = false;
     self._emitBuffer = [];
+    
+    // Exponential backoff reconnect
+    if (!self.connected) {
+      var exponent = ++self._connectAttempts;
+      if (exponent > 5) {
+        exponent = 5;
+      }
+      var reconnectOptions = self.options.autoReconnectOptions;
+      var initialTimeout = Math.round((reconnectOptions.delay + (reconnectOptions.randomness || 0) * Math.random()) * 1000);
+      var backoutTimeout = Math.round(initialTimeout * Math.pow(1.5, exponent));
+      setTimeout(function () {
+        if (!self.connected && !self.connecting) {
+          self.connect();
+        }
+      }, backoutTimeout);
+    }
   });
   
   Socket.prototype.on.call(this, 'close', function () {
@@ -4241,17 +4254,46 @@ SCSocket.prototype._emit = function (event, data, callback) {
 SCSocket.prototype._flushEmitBuffer = function () {
   var self = this;
   
-  // 'subscribe' and 'ready' events have priority over user events.
-  this._emitBuffer.sort(function (a, b) {
-    return (self._sortWeights[a.event] || 0) - (self._sortWeights[b.event] || 0);
-  });
+  /*
+    'subscribe' and 'ready' events have priority over other events 
+    so they get emitted first.
+  */
   
-  var len = this._emitBuffer.length;
+  var subscribeEvents = [];
+  var readyEvents = [];
+  var otherEvents = [];
+  
   var ev;
+  var len = this._emitBuffer.length;
   for (var i = 0; i < len; i++) {
     ev = this._emitBuffer[i];
+    if (ev.event == 'subscribe') {
+      subscribeEvents.push(ev);
+    } else if (ev.event == 'ready') {
+      readyEvents.push(ev);
+    } else {
+      otherEvents.push(ev);
+    }
+  }
+  
+  len = subscribeEvents.length;
+  for (var j = 0; j < len; j++) {
+    ev = subscribeEvents[j];
     this._emit(ev.event, ev.data, ev.callback);
   }
+  
+  len = readyEvents.length;
+  for (var k = 0; k < len; k++) {
+    ev = readyEvents[k];
+    this._emit(ev.event, ev.data, ev.callback);
+  }
+  
+  len = otherEvents.length;
+  for (var m = 0; m < len; m++) {
+    ev = otherEvents[m];
+    this._emit(ev.event, ev.data, ev.callback);
+  }
+  
   this._emitBuffer = [];
 };
 
