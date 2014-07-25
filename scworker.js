@@ -21,7 +21,7 @@ var SCWorker = function (options) {
   this._errorDomain = domain.create();
   this._errorDomain.on('error', function () {
     self.errorHandler.apply(self, arguments);
-    if (self.options.rebootWorkerOnError) {
+    if (self.options.rebootWorkerOnCrash) {
       self.emit(self.EVENT_EXIT);
     }
   });

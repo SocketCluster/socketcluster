@@ -40,7 +40,7 @@ SocketCluster.prototype._init = function (options) {
     stores: null,
     appName: null,
     dataKey: null,
-    rebootWorkerOnError: true,
+    rebootWorkerOnCrash: true,
     protocol: 'http',
     protocolOptions: null,
     autoReconnect: true,
@@ -439,7 +439,7 @@ SocketCluster.prototype._handleWorkerExit = function (worker, code, signal) {
   this._leaderId = -1;
   this.errorHandler(new Error(message), {type: 'master'});
 
-  if (this.options.rebootWorkerOnError) {
+  if (this.options.rebootWorkerOnCrash) {
     if (this.options.logLevel > 0) {
       this.log('Respawning worker ' + worker.id);
     }
