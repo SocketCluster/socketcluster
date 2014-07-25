@@ -4079,7 +4079,7 @@ var SCSocket = function (options) {
     self._emitBuffer = [];
     
     // Exponential backoff reconnect
-    if (!self.connected) {
+    if (!self.connected && self.options.autoReconnect) {
       var exponent = ++self._connectAttempts;
       if (exponent > 5) {
         exponent = 5;
