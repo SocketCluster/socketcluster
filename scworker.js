@@ -45,6 +45,16 @@ SCWorker.prototype._init = function (options) {
   for (var i in options) {
     this.options[i] = options[i];
   }
+  
+  if (this.options.downgradeToUser && process.setuid) {
+    try {
+      process.setuid(this.options.downgradeToUser);
+    } catch (err) {
+      this._errorDomain.emit('error', new Error('Could not downgrade to user "' + this.options.downgradeToUser +
+        '" - Either this user does not exist or the current process does not have the permission' +
+        ' to switch to it.'));
+    }
+  }
 
   if (this.options.dataKey == null) {
     this.options.dataKey = crypto.randomBytes(32).toString('hex');

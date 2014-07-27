@@ -69,6 +69,7 @@ SocketCluster.prototype._init = function (options) {
     storeController: null,
     rebootOnSignal: true,
     useSmartBalancing: false,
+    downgradeToUser: false,
     clusterEngine: 'iocluster'
   };
 
@@ -312,6 +313,7 @@ SocketCluster.prototype._initLoadBalancer = function () {
       checkStatusTimeout: this.options.connectTimeout * 1000,
       statusURL: this._paths.statusURL,
       statusCheckInterval: this.options.workerStatusInterval * 1000,
+      downgradeToUser: this.options.downgradeToUser,
       appBalancerControllerPath: this._paths.appBalancerControllerPath
     }
   });
@@ -536,8 +538,9 @@ SocketCluster.prototype._start = function () {
     self._ioCluster = new self._clusterEngine.IOCluster({
       stores: self.options.stores,
       dataKey: self._dataKey,
-      appStoreControllerPath: self._paths.appStoreControllerPath,
-      expiryAccuracy: self._dataExpiryAccuracy
+      expiryAccuracy: self._dataExpiryAccuracy,
+      downgradeToUser: self.options.downgradeToUser,
+      appStoreControllerPath: self._paths.appStoreControllerPath
     });
 
     self._ioCluster.on('error', function (err) {
