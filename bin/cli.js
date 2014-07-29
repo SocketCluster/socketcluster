@@ -107,6 +107,8 @@ var wd = process.cwd();
 
 var sampleDir = __dirname + '/../sample';
 var destDir = path.normalize(wd + '/' + arg1);
+var clientFileSourcePath = path.normalize(destDir + '/node_modules/socketcluster-client/socketcluster.js');
+var clientFileDestPath = path.normalize(destDir + '/public/socketcluster.js');
 
 var createFail = function () {
   errorMessage("Failed to create SocketCluster sample app.");
@@ -126,7 +128,13 @@ var createSuccess = function () {
       errorMessage("Failed to install dependencies for sample '" + arg1 + "' app. Navigate to " + 
         destDir + " and then try to run 'npm install' from there.");
     } else {
-      successMessage("SocketCluster sample '" + destDir + "' was setup successfully.");
+      try {
+        fs.writeFileSync(clientFileDestPath, fs.readFileSync(clientFileSourcePath));
+        successMessage("SocketCluster sample '" + destDir + "' was setup successfully.");
+      } catch (err) {
+        warningMessage("Failed to copy file from '" + clientFileSourcePath + "' to '" + 
+          clientFileDestPath + "' - Try copying it manually.");
+      }
     }
     process.exit();
   });
