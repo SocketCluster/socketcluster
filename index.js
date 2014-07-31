@@ -81,8 +81,7 @@ SocketCluster.prototype._init = function (options) {
     yellow: 33
   };
 
-  var i;
-  for (i in options) {
+  for (var i in options) {
     self.options[i] = options[i];
   }
 
@@ -156,29 +155,11 @@ SocketCluster.prototype._init = function (options) {
     }
   }
 
-  if (self.options.stores) {
-    var newStores = [];
-    var curStore;
-
-    for (i in self.options.stores) {
-      curStore = self.options.stores[i];
-      if (typeof curStore == 'number') {
-        curStore = {port: curStore};
-      } else {
-        if (curStore.port == null) {
-          throw new Error('One or more store objects is missing a port property');
-        }
-      }
-      newStores.push(curStore);
-    }
-    self.options.stores = newStores;
-  }
-
   if (!self.options.stores || self.options.stores < 1) {
     self.options.stores = 1;
   }
 
-  if (!self.options.workers) {
+  if (!self.options.workers || self.options.workers < 1) {
     self.options.workers = 1;
   }
 

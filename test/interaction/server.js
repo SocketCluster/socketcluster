@@ -1,9 +1,9 @@
 var SocketCluster = require('socketcluster').SocketCluster;
 
 var socketCluster = new SocketCluster({
-  workers: [9100],
-  stores: [9001],
-  balancerCount: 1,
+  balancers: 1,
+  workers: 1,
+  stores: 1,
   port: 8000,
   appName: 'myapp',
   workerController: __dirname + '/worker.js',
