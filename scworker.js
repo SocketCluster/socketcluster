@@ -94,7 +94,7 @@ SCWorker.prototype._init = function (options) {
     pingTimeout: this.options.heartbeatTimeout,
     pingInterval: this.options.heartbeatInterval,
     upgradeTimeout: this.options.connectTimeout,
-    host: this.options.host,
+    socketName: this.options.socketName,
     secure: this.options.protocol == 'https',
     appName: this.options.appName
   });
@@ -138,7 +138,7 @@ SCWorker.prototype._start = function () {
   this._workerController = require(this._paths.appWorkerControllerPath);
   this._workerController.run(this);
   
-  this._server.listen(this.options.workerPort);
+  this._server.listen(this.options.socketDirPath + this.options.socketName);
 };
 
 SCWorker.prototype._httpRequestHandler = function (req, res) {

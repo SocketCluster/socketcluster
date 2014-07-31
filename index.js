@@ -36,6 +36,7 @@ SocketCluster.prototype._init = function (options) {
 
   self.options = {
     port: 8000,
+    balancers: null,
     workers: null,
     stores: null,
     appName: null,
@@ -63,7 +64,6 @@ SocketCluster.prototype._init = function (options) {
     workerStatusInterval: 10,
     propagateErrors: true,
     host: 'localhost',
-    balancerCount: null,
     workerController: null,
     balancerController: null,
     storeController: null,
@@ -109,6 +109,12 @@ SocketCluster.prototype._init = function (options) {
     statusURL: '/~status',
     appWorkerControllerPath: path.resolve(self.options.workerController)
   };
+  
+  if (process.platform === 'win32') {
+    self._socketDirPath = '\\\\.\\pipe\\sc\\' + self.options.appName + '\\';
+  } else {
+    self._socketDirPath = '/sc/' + self.options.appName + '/';
+  }
 
   if (self.options.balancerController) {
     self._paths.appBalancerControllerPath = path.resolve(self.options.balancerController);
@@ -168,34 +174,18 @@ SocketCluster.prototype._init = function (options) {
     self.options.stores = newStores;
   }
 
-  if (!self.options.stores || self.options.stores.length < 1) {
-    self.options.stores = [{port: self.options.port + 2}];
+  if (!self.options.stores || self.options.stores < 1) {
+    self.options.stores = 1;
   }
 
-  if (self.options.workers) {
-    var newWorkers = [];
-    var curWorker;
-
-    for (i in self.options.workers) {
-      curWorker = self.options.workers[i];
-      if (typeof curWorker == 'number') {
-        curWorker = {port: curWorker};
-      } else {
-        if (curWorker.port == null) {
-          throw new Error('One or more worker objects is missing a port property');
-        }
-      }
-      newWorkers.push(curWorker);
-    }
-    self.options.workers = newWorkers;
-  } else {
-    self.options.workers = [{port: self.options.port + 3}];
+  if (!self.options.workers) {
+    self.options.workers = 1;
   }
 
-  if (!self.options.balancerCount) {
-    self.options.balancerCount = Math.floor(self.options.workers.length / 2);
-    if (self.options.balancerCount < 1) {
-      self.options.balancerCount = 1;
+  if (!self.options.balancers) {
+    self.options.balancers = Math.floor(self.options.workers / 2);
+    if (self.options.balancers < 1) {
+      self.options.balancers = 1;
     }
   }
 
@@ -233,6 +223,30 @@ SocketCluster.prototype._init = function (options) {
   }
 
   self._start();
+};
+
+SocketCluster.prototype._getWorkerSocketName = function (workerId) {
+  return 'w' + workerId;
+};
+
+SocketCluster.prototype._getWorkerSocketNames = function () {
+  var socketNames = [];
+  for (var i = 0; i < this.options.workers; i++) {
+    socketNames.push(this._getWorkerSocketName(i));
+  }
+  return socketNames;
+};
+
+SocketCluster.prototype._getStoreSocketName = function (storeId) {
+  return 's' + storeId;
+};
+
+SocketCluster.prototype._getStoreSocketPaths = function () {
+  var socketPaths = [];
+  for (var i = 0; i < this.options.stores; i++) {
+    socketPaths.push(this._socketDirPath + this._getStoreSocketName(i));
+  }
+  return socketPaths;
 };
 
 SocketCluster.prototype.errorHandler = function (err, origin) {
@@ -304,9 +318,9 @@ SocketCluster.prototype._initLoadBalancer = function () {
     data: {
       dataKey: this._dataKey,
       sourcePort: this.options.port,
-      workers: this.options.workers,
-      host: this.options.host,
-      balancerCount: this.options.balancerCount,
+      socketDirPath: this._socketDirPath,
+      workers: this._getWorkerSocketNames(),
+      balancers: this.options.balancers,
       protocol: this.options.protocol,
       protocolOptions: this.options.protocolOptions,
       useSmartBalancing: this.options.useSmartBalancing,
@@ -370,12 +384,12 @@ SocketCluster.prototype._workerNoticeHandler = function (worker, noticeMessage) 
   this.noticeHandler(noticeMessage, origin);
 };
 
-SocketCluster.prototype._workerReadyHandler = function (worker, data) {
+SocketCluster.prototype._workerReadyHandler = function (worker) {
   var self = this;
   
   self._workers.push(worker);
   
-  if (worker.id == self._leaderId) {
+  if (!worker.id) {
     worker.send({
       type: 'emit',
       event: self.EVENT_LEADER_START
@@ -383,10 +397,10 @@ SocketCluster.prototype._workerReadyHandler = function (worker, data) {
   }
 
   if (self._active && self.options.logLevel > 0) {
-    self.log('Worker ' + worker.data.id + ' was respawned on port ' + worker.data.port);
+    self.log('Worker ' + worker.id + ' was respawned');
   }
 
-  if (self._workers.length >= self.options.workers.length) {
+  if (self._workers.length >= self.options.workers) {
     if (self._firstTime) {
       self._firstTime = false;
 
@@ -401,13 +415,9 @@ SocketCluster.prototype._workerReadyHandler = function (worker, data) {
         });
       }
     } else {
-      var workersData = [];
-      for (var i in self._workers) {
-        workersData.push(self._workers[i].data);
-      }
       self._balancer.send({
         type: 'setWorkers',
-        data: workersData
+        data: self._getWorkerSocketNames()
       });
     }
     self._active = true;
@@ -422,54 +432,48 @@ SocketCluster.prototype._handleWorkerExit = function (worker, code, signal) {
     message += ', signal: ' + signal;
   }
 
-  var workersData = [];
   var newWorkers = [];
+  var newWorkerSockets = [];
   for (var i in this._workers) {
     if (this._workers[i].id != worker.id) {
       newWorkers.push(this._workers[i]);
-      workersData.push(this._workers[i].data);
+      newWorkerSockets.push(this._getWorkerSocketName(this._workers[i].id));
     }
   }
 
   this._workers = newWorkers;
   this._balancer.send({
     type: 'setWorkers',
-    data: workersData
+    data: newWorkerSockets
   });
 
-  var lead = worker.id == this._leaderId;
-  this._leaderId = -1;
   this.errorHandler(new Error(message), {type: 'master'});
 
   if (this.options.rebootWorkerOnCrash) {
     if (this.options.logLevel > 0) {
       this.log('Respawning worker ' + worker.id);
     }
-    this._launchWorker(worker.data, lead, true);
+    this._launchWorker(worker.id);
   }
 };
 
-SocketCluster.prototype._launchWorker = function (workerData, lead, respawn) {
+SocketCluster.prototype._launchWorker = function (workerId, respawn) {
   var self = this;
   
   var worker = fork(__dirname + '/worker.js');
   worker.on('error', self._workerErrorHandler.bind(self, worker));
-
-  if (!workerData.id) {
-    workerData.id = self._workerIdCounter++;
-  }
-
-  worker.id = workerData.id;
-  worker.data = workerData;
+  
+  worker.id = workerId;
 
   var workerOpts = self._cloneObject(self.options);
   workerOpts.paths = self._paths;
-  workerOpts.workerId = worker.id;
+  workerOpts.workerId = workerId;
   workerOpts.sourcePort = self.options.port;
-  workerOpts.workerPort = workerData.port;
-  workerOpts.stores = self.options.stores;
+  workerOpts.socketDirPath = self._socketDirPath;
+  workerOpts.socketName = self._getWorkerSocketName(workerId);
+  workerOpts.stores = self._getStoreSocketPaths();
   workerOpts.dataKey = self._dataKey;
-  workerOpts.lead = lead ? 1 : 0;
+  workerOpts.lead = workerId ? 0 : 1;
 
   worker.send({
     type: 'init',
@@ -482,9 +486,6 @@ SocketCluster.prototype._launchWorker = function (workerData, lead, respawn) {
     } else if (m.type == 'notice') {
       self._workerNoticeHandler(worker, m.data);
     } else if (m.type == 'ready') {
-      if (lead) {
-        self._leaderId = worker.id;
-      }
       if (self._firstTime || respawn) {
         self._workerReadyHandler(worker, m);
       }
@@ -502,7 +503,6 @@ SocketCluster.prototype._start = function () {
   self._workers = [];
   self._active = false;
 
-  self._leaderId = -1;
   self._firstTime = true;
   self._workersActive = false;
 
@@ -512,9 +512,9 @@ SocketCluster.prototype._start = function () {
       console.log('   ' + self.colorText('[Active]', 'green') + ' SocketCluster started');
       console.log('            Port: ' + self.options.port);
       console.log('            Master PID: ' + process.pid);
-      console.log('            Balancer count: ' + self.options.balancerCount);
-      console.log('            Worker count: ' + self.options.workers.length);
-      console.log('            Store count: ' + self.options.stores.length);
+      console.log('            Balancer count: ' + self.options.balancers);
+      console.log('            Worker count: ' + self.options.workers);
+      console.log('            Store count: ' + self.options.stores);
       console.log();
     }
     self.emit(self.EVENT_READY);
@@ -525,18 +525,15 @@ SocketCluster.prototype._start = function () {
   var ioClusterReady = function () {
     self._ioCluster.removeListener('ready', ioClusterReady);
 
-    var len = self.options.workers.length;
-    if (len > 0) {
-      self._launchWorker(self.options.workers[0], true);
-      for (var j = 1; j < len; j++) {
-        self._launchWorker(self.options.workers[j]);
-      }
+    var len = self.options.workers;
+    for (var j = 0; j < len; j++) {
+      self._launchWorker(j);
     }
   };
 
   var launchIOCluster = function () {
     self._ioCluster = new self._clusterEngine.IOCluster({
-      stores: self.options.stores,
+      stores: self._getStoreSocketPaths(),
       dataKey: self._dataKey,
       expiryAccuracy: self._dataExpiryAccuracy,
       downgradeToUser: self.options.downgradeToUser,
@@ -546,10 +543,11 @@ SocketCluster.prototype._start = function () {
     self._ioCluster.on('error', function (err) {
       self.errorHandler(err, {type: 'store'});
     });
+    
+    self._ioCluster.on('ready', ioClusterReady);
   };
 
   launchIOCluster();
-  self._ioCluster.on('ready', ioClusterReady);
 };
 
 SocketCluster.prototype.killWorkers = function () {
