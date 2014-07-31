@@ -174,8 +174,8 @@ SocketCluster.prototype._init = function (options) {
     self.options.stores = newStores;
   }
 
-  if (!self.options.stores || self.options.stores.length < 1) {
-    self.options.stores = [{port: self.options.port + 2}];
+  if (!self.options.stores || self.options.stores < 1) {
+    self.options.stores = 1;
   }
 
   if (!self.options.workers) {
@@ -235,6 +235,18 @@ SocketCluster.prototype._getWorkerSocketNames = function () {
     socketNames.push(this._getWorkerSocketName(i));
   }
   return socketNames;
+};
+
+SocketCluster.prototype._getStoreSocketName = function (storeId) {
+  return 's' + storeId;
+};
+
+SocketCluster.prototype._getStoreSocketPaths = function () {
+  var socketPaths = [];
+  for (var i = 0; i < this.options.stores; i++) {
+    socketPaths.push(this._socketDirPath + this._getStoreSocketName(i));
+  }
+  return socketPaths;
 };
 
 SocketCluster.prototype.errorHandler = function (err, origin) {
@@ -459,7 +471,7 @@ SocketCluster.prototype._launchWorker = function (workerId, respawn) {
   workerOpts.sourcePort = self.options.port;
   workerOpts.socketDirPath = self._socketDirPath;
   workerOpts.socketName = self._getWorkerSocketName(workerId);
-  workerOpts.stores = self.options.stores;
+  workerOpts.stores = self._getStoreSocketPaths();
   workerOpts.dataKey = self._dataKey;
   workerOpts.lead = workerId ? 0 : 1;
 
@@ -502,7 +514,7 @@ SocketCluster.prototype._start = function () {
       console.log('            Master PID: ' + process.pid);
       console.log('            Balancer count: ' + self.options.balancers);
       console.log('            Worker count: ' + self.options.workers);
-      console.log('            Store count: ' + self.options.stores.length);
+      console.log('            Store count: ' + self.options.stores);
       console.log();
     }
     self.emit(self.EVENT_READY);
@@ -521,7 +533,7 @@ SocketCluster.prototype._start = function () {
 
   var launchIOCluster = function () {
     self._ioCluster = new self._clusterEngine.IOCluster({
-      stores: self.options.stores,
+      stores: self._getStoreSocketPaths(),
       dataKey: self._dataKey,
       expiryAccuracy: self._dataExpiryAccuracy,
       downgradeToUser: self.options.downgradeToUser,
@@ -531,10 +543,11 @@ SocketCluster.prototype._start = function () {
     self._ioCluster.on('error', function (err) {
       self.errorHandler(err, {type: 'store'});
     });
+    
+    self._ioCluster.on('ready', ioClusterReady);
   };
 
   launchIOCluster();
-  self._ioCluster.on('ready', ioClusterReady);
 };
 
 SocketCluster.prototype.killWorkers = function () {
