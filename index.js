@@ -3,6 +3,9 @@ var crypto = require('crypto');
 var EventEmitter = require('events').EventEmitter;
 var domain = require('domain');
 var fork = require('child_process').fork;
+var os = require('os');
+var fs = require('fs');
+var wrench = require('wrench');
 
 var SocketCluster = function (options) {
   var self = this;
@@ -110,9 +113,16 @@ SocketCluster.prototype._init = function (options) {
   };
   
   if (process.platform == 'win32') {
-    self._socketDirPath = '\\\\.\\pipe\\sc\\' + self.options.appName + '\\';
+    self._socketDirPath = '\\\\.\\pipe\\socketcluster\\' + self.options.appName + '\\';
   } else {
-    self._socketDirPath = '/sc/' + self.options.appName + '/';
+    var socketDir = os.tmpdir() + '/socketcluster/';
+    if (fs.existsSync(socketDir)) {
+      wrench.rmdirSyncRecursive(socketDir);
+    }
+    fs.mkdirSync(socketDir);
+    socketDir += self.options.appName + '/';
+    fs.mkdirSync(socketDir);
+    self._socketDirPath = socketDir;
   }
 
   if (self.options.balancerController) {
