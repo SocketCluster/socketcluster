@@ -125,8 +125,7 @@ var createSuccess = function () {
   console.log('Installing app dependencies using npm. This could take a while...');
   var installProcess = exec(npmInstall, options, function (err) {
     if (err) {
-      errorMessage("Failed to install dependencies for sample '" + arg1 + "' app. Navigate to " + 
-        destDir + " and then try to run 'npm install' from there.");
+      errorMessage("Failed to install dependencies for sample '" + arg1 + "' app. Try to run the create command again.");
     } else {
       try {
         fs.writeFileSync(clientFileDestPath, fs.readFileSync(clientFileSourcePath));
