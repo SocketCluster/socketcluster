@@ -95,6 +95,7 @@ SCWorker.prototype._init = function (options) {
     upgradeTimeout: this.options.connectTimeout,
     socketName: this.options.socketName,
     secure: this.options.protocol == 'https',
+    host: this.options.host,
     appName: this.options.appName
   });
 
