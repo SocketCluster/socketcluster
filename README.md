@@ -99,18 +99,18 @@ It is recommended that you use Node.js version >=0.10.22 due to memory leaks pre
 ## How to use
 
 The following example launches SocketCluster as 7 distinct processes (in addition to the current master process):
-- 3 workers on ports 9100, 9101, 9102
-- 3 stores on ports 9001, 9002, 9003
+- 3 workers
+- 3 stores
 - 1 load balancer on port 8000 which distributes requests evenly between the 3 workers
 
 ```js
 var SocketCluster = require('socketcluster').SocketCluster;
 
 var socketCluster = new SocketCluster({
-    workers: [9100, 9101, 9102],
-    stores: [9001, 9002, 9003],
-    balancerCount: 1, // Optional
     port: 8000,
+    balancers: 1,
+    workers: 3,
+    stores: 3,
     appName: 'myapp',
     workerController: 'worker.js',
     // balancerController: 'firewall.js', // Optional
@@ -280,9 +280,9 @@ provide your private key and certificate as a start option when you instantiate 
 
 ```js
 var socketCluster = new SocketCluster({
-  workers: [9100, 9101, 9102],
-  stores: [9001, 9002, 9003],
-  balancerCount: 1, // Optional
+  balancers: 1,
+  workers: 3,
+  stores: 3,
   port: 8000,
   appName: 'myapp',
   workerController: 'worker.js',
@@ -380,8 +380,8 @@ Creates a new SocketCluster, must be invoked with the new keyword.
 var SocketCluster = require('socketcluster').SocketCluster;
 
 var socketCluster = new SocketCluster({
-    workers: [9100, 9101, 9102],
-    stores: [9001, 9002, 9003],
+    workers: 3,
+    stores: 3,
     port: 8000,
     appName: 'myapp',
     workerController: 'worker.js'
