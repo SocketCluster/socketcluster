@@ -63,7 +63,7 @@ SocketCluster.prototype._init = function (options) {
     heartbeatTimeout: 60,
     workerStatusInterval: 10,
     propagateErrors: true,
-    host: 'localhost',
+    host: null,
     workerController: null,
     balancerController: null,
     storeController: null,
@@ -109,7 +109,7 @@ SocketCluster.prototype._init = function (options) {
     appWorkerControllerPath: path.resolve(self.options.workerController)
   };
   
-  if (process.platform === 'win32') {
+  if (process.platform == 'win32') {
     self._socketDirPath = '\\\\.\\pipe\\sc\\' + self.options.appName + '\\';
   } else {
     self._socketDirPath = '/sc/' + self.options.appName + '/';

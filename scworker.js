@@ -38,8 +38,7 @@ SCWorker.prototype._init = function (options) {
   var self = this;
 
   this.options = {
-    transports: ['polling', 'websocket'],
-    host: 'localhost'
+    transports: ['polling', 'websocket']
   };
 
   for (var i in options) {
