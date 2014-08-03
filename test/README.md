@@ -1,7 +1,6 @@
 SocketCluster integration tests
 ===============================
 
-To launch automated integration tests, you need to install dependencies into a test/node_modules/ subdirectory
-by running 'npm install' while inside the test/ directory.
-Launch a test by running the appropriate index.js file using the 'node' command.
-Each subdirectory (aside from the node_modules directory) tests different aspects of SocketCluster.
+The 'external' directory validates the behavioral aspect of SocketCluster (as it would appear to a client/user).
+The 'internal' directory verifies that SocketCluster manages its internal resources appropriately.
+Launch a test by running the appropriate index.js file using 'node' command.
