@@ -24,7 +24,7 @@ Follow the project on Twitter: https://twitter.com/SocketCluster
 
 ### Recent changes
 
-v0.9.42 - Major efficiency improvement - Now using UNIX sockets instead of TCP sockets for IPC. Uses named pipes on Windows.
+v0.9.44 - Major efficiency improvement - Now using UNIX sockets instead of TCP sockets for IPC. Uses named pipes on Windows.
 This change affected the API. The workers and stores start options are now just integers instead of arrays of port numbers.
 Also note that the balancerCount option was renamed to balancers.
 
