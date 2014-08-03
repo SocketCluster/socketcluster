@@ -51,7 +51,7 @@ var options = {
 };
 
 scServer.on('message', function (m) {
-  var numSockets = 100;
+  var numSockets = 200;
   var messageInterval = 2000;
   var socketCount = 0;
 
