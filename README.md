@@ -5,6 +5,8 @@ SocketCluster
 
 **See bottom of page for benchmark tests.**
 
+### Introduction
+
 SocketCluster is a fast, highly scalable HTTP + WebSocket (engine.io) server which lets you build multi-process 
 realtime systems/apps that make use of all CPU cores on a machine/instance.
 It removes the limitations of having to run your Node.js server as a single thread.
@@ -20,6 +22,12 @@ SocketCluster was designed to be lightweight and its realtime API is almost iden
 
 Follow the project on Twitter: https://twitter.com/SocketCluster
 
+### Recent changes
+
+v0.9.42 - Major efficiency improvement - Now using UNIX sockets instead of TCP sockets for IPC. Uses named pipes on Windows.
+This change affected the API. The workers and stores start options are now just integers instead of arrays of port numbers.
+Also note that the balancerCount option was renamed to balancers.
+
 ### Memory leak profile
 
 SocketCluster has been tested for memory leaks.
@@ -29,6 +37,7 @@ No memory leaks were detected when using the latest Node.js version.
 Note that leaks were found when using Node.js versions below v0.10.22 - This is probably the Node.js 'Walmart' memory leak - Not a SocketCluster issue.
 
 ### Main Contributors
+
 - Jonathan Gros-Dubois
 - Nelson Zheng
 - Gabriel Muller
