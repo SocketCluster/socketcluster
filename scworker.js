@@ -3,6 +3,7 @@ var EventEmitter = require('events').EventEmitter;
 var crypto = require('crypto');
 var domain = require('domain');
 var http = require('http');
+var fs = require('fs');
 
 var SCWorker = function (options) {
   var self = this;
@@ -138,7 +139,11 @@ SCWorker.prototype._start = function () {
   this._workerController = require(this._paths.appWorkerControllerPath);
   this._workerController.run(this);
   
-  this._server.listen(this.options.socketDirPath + this.options.socketName);
+  var socketPath = this.options.socketDirPath + this.options.socketName;
+  if (process.platform != 'win32' && fs.existsSync(socketPath)) {
+    fs.unlinkSync(socketPath);
+  }
+  this._server.listen(socketPath);
 };
 
 SCWorker.prototype._httpRequestHandler = function (req, res) {
