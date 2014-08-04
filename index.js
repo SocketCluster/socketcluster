@@ -311,7 +311,7 @@ SocketCluster.prototype._initLoadBalancer = function () {
       sourcePort: this.options.port,
       socketDirPath: this._socketDirPath,
       workers: this._getWorkerSocketNames(),
-      balancers: this.options.balancers,
+      balancerCount: this.options.balancers,
       protocol: this.options.protocol,
       protocolOptions: this.options.protocolOptions,
       useSmartBalancing: this.options.useSmartBalancing,

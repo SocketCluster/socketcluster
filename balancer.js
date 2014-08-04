@@ -7,7 +7,7 @@ if (cluster.isMaster) {
   process.on('message', function (m) {
     var balancers;
     if (m.type == 'init') {
-      var balancerCount = m.data.balancers;
+      var balancerCount = m.data.balancerCount;
       var readyCount = 0;
       var isReady = false;
       balancers = [];
