@@ -113,7 +113,7 @@ SocketCluster.prototype._init = function (options) {
   };
   
   if (process.platform == 'win32') {
-    self._socketDirPath = '\\\\.\\pipe\\socketcluster\\' + self.options.appName + '\\';
+    self._socketDirPath = '\\\\.\\pipe\\socketcluster_' + self.options.appName + '_';
   } else {
     var socketDir = os.tmpdir() + '/socketcluster/';
     if (fs.existsSync(socketDir)) {
