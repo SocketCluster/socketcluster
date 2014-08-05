@@ -1,7 +1,7 @@
 {
   "name": "socketcluster",
   "description": "SocketCluster - A Highly parallelized WebSocket server cluster to make the most of multi-core machines/instances.",
-  "version": "0.9.47",
+  "version": "0.9.48",
   "homepage": "https://github.com/topcloud/socketcluster",
   "contributors": [
     {
@@ -17,7 +17,7 @@
     "iocluster": ">= 1.3.1",
     "loadbalancer": ">= 0.9.19",
     "optimist": "0.6.1",
-    "socketcluster-server": ">= 0.9.29",
+    "socketcluster-server": ">= 0.9.30",
     "wrench": "1.5.8"
   },
   "bin": {
