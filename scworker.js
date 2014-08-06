@@ -100,7 +100,8 @@ SCWorker.prototype._init = function (options) {
     secure: this.options.protocol == 'https',
     host: this.options.host,
     origins: this.options.origins,
-    appName: this.options.appName
+    appName: this.options.appName,
+    path: this.options.path
   });
 
   this._socketServer.on('connection', function (socket) {
@@ -114,8 +115,8 @@ SCWorker.prototype._init = function (options) {
     self.noticeHandler.apply(self, arguments);
   });
 
-  this._socketURL = this._socketServer.getURL();
-  this._socketURLRegex = new RegExp('^' + this._socketURL);
+  this._socketPath = this._socketServer.getPath();
+  this._socketPathRegex = new RegExp('^' + this._socketPath);
 
   this._errorDomain.add(this._socketServer);
   this._socketServer.on('ready', function () {
@@ -125,7 +126,7 @@ SCWorker.prototype._init = function (options) {
 };
 
 SCWorker.prototype.getSocketURL = function () {
-  return this._socketURL;
+  return this._socketPath;
 };
 
 SCWorker.prototype._start = function () {
@@ -153,7 +154,7 @@ SCWorker.prototype._httpRequestHandler = function (req, res) {
   this._httpRequestCount++;
   if (req.url == this._paths.statusURL) {
     this._handleStatusRequest(req, res);
-  } else if (!this._socketURLRegex.test(req.url)) {
+  } else if (!this._socketPathRegex.test(req.url)) {
     this._server.emit('req', req, res);
   }
 };

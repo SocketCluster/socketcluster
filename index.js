@@ -75,6 +75,7 @@ SocketCluster.prototype._init = function (options) {
     rebootOnSignal: true,
     useSmartBalancing: false,
     downgradeToUser: false,
+    path: null,
     clusterEngine: 'iocluster'
   };
 
