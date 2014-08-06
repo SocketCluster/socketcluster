@@ -94,9 +94,11 @@ SCWorker.prototype._init = function (options) {
     pingTimeout: this.options.heartbeatTimeout,
     pingInterval: this.options.heartbeatInterval,
     upgradeTimeout: this.options.connectTimeout,
+    maxHttpBufferSize: this.options.maxHttpBufferSize,
     socketName: this.options.socketName,
     secure: this.options.protocol == 'https',
     host: this.options.host,
+    origins: this.options.origins,
     appName: this.options.appName
   });
 

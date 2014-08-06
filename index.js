@@ -57,6 +57,7 @@ SocketCluster.prototype._init = function (options) {
     connectTimeout: 10,
     sessionTimeout: 1200,
     sessionHeartRate: 4,
+    maxHttpBufferSize: null,
     origins: '*:*',
     matchOriginProtocol: true,
     addressSocketLimit: null,
