@@ -127,10 +127,14 @@ var createSuccess = function () {
 
   var npmProcess = spawn(npmCommand, ['install'], options);
   
-  npmProcess.stderr.on('data', function (data) {
+  npmProcess.stdout.on('data', function (data) {
     process.stdout.write(data);
   });
-
+  
+  npmProcess.stderr.on('data', function (data) {
+    process.stderr.write(data);
+  });
+  
   npmProcess.on('close', function (code) {
     if (code) {
       errorMessage('Failed to install npm dependencies. Exited with code ' + code + '.');
