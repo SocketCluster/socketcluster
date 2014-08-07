@@ -15,10 +15,11 @@
   },
   "dependencies": {
     "iocluster": ">= 1.3.1",
-    "loadbalancer": ">= 0.9.19",
     "optimist": "0.6.1",
     "socketcluster-server": ">= 0.9.32",
-    "wrench": "1.5.8"
+    "wrench": "1.5.8",
+    "http-proxy": "1.1.4",
+    "async": "0.7.0"
   },
   "bin": {
     "socketcluster": "bin/cli.js"

@@ -1,5 +1,5 @@
 var cluster = require('cluster');
-var LoadBalancer = require('loadbalancer');
+var SCBalancer = require('./scbalancer');
 
 var balancer;
 
@@ -68,14 +68,14 @@ if (cluster.isMaster) {
   var handleNotice = function (err) {
     handleError(err, true);
   };
-  
+
   var handleReady = function () {
     process.send({type: 'ready'});
   };
 
   process.on('message', function (m) {
     if (m.type == 'init') {
-      balancer = new LoadBalancer(m.data);
+      balancer = new SCBalancer(m.data);
       balancer.on('error', handleError);
       balancer.on('notice', handleNotice);
       balancer.start();
