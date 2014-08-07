@@ -9,7 +9,11 @@ SocketCluster
 
 SocketCluster is a fast, highly scalable HTTP + WebSocket (engine.io) server which lets you build multi-process 
 realtime systems/apps that make use of all CPU cores on a machine/instance.
-It removes the limitations of having to run your Node.js server as a single thread.
+It removes the limitations of having to run your Node.js server as a single thread and makes your backend 
+resilient (auto-respawn, aggregated error logging).
+SC is designed to scale horizontally too - By simply listening to socket events on the client-side, your clients can be made to automatically
+(and securely) subscribe to distributed message queues on the backend - SC only delivers particular events to clients who actually need them.
+You just have to hook up your store to a message queue like RabbitMQ.
 
 SocketCluster was designed to be modular so that you can run other frameworks like express on top of it (or build your own!)
 
@@ -50,7 +54,7 @@ Some key technical features of SocketCluster are:
 - You can emit an event on a session to notify all sockets that belong to it.
 - The SocketCluster client (socketcluster-client) has an option to allow disconnected sockets to automatically (and seamlessly) reconnect
 if they lose the connection.
-- Server crashes are transparent to users (aside from a 2 to 5 second delay to allow the worker to respawn) - Session data remains intact between crashes.
+- SocketCluster processes automagically respawn on crash - Worker and load balancer crashes are invisible to users.
 - It uses a memory store cluster called nData which you can use to store 'volatile' session data which relates to your sockets/sessions.
 
 
