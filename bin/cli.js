@@ -9,6 +9,7 @@ var path = require('path');
 var argv = require('optimist').argv;
 var childProcess = require('child_process');
 var exec = childProcess.exec;
+var spawn = childProcess.spawn;
 
 var command = argv._[0];
 var arg1 = argv._[1];
@@ -116,16 +117,23 @@ var createFail = function () {
 };
 
 var createSuccess = function () {
-  var npmInstall = 'npm install';
+  console.log('Installing app dependencies using npm. This could take a while...');
+  
+  var npmCommand = (process.platform === "win32" ? "npm.cmd" : "npm");
   var options = {
     cwd: destDir,
     maxBuffer: Infinity
   };
+
+  var npmProcess = spawn(npmCommand, ['install'], options);
   
-  console.log('Installing app dependencies using npm. This could take a while...');
-  var installProcess = exec(npmInstall, options, function (err) {
-    if (err) {
-      errorMessage("Failed to install dependencies for sample '" + arg1 + "' app. Try to run the create command again.");
+  npmProcess.stderr.on('data', function (data) {
+    process.stdout.write(data);
+  });
+
+  npmProcess.on('close', function (code) {
+    if (code) {
+      errorMessage('Failed to install npm dependencies. Exited with code ' + code + '.');
     } else {
       try {
         fs.writeFileSync(clientFileDestPath, fs.readFileSync(clientFileSourcePath));
@@ -137,6 +145,8 @@ var createSuccess = function () {
     }
     process.exit();
   });
+  
+  npmProcess.stdin.end();
 };
 
 var setupMessage = function () {
