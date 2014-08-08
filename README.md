@@ -5,15 +5,17 @@ SocketCluster
 
 **See bottom of page for benchmark tests.**
 
-### Introduction
+## Introduction
 
 SocketCluster is a fast, highly scalable HTTP + WebSocket (engine.io) server which lets you build multi-process 
 realtime systems/apps that make use of all CPU cores on a machine/instance.
 It removes the limitations of having to run your Node.js server as a single thread and makes your backend 
 resilient (auto-respawn, aggregated error logging).
+
+SC works like a pub/sub system (which extends all the way to the browser) - It only delivers particular events to clients who 
+actually need them. See this issue: https://github.com/TopCloud/socketcluster/issues/6 for some tips of how to leverage this feature.
 SC is designed to scale horizontally too - By simply listening to socket events on the client-side, your clients can be made to automatically
-(and securely) subscribe to distributed message queues on the backend - SC only delivers particular events to clients who actually need them.
-You just have to hook up your store to a message queue like RabbitMQ.
+(and securely) hook in to distributed message queues on the backend. You just have to hook up your store to a message queue like RabbitMQ.
 
 SocketCluster was designed to be modular so that you can run other frameworks like express on top of it (or build your own!)
 
@@ -25,14 +27,15 @@ single-threaded WebSocket/HTTP server (where N is the number of CPUs/cores avail
 SocketCluster was designed to be lightweight and its realtime API is almost identical to Socket.io.
 
 Follow the project on Twitter: https://twitter.com/SocketCluster
+Subscribe for updates: http://socketcluster.launchrock.com/
 
-### Recent changes
+## Recent changes
 
 v0.9.44 - Major efficiency improvement - Now using UNIX sockets instead of TCP sockets for IPC. Uses named pipes on Windows.
 This change affected the API. The workers and stores start options are now just integers instead of arrays of port numbers.
 Also note that the balancerCount option was renamed to balancers.
 
-### Memory leak profile
+## Memory leak profile
 
 SocketCluster has been tested for memory leaks.
 The last full memory profiling was done on SocketCluster v0.9.17 (Node.js v0.10.28) and included checks on load balancer, worker and store processes.
@@ -40,7 +43,7 @@ The last full memory profiling was done on SocketCluster v0.9.17 (Node.js v0.10.
 No memory leaks were detected when using the latest Node.js version.
 Note that leaks were found when using Node.js versions below v0.10.22 - This is probably the Node.js 'Walmart' memory leak - Not a SocketCluster issue.
 
-### Main Contributors
+## Main Contributors
 
 - Jonathan Gros-Dubois
 - Nelson Zheng
@@ -251,15 +254,20 @@ On a specific session (possibly hosted on a different worker process):
 socket.global.emit('localhost_9101_8000_0_47kR_u7W4LGk56rSAAAA', 'foo', eventData, callback);
 ```
 
-Broadcast to all sessions (on all worker processes):
+Broadcast to all interested sockets/sessions (on all worker processes):
 ```js
 socket.global.broadcast('foo', eventData, callback);
 ```
 
-Broadcast to all sessions (this time we access the global object directly from the SCServer instance):
+Broadcast to all interested sockets/session (this time we access the global object directly from the SCServer instance):
 ```js
 wsServer.global.broadcast('foo', eventData, callback);
 ```
+
+Note that when you broadcast an event, only the clients which are actually subscribed tp that particular event
+will receive it. SocketCluster is efficient and works more like a pub/sub system.
+When you listen to an even on the client using socket.on(...), it will send a 'subscribe' event to the backend which
+may be intercepted/blocked by your middleware if appropriate.
 
 On the socket (only use this one if you know what you're doing; generally, it's better to emit on a session):
 ```js
