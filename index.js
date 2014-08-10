@@ -47,11 +47,6 @@ SocketCluster.prototype._init = function (options) {
     rebootWorkerOnCrash: true,
     protocol: 'http',
     protocolOptions: null,
-    autoReconnect: true,
-    autoReconnectOptions: {
-      delay: 10,
-      randomness: 10
-    },
     transports: ['polling', 'websocket'],
     logLevel: 2,
     connectTimeout: 10,
