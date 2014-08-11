@@ -123,7 +123,7 @@ SocketCluster.prototype._init = function (options) {
     if (this.options.socketRoot) {
       socketDir = this.options.socketRoot.replace(/\/$/, '') + '/';
     } else {
-      socketDir = os.tmpdir() + '/socketcluster/';
+      socketDir = os.tmpdir() + '/socketcluster/' + self.options.appName + '/';
     }
     if (fs.existsSync(socketDir)) {
       try {
@@ -132,9 +132,7 @@ SocketCluster.prototype._init = function (options) {
         throw new Error('Failed to remove old socket directory ' + socketDir + '. Try removing it manually.');
       }
     }
-    fs.mkdirSync(socketDir);
-    socketDir += self.options.appName + '/';
-    fs.mkdirSync(socketDir);
+    wrench.mkdirSyncRecursive(socketDir);
     self._socketDirPath = socketDir;
   }
 
