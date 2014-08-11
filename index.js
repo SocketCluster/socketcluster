@@ -177,14 +177,23 @@ SocketCluster.prototype._init = function (options) {
     }
   }
 
+  if (typeof self.options.stores != 'number') {
+    throw new Error('The stores option must be a number');
+  }
   if (!self.options.stores || self.options.stores < 1) {
     self.options.stores = 1;
   }
 
+  if (typeof self.options.workers != 'number') {
+    throw new Error('The workers option must be a number');
+  }
   if (!self.options.workers || self.options.workers < 1) {
     self.options.workers = 1;
   }
 
+  if (typeof self.options.balancers != 'number') {
+    throw new Error('The balancers option must be a number');
+  }
   if (!self.options.balancers) {
     self.options.balancers = Math.floor(self.options.workers / 2);
     if (self.options.balancers < 1) {
