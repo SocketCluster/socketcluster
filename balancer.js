@@ -4,6 +4,7 @@ var SCBalancer = require('./scbalancer');
 var balancer;
 
 if (cluster.isMaster) {
+  cluster.schedulingPolicy = cluster.SCHED_NONE;
   process.on('message', function (m) {
     var balancers;
     if (m.type == 'init') {
