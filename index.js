@@ -71,6 +71,7 @@ SocketCluster.prototype._init = function (options) {
     useSmartBalancing: false,
     downgradeToUser: false,
     path: null,
+    socketRoot: null,
     clusterEngine: 'iocluster'
   };
 
@@ -111,11 +112,24 @@ SocketCluster.prototype._init = function (options) {
   };
   
   if (process.platform == 'win32') {
-    self._socketDirPath = '\\\\.\\pipe\\socketcluster_' + self.options.appName + '_';
+    if (this.options.socketRoot) {
+      self._socketDirPath = this.options.socketRoot + '_' + self.options.appName + '_';
+    } else {
+      self._socketDirPath = '\\\\.\\pipe\\socketcluster_' + self.options.appName + '_';
+    }
   } else {
-    var socketDir = os.tmpdir() + '/socketcluster/';
+    var socketDir;
+    if (this.options.socketRoot) {
+      socketDir = this.options.socketRoot.replace(/\/$/, '') + '/';
+    } else {
+      socketDir = os.tmpdir() + '/socketcluster/';
+    }
     if (fs.existsSync(socketDir)) {
-      wrench.rmdirSyncRecursive(socketDir);
+      try {
+        wrench.rmdirSyncRecursive(socketDir);
+      } catch (err) {
+        throw new Error('Failed to remove old socket directory ' + socketDir + '. Try removing it manually.');
+      }
     }
     fs.mkdirSync(socketDir);
     socketDir += self.options.appName + '/';
