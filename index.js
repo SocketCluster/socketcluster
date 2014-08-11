@@ -5,6 +5,7 @@ var domain = require('domain');
 var fork = require('child_process').fork;
 var os = require('os');
 var fs = require('fs');
+var uidNumber = require("uid-number");
 var wrench = require('wrench');
 
 var SocketCluster = function (options) {
@@ -229,12 +230,28 @@ SocketCluster.prototype._init = function (options) {
   /*
     To allow inserting blank lines in console on Windows to aid with debugging.
   */
-  if (/^win/.test(process.platform)) {
+  if (process.platform == 'win32') {
     process.stdin.resume();
     process.stdin.setEncoding('utf8');
   }
 
-  self._start();
+  if (self.options.downgradeToUser) {
+    if (typeof self.options.downgradeToUser == 'number') {
+      fs.chownSync(self._socketDirPath, self.options.downgradeToUser, 0);
+      self._start();
+    } else {
+      uidNumber(self.options.downgradeToUser, function (err, uid, gid) {
+        if (err) {
+          throw new Error('Failed to downgrade to user "' + self.options.downgradeToUser + '" - ' + err);
+        } else {
+          fs.chownSync(self._socketDirPath, uid, gid);
+          self._start();
+        }
+      });
+    }
+  } else {
+    self._start();
+  }
 };
 
 SocketCluster.prototype._getWorkerSocketName = function (workerId) {
