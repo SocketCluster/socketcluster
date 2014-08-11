@@ -235,7 +235,7 @@ SocketCluster.prototype._init = function (options) {
     process.stdin.setEncoding('utf8');
   }
 
-  if (self.options.downgradeToUser) {
+  if (self.options.downgradeToUser && process.platform != 'win32') {
     if (typeof self.options.downgradeToUser == 'number') {
       fs.chownSync(self._socketDirPath, self.options.downgradeToUser, 0);
       self._start();
