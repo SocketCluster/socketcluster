@@ -73,6 +73,7 @@ SocketCluster.prototype._init = function (options) {
     downgradeToUser: false,
     path: null,
     socketRoot: null,
+    schedulingPolicy: null,
     clusterEngine: 'iocluster'
   };
 
@@ -355,6 +356,7 @@ SocketCluster.prototype._initLoadBalancer = function () {
       statusURL: this._paths.statusURL,
       statusCheckInterval: this.options.workerStatusInterval * 1000,
       downgradeToUser: this.options.downgradeToUser,
+      schedulingPolicy: this.options.schedulingPolicy,
       appBalancerControllerPath: this._paths.appBalancerControllerPath
     }
   });
