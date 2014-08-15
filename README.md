@@ -253,6 +253,7 @@ On a specific session (possibly hosted on a different worker process):
 // Function signature: emit(sessionId, event, data, callback)
 socket.global.emit('localhost_9101_8000_0_47kR_u7W4LGk56rSAAAA', 'foo', eventData, callback);
 ```
+^ Generally, you should avoid targeting clients explicitly - Instead, you should use a pub/sub approach.
 
 Broadcast to all interested sockets/sessions (on all worker processes):
 ```js
@@ -269,7 +270,7 @@ will receive it. SocketCluster is efficient and works more like a pub/sub system
 When you listen to an even on the client using socket.on(...), it will send a 'subscribe' event to the backend which
 may be intercepted/blocked by your middleware if appropriate.
 
-On the socket (only use this one if you know what you're doing; generally, it's better to emit on a session):
+On the socket:
 ```js
 socket.emit('foo', eventData, callback);
 ```
@@ -379,10 +380,9 @@ wsServer.addMiddleware(wsServer.MIDDLEWARE_EVENT, function (socket, event, data,
 
 ## Contribute to SocketCluster
 
-- Tests needed - While some of the underlying modules of SC are well tested, 
-it would be nice to add some higher-level tests to help maintain high code quality.
-- Documentation - Inline source documentation is needed.
-- Benchmarks - More benchmarks - Particularly, it would be nice to get an idea of how many concurrent connections SocketCluster can handle on a big machine.
+- Security - Identify and fix any vulnerabilities.
+- More test cases needed.
+- Documentation - Inline source documentation (commenting) is needed.
 - Efficiency/speed - faster is better!
 
 To contribute; clone this repo, then cd inside it and then run npm install to install all dependencies.
