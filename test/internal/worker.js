@@ -27,13 +27,9 @@ module.exports.run = function (worker) {
         affect all sockets which belong to that session.
     */
     activeSessions[socket.session.id] = socket.session;
-
-    socket.on('test', function (data) {
-      // TODO: Fix this
-    });
   });
   
-  wsServer.on('sessiondestroy', function (ssid) {
+  wsServer.on('sessionend', function (ssid) {
     delete activeSessions[ssid];
   });
 };

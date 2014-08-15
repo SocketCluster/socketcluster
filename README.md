@@ -222,7 +222,7 @@ module.exports.run = function (worker) {
         console.log('Socket ' + socket.id + ' was disconnected');
     });
     
-    wsServer.on('sessiondestroy', function (ssid) {
+    wsServer.on('sessionend', function (ssid) {
         delete activeSessions[ssid];
     });
     
@@ -248,24 +248,17 @@ On the current session (this is the recommended way; accounts for multiple open 
 socket.session.emit('foo', eventData, callback);
 ```
 
-On a specific session (possibly hosted on a different worker process):
-```js
-// Function signature: emit(sessionId, event, data, callback)
-socket.global.emit('localhost_9101_8000_0_47kR_u7W4LGk56rSAAAA', 'foo', eventData, callback);
-```
-^ Generally, you should avoid targeting clients explicitly - Instead, you should use a pub/sub approach using global events and middleware for auth.
-
-Broadcast to all interested sockets/sessions (on all worker processes):
+Broadcast to all subscribed sockets/sessions (on all worker processes):
 ```js
 socket.global.broadcast('foo', eventData, callback);
 ```
 
-Broadcast to all interested sockets/session (this time we access the global object directly from the SCServer instance):
+Broadcast to all subscribed sockets/session (this time we access the global object directly from the SCServer instance):
 ```js
 wsServer.global.broadcast('foo', eventData, callback);
 ```
 
-Note that when you broadcast an event, only the clients which are actually subscribed tp that particular event
+Note that when you broadcast an event, only the clients which are actually subscribed to that particular event
 will receive it. SocketCluster is efficient and works more like a pub/sub system.
 When you listen to an even on the client using socket.on(...), it will send a 'subscribe' event to the backend which
 may be intercepted/blocked by your middleware if appropriate.

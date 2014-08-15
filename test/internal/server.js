@@ -12,7 +12,7 @@ var socketCluster = new SocketCluster({
   addressSocketLimit: 0,
   socketEventLimit: 100,
   rebootWorkerOnCrash: true,
-  useSmartBalancing: false,
+  useSmartBalancing: true,
   sessionTimeout: 20
 });
 
