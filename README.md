@@ -253,7 +253,7 @@ On a specific session (possibly hosted on a different worker process):
 // Function signature: emit(sessionId, event, data, callback)
 socket.global.emit('localhost_9101_8000_0_47kR_u7W4LGk56rSAAAA', 'foo', eventData, callback);
 ```
-^ Generally, you should avoid targeting clients explicitly - Instead, you should use a pub/sub approach.
+^ Generally, you should avoid targeting clients explicitly - Instead, you should use a pub/sub approach using global events and middleware for auth.
 
 Broadcast to all interested sockets/sessions (on all worker processes):
 ```js
