@@ -31,7 +31,7 @@ module.exports.run = function (worker) {
     socket.emit('first', 'This is the first event');
 
     socket.on('ping', function (data) {
-      wsServer.global.broadcast('pong', pongData);
+      wsServer.global.publish('pong', pongData);
     });
   });
   

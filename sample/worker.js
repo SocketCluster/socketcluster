@@ -39,7 +39,7 @@ module.exports.run = function (worker) {
     socket.on('ping', function (data) {
       count++;
       console.log('PING', data);
-      wsServer.global.broadcast('pong', count);
+      wsServer.global.publish('pong', count);
     });
   });
   

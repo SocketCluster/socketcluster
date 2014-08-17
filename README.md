@@ -248,17 +248,17 @@ On the current session (this is the recommended way; accounts for multiple open 
 socket.session.emit('foo', eventData, callback);
 ```
 
-Broadcast to all subscribed sockets/sessions (on all worker processes):
+Publish to all subscribed sockets/sessions (on all worker processes):
 ```js
-socket.global.broadcast('foo', eventData, callback);
+socket.global.publish('foo', eventData, callback);
 ```
 
-Broadcast to all subscribed sockets/session (this time we access the global object directly from the SCServer instance):
+Publish to all subscribed sockets/session (this time we access the global object directly from the SCServer instance):
 ```js
-wsServer.global.broadcast('foo', eventData, callback);
+wsServer.global.publish('foo', eventData, callback);
 ```
 
-Note that when you broadcast an event, only the clients which are actually subscribed to that particular event
+Note that when you publish an event, only the clients which are actually subscribed to that particular event
 will receive it. SocketCluster is efficient and works more like a pub/sub system.
 When you listen to an even on the client using socket.on(...), it will send a 'subscribe' event to the backend which
 may be intercepted/blocked by your middleware if appropriate.
