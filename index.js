@@ -51,6 +51,7 @@ SocketCluster.prototype._init = function (options) {
     transports: ['polling', 'websocket'],
     logLevel: 2,
     connectTimeout: 10,
+    ackTimeout: 10,
     socketUpgradeTimeout: 1,
     sessionTimeout: 1200,
     sessionHeartRate: 4,
