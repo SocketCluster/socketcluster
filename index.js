@@ -121,11 +121,12 @@ SocketCluster.prototype._init = function (options) {
       self._socketDirPath = '\\\\.\\pipe\\socketcluster_' + self.options.appName + '_';
     }
   } else {
-    var socketDir;
+    var socketDir, socketParentDir;
     if (this.options.socketRoot) {
       socketDir = this.options.socketRoot.replace(/\/$/, '') + '/';
     } else {
-      socketDir = os.tmpdir() + '/socketcluster/' + self.options.appName + '/';
+      socketParentDir = os.tmpdir() + '/socketcluster/';
+      socketDir = socketParentDir + self.options.appName + '/';
     }
     if (fs.existsSync(socketDir)) {
       try {
@@ -135,6 +136,9 @@ SocketCluster.prototype._init = function (options) {
       }
     }
     wrench.mkdirSyncRecursive(socketDir);
+    if (socketParentDir) {
+      fs.chmodSync(socketParentDir, '1777');
+    }
     self._socketDirPath = socketDir;
   }
 
