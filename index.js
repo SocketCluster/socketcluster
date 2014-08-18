@@ -137,7 +137,9 @@ SocketCluster.prototype._init = function (options) {
     }
     wrench.mkdirSyncRecursive(socketDir);
     if (socketParentDir) {
-      fs.chmodSync(socketParentDir, '1777');
+      try {
+        fs.chmodSync(socketParentDir, '1777');
+      } catch (err) {}
     }
     self._socketDirPath = socketDir;
   }
