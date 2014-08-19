@@ -114,11 +114,15 @@ SocketCluster.prototype._init = function (options) {
     appWorkerControllerPath: path.resolve(self.options.workerController)
   };
   
+  var pathHasher = crypto.createHash('md5');
+  pathHasher.update(self._paths.appDirPath, 'utf8');
+  var pathHash = pathHasher.digest('hex');
+
   if (process.platform == 'win32') {
     if (this.options.socketRoot) {
-      self._socketDirPath = this.options.socketRoot + '_' + self.options.appName + '_';
+      self._socketDirPath = this.options.socketRoot + '_';
     } else {
-      self._socketDirPath = '\\\\.\\pipe\\socketcluster_' + self.options.appName + '_';
+      self._socketDirPath = '\\\\.\\pipe\\socketcluster_' + self.options.appName + '_' + pathHash + '_';
     }
   } else {
     var socketDir, socketParentDir;
@@ -126,7 +130,7 @@ SocketCluster.prototype._init = function (options) {
       socketDir = this.options.socketRoot.replace(/\/$/, '') + '/';
     } else {
       socketParentDir = os.tmpdir() + '/socketcluster/';
-      socketDir = socketParentDir + self.options.appName + '/';
+      socketDir = socketParentDir + self.options.appName + '_' + pathHash + '/';
     }
     if (fs.existsSync(socketDir)) {
       try {
