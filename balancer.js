@@ -61,7 +61,7 @@ if (cluster.isMaster) {
       error = err;
     }
     process.send({type: notice ? 'notice' : 'error', data: error});
-    if (err.code != 'ECONNRESET') {
+    if (err.code != 'ECONNRESET' && !notice) {
       process.exit();
     }
   };

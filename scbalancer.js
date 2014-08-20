@@ -115,6 +115,8 @@ SCBalancer.prototype._defaultErrorHandler = function (err, req, res) {
 SCBalancer.prototype._handleError = function (error, req, res) {
   var self = this;
 
+  this.emit('notice', error.message || error);
+  
   var errorMiddleware = this._middleware[this.MIDDLEWARE_ERROR];
   if (errorMiddleware.length) {
     async.applyEachSeries(errorMiddleware, error, req, res, function (err) {
