@@ -117,7 +117,7 @@ SocketCluster.prototype._init = function (options) {
   
   var pathHasher = crypto.createHash('md5');
   pathHasher.update(self._paths.appDirPath, 'utf8');
-  var pathHash = pathHasher.digest('hex');
+  var pathHash = pathHasher.digest('hex').substr(0, 10);
 
   if (process.platform == 'win32') {
     if (this.options.socketRoot) {
