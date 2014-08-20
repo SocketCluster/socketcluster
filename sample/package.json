@@ -12,7 +12,7 @@
     "connect": "3.0.1",
     "express": "4.4.4",
     "serve-static": "1.2.3",
-    "socketcluster": ">= 0.9.65",
+    "socketcluster": ">= 0.9.66",
     "socketcluster-client": ">= 0.9.32"
   },
   "keywords": [
