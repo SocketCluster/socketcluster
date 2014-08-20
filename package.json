@@ -18,7 +18,7 @@
     "http-proxy": "1.1.4",
     "iocluster": ">= 1.4.1",
     "optimist": "0.6.1",
-    "socketcluster-server": ">= 0.9.34",
+    "socketcluster-server": ">= 0.9.36",
     "uid-number": "0.0.5",
     "wrench": "1.5.8"
   },

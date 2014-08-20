@@ -75,6 +75,7 @@ SocketCluster.prototype._init = function (options) {
     path: null,
     socketRoot: null,
     schedulingPolicy: null,
+    allowClientPublish: true,
     clusterEngine: 'iocluster'
   };
 
@@ -375,10 +376,6 @@ SocketCluster.prototype._initLoadBalancer = function () {
 
 SocketCluster.prototype._launchLoadBalancer = function (callback) {
   var self = this;
-  
-  if (self._balancer) {
-    self._errorDomain.remove(self._balancer);
-  }
 
   var balancerErrorHandler = function (err) {
     self.errorHandler(err, {type: 'balancer'});

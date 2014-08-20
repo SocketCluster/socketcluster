@@ -91,6 +91,7 @@ SCWorker.prototype._init = function (options) {
     sourcePort: this.options.sourcePort,
     ioClusterClient: this._ioClusterClient,
     transports: this.options.transports,
+    allowClientPublish: this.options.allowClientPublish,
     pingTimeout: this.options.heartbeatTimeout * 1000,
     pingInterval: this.options.heartbeatInterval * 1000,
     ackTimeout: this.options.ackTimeout * 1000,
