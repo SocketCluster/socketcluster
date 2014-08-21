@@ -97,15 +97,15 @@ scServer.on('message', function (m) {
       console.log('Done connecting');
       setTimeout(function () {
         var sessionCounts = {};
-        var sessions;
+        var sessionData;
         var storeCount = 0;
         var totalSessions = 0;
         
         for (var i in storeData) {
           storeCount++;
-          sessions = storeData[i].sessions;
+          sessionData = storeData[i].sessionData;
           sessionCounts[i] = 0;
-          for (var j in sessions) {
+          for (var j in sessionData) {
             sessionCounts[i]++;
             totalSessions++;
           }
@@ -150,6 +150,24 @@ scServer.on('message', function (m) {
         
         cb();
       }, 30000);
+    });
+    
+    tasks.push(function (cb) {
+      console.log('Checking that channels/events get cleaned up after sessions time out');
+      
+      var channels = {};
+      for (var i in storeData) {
+        channels[i] = storeData[i].channels;
+      }
+      console.log('Store channels/events after session timeouts:', util.inspect(channels, {depth: 5}));
+      
+      for (var j in channels) {
+        var isChannelMapEmpty = JSON.stringify(channels[j]).length < 70;
+        assert(isChannelMapEmpty, 'Channels/events were not cleaned up after sessions timed out');
+      }
+      console.log('[Success] Store channels/events were cleaned up after sessions timed out');
+      
+      cb();
     });
     
     var timedTasks = [];

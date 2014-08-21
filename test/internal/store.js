@@ -9,7 +9,8 @@ module.exports.run = function (store) {
   
   // Send test data to index.js every second
   var testDataInterval = setInterval(function () {
-    var sessions = Object.keys(store.get(['__iocl', 'sed']) || {});
+    var sessionData = Object.keys(store.dataMap.get(['__iocl', 'sed']) || {});
+    var channels = store.channelMap.getAll();
     var req = http.request({
       socketPath: resultSocketPath,
       method: 'POST'
@@ -24,14 +25,20 @@ module.exports.run = function (store) {
       {
         origin: 'store',
         pid: process.pid,
-        type: 'sessions',
-        data: sessions
+        type: 'sessionData',
+        data: sessionData
+      },
+      {
+        origin: 'store',
+        pid: process.pid,
+        type: 'channels',
+        data: channels
       },
       {
         origin: 'store',
         pid: process.pid,
         type: 'all',
-        data: store.getAll()
+        data: store.dataMap.getAll()
       }
     ]));
     req.end();
