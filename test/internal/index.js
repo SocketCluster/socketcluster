@@ -71,6 +71,12 @@ scServer.on('message', function (m) {
         var socket = scClient.connect(options);
         socket.once('connect', function () {
           if (socket.connected) {
+            // Subscribe to some events
+            socket.on('event1', function () {});
+            socket.on('event2', function () {});
+            socket.on('event3', function () {});
+            socket.on('event4', function () {});
+
             console.log('#' + ++socketCount + ' - Socket ' + socket.id + ' connected');
  
             var interval = setInterval(function () {
@@ -162,7 +168,7 @@ scServer.on('message', function (m) {
       console.log('Store channels/events after session timeouts:', util.inspect(channels, {depth: 5}));
       
       for (var j in channels) {
-        var isChannelMapEmpty = JSON.stringify(channels[j]).length < 70;
+        var isChannelMapEmpty = JSON.stringify(channels[j]).length < 50;
         assert(isChannelMapEmpty, 'Channels/events were not cleaned up after sessions timed out');
       }
       console.log('[Success] Store channels/events were cleaned up after sessions timed out');

@@ -1,6 +1,7 @@
 var fs = require('fs');
 var http = require('http');
 var getTestSocketPath = require('./testsocketpath').getTestSocketPath;
+var util = require('util');
 
 module.exports.run = function (store) {
   console.log('   >> Store PID:', process.pid);
@@ -9,8 +10,13 @@ module.exports.run = function (store) {
   
   // Send test data to index.js every second
   var testDataInterval = setInterval(function () {
+    var socketChannelData = store.channelMap.get(['sockets']);
+    var channels = [];
+    for (var i in socketChannelData) {
+      channels = channels.concat(Object.keys(socketChannelData[i]['__iocl']['gle']));
+    }
     var sessionData = Object.keys(store.dataMap.get(['__iocl', 'sed']) || {});
-    var channels = store.channelMap.getAll();
+    
     var req = http.request({
       socketPath: resultSocketPath,
       method: 'POST'
