@@ -40,6 +40,20 @@ scServer.on('message', function (m) {
           }
           cb(err);
         });
+      },
+      function (cb) {
+        socket.removeAllListeners('pong');
+        socket.on('pong', function (data) {
+          var err;
+          try {
+            assert(JSON.stringify(data) == JSON.stringify({message: 'published pong'}),
+              'Received incorrect data from published "pong" event');
+          } catch (e) {
+            err = e;
+          }
+          cb(err);
+        });
+        socket.publish('pong', {message: 'published pong'});
       }
     ];
     
