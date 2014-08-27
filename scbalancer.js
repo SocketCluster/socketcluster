@@ -59,6 +59,7 @@ var SCBalancer = function (options) {
   this._proxy.on('error', this._handleError.bind(this));
 
   if (this.protocol == 'https') {
+    if(this.protocolOptions.pfx) this.protocolOptions.pfx = require('fs').readFileSync(this.protocolOptions.pfx);
     this._server = https.createServer(this.protocolOptions, this._handleRequest.bind(this));
   } else {
     this._server = http.createServer(this._handleRequest.bind(this));
