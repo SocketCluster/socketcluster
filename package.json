@@ -1,8 +1,8 @@
 {
   "name": "socketcluster",
   "description": "SocketCluster - A Highly parallelized WebSocket server cluster to make the most of multi-core machines/instances.",
-  "version": "0.9.70",
-  "homepage": "https://github.com/topcloud/socketcluster",
+  "version": "0.9.71",
+  "homepage": "http://socketcluster.io",
   "contributors": [
     {
       "name": "Jonathan Gros-Dubois",
