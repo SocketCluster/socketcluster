@@ -3,15 +3,9 @@
 	<head>
 		<script type="text/javascript" src="/socketcluster.js"></script>
 		<script type="text/javascript">
-			var options = {
-				protocol: location.protocol.replace(/:$/, ''),
-				hostname: location.hostname,
-				port: 8000,
-				autoReconnect: true
-			};
-
 			// Initiate the connection to the server
-			var socket = socketCluster.connect(options);
+			var socket = socketCluster.connect();
+      
       socket.on('error', function (err) {
         throw 'Socket error - ' + err;
       });
