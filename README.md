@@ -159,8 +159,8 @@ var fs = require('fs');
 module.exports.run = function (worker) {
     // Get a reference to our raw Node HTTP server
     var httpServer = worker.getHTTPServer();
-    // Get a reference to our WebSocket server
-    var wsServer = worker.getSCServer();
+    // Get a reference to our SocketCluster server (WebSockets)
+    var scServer = worker.getSCServer();
     
     /*
         We're going to read our main HTML file and the socketcluster-client
@@ -206,7 +206,7 @@ module.exports.run = function (worker) {
         In here we handle our incoming WebSocket connections and listen for events.
         From here onwards is just like Socket.io but with some additional features.
     */
-    wsServer.on('connection', function (socket) {
+    scServer.on('connection', function (socket) {
         // Emit a 'greet' event on the current socket with value 'hello world'
         socket.emit('greet', 'hello world');
         
@@ -218,11 +218,11 @@ module.exports.run = function (worker) {
         activeSessions[socket.session.id] = socket.session;
     });
   
-    wsServer.on('disconnection', function (socket) {
+    scServer.on('disconnection', function (socket) {
         console.log('Socket ' + socket.id + ' was disconnected');
     });
     
-    wsServer.on('sessionend', function (ssid) {
+    scServer.on('sessionend', function (ssid) {
         delete activeSessions[ssid];
     });
     
@@ -255,7 +255,7 @@ socket.global.publish('foo', eventData, callback);
 
 Publish to all subscribed sockets/session (this time we access the global object directly from the SCServer instance):
 ```js
-wsServer.global.publish('foo', eventData, callback);
+scServer.global.publish('foo', eventData, callback);
 ```
 
 Note that when you publish an event, only the clients which are actually subscribed to that particular event
@@ -277,7 +277,7 @@ module.exports.run = function (worker) {
     // Get a reference to our raw Node HTTP server
     var httpServer = worker.getHTTPServer();
     // Get a reference to our WebSocket server
-    var wsServer = worker.getSCServer();
+    var scServer = worker.getSCServer();
     
     var app = require('express')();
     
@@ -349,7 +349,7 @@ SocketCluster provides two middleware lines for filtering out sockets and events
 
 MIDDLEWARE_HANDSHAKE middleware for filtering out sockets based on session data:
 ```js
-wsServer.addMiddleware(wsServer.MIDDLEWARE_HANDSHAKE, function (req, next) {
+scServer.addMiddleware(scServer.MIDDLEWARE_HANDSHAKE, function (req, next) {
   req.session.get('isUserAuthorized', function (err, value) {
     if (value) {
       next();
@@ -362,7 +362,7 @@ wsServer.addMiddleware(wsServer.MIDDLEWARE_HANDSHAKE, function (req, next) {
 
 MIDDLEWARE_EVENT middleware for filtering out individual events:
 ```js
-wsServer.addMiddleware(wsServer.MIDDLEWARE_EVENT, function (socket, event, data, next) {
+scServer.addMiddleware(scServer.MIDDLEWARE_EVENT, function (socket, event, data, next) {
   if (event == 'bla') {
     next(new Error('bla event is not allowed for socket ' + socket.id + ' on session ' + socket.session.id));
   } else {
