@@ -176,13 +176,23 @@ SocketCluster.prototype._init = function (options) {
       protoOpts.cert = protoOpts.cert.toString();
     }
     if (protoOpts.pfx instanceof Buffer) {
-      protoOpts.pfx = protoOpts.pfx.toString();
+      protoOpts.pfx = protoOpts.pfx.toString('base64');
     }
     if (protoOpts.passphrase == null) {
-      var privKeyEncLine = protoOpts.key.split('\n')[1];
-      if (privKeyEncLine.toUpperCase().indexOf('ENCRYPTED') > -1) {
-        var message = 'The supplied private key is encrypted and cannot be used without a passphrase - ' +
-          'Please provide a valid passphrase as a property to protocolOptions';
+      if (protoOpts.key) {
+        var privKeyEncLine = protoOpts.key.split('\n')[1];
+        if (privKeyEncLine.toUpperCase().indexOf('ENCRYPTED') > -1) {
+          var message = 'The supplied private key is encrypted and cannot be used without a passphrase - ' +
+            'Please provide a valid passphrase as a property to protocolOptions';
+          throw new Error(message);
+        }
+      } else if (protoOpts.pfx) {
+        var message = 'The supplied pfx certificate cannot be used without a passphrase - ' +
+            'Please provide a valid passphrase as a property to protocolOptions';
+        throw new Error(message);
+      } else {
+        var message = 'The supplied protocolOptions were invalid - ' +
+          'Please provide either a key and cert pair or a pfx certificate';
         throw new Error(message);
       }
       process.exit();

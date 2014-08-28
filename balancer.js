@@ -76,6 +76,9 @@ if (cluster.isMaster) {
 
   process.on('message', function (m) {
     if (m.type == 'init') {
+      if (m.data && m.data.protocolOptions && m.data.protocolOptions.pfx) {
+        m.data.protocolOptions.pfx = new Buffer(m.data.protocolOptions.pfx, 'base64');
+      }
       balancer = new SCBalancer(m.data);
       balancer.on('error', handleError);
       balancer.on('notice', handleNotice);
