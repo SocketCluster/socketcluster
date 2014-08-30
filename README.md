@@ -29,12 +29,6 @@ SocketCluster was designed to be lightweight and its realtime API is almost iden
 Follow the project on Twitter: https://twitter.com/SocketCluster
 Subscribe for updates: http://socketcluster.launchrock.com/
 
-## Recent changes
-
-v0.9.44 - Major efficiency improvement - Now using UNIX sockets instead of TCP sockets for IPC. Uses named pipes on Windows.
-This change affected the API. The workers and stores start options are now just integers instead of arrays of port numbers.
-Also note that the balancerCount option was renamed to balancers.
-
 ## Memory leak profile
 
 SocketCluster has been tested for memory leaks.
