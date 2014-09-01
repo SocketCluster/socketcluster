@@ -4,6 +4,7 @@ var crypto = require('crypto');
 var domain = require('domain');
 var http = require('http');
 var fs = require('fs');
+var base64id = require('base64id');
 
 var SCWorker = function (options) {
   var self = this;
@@ -83,9 +84,18 @@ SCWorker.prototype._init = function (options) {
   this._ioClusterClient.on('notice', function () {
     self.noticeHandler.apply(self, arguments);
   });
+  this.global = this._ioClusterClient.global();
 
   this._server = http.createServer();
   this._errorDomain.add(this._server);
+  
+  var secure = this.options.protocol == 'https' ? 1 : 0;
+  
+  this._idPrefix = (this.options.host || '') + '_' + this.options.socketName + '_' +
+    this.options.sourcePort + '_' + secure + '_';
+  
+  this._ssidCookieName = 'n/' + this.options.appName + '/ssid';
+  this._sessionIdRegex = new RegExp('(' + this._ssidCookieName + '=)([^;]*)');
 
   this._socketServer = socketClusterServer.attach(this._server, {
     sourcePort: this.options.sourcePort,
@@ -99,7 +109,7 @@ SCWorker.prototype._init = function (options) {
     destroyUpgradeTimeout: this.options.socketUpgradeTimeout * 1000,
     maxHttpBufferSize: this.options.maxHttpBufferSize,
     socketName: this.options.socketName,
-    secure: this.options.protocol == 'https',
+    secure: secure,
     host: this.options.host,
     origins: this.options.origins,
     appName: this.options.appName,
@@ -119,12 +129,27 @@ SCWorker.prototype._init = function (options) {
 
   this._socketPath = this._socketServer.getPath();
   this._socketPathRegex = new RegExp('^' + this._socketPath);
-
+  
   this._errorDomain.add(this._socketServer);
+  this._server.on('request', this._httpRequestHandler.bind(this));
+
   this._socketServer.on('ready', function () {
-    self._server.on('request', self._httpRequestHandler.bind(self));
     self.emit(self.EVENT_READY);
   });
+};
+
+SCWorker.prototype._generateSessionId = function () {
+  return this._idPrefix + base64id.generateId();
+};
+
+SCWorker.prototype._parseSessionId = function (cookieString) {
+  if (typeof cookieString == 'string') {
+    var result = cookieString.match(this._sessionIdRegex);
+    if (result) {
+      return result[2];
+    }
+  }
+  return null;
 };
 
 SCWorker.prototype.getSocketURL = function () {
@@ -153,10 +178,35 @@ SCWorker.prototype._start = function () {
 };
 
 SCWorker.prototype._httpRequestHandler = function (req, res) {
+  var self = this;
+  
   this._httpRequestCount++;
+  
   if (req.url == this._paths.statusURL) {
     this._handleStatusRequest(req, res);
   } else if (!this._socketPathRegex.test(req.url)) {
+    var ssid;
+    if (req.headers) {
+      ssid = this._parseSessionId(req.headers.cookie);
+    }
+    if (!ssid) {
+      ssid = this._generateSessionId();
+
+      // Monkey patch writeHead to prevent the session id cookie from being overwritten
+      var writeHead = res.writeHead;
+      res.writeHead = function () {
+        var headers = arguments[arguments.length - 1];
+        var cookieHeader = self._ssidCookieName + '=' + ssid;
+        var extraCookies = res.getHeader('Set-Cookie');
+        if (extraCookies) {
+          cookieHeader = [cookieHeader].concat(extraCookies);
+        }
+        res.setHeader('Set-Cookie', cookieHeader);
+        writeHead.apply(res, arguments);
+      };
+    }
+    req.session = this._ioClusterClient.session(ssid);
+    req.global = this.global;
     this._server.emit('req', req, res);
   }
 };

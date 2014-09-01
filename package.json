@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "async": "0.7.0",
+    "base64id": "0.1.0",
     "http-proxy": "1.1.4",
     "iocluster": ">= 1.4.4",
     "optimist": "0.6.1",
