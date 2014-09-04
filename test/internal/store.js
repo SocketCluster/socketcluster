@@ -13,7 +13,7 @@ module.exports.run = function (store) {
     var socketChannelData = store.channelMap.get(['sockets']);
     var channels = [];
     for (var i in socketChannelData) {
-      channels = channels.concat(Object.keys(socketChannelData[i]['__iocl']['gle']));
+      channels = channels.concat(Object.keys(socketChannelData[i]));
     }
     var sessionData = Object.keys(store.dataMap.get(['__iocl', 'sed']) || {});
     
