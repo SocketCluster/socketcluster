@@ -117,7 +117,7 @@ SCWorker.prototype._init = function (options) {
   });
 
   this._socketServer.on('connection', function (socket) {
-    socket.on('message', function () {
+    socket.addMessageHandler(function () {
       self._ioRequestCount++;
     });
     self.emit(self.EVENT_CONNECTION, socket);
