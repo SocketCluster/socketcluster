@@ -18,21 +18,17 @@ module.exports.run = function (worker) {
 
   var activeSessions = {};
 
-	var count = 0;
+  var count = 0;
 
-  wsServer.on('notice', function (notice) {
-		console.log('NOTICE:', notice);
-	});
-  
   /*
-      In here we handle our incoming WebSocket connections and listen for events.
-      From here onwards is just like Socket.io but with some additional features.
+    In here we handle our incoming WebSocket connections and listen for events.
+    From here onwards is just like Socket.io but with some additional features.
   */
   wsServer.on('connection', function (socket) {
     /*
-        Store that socket's session for later use.
-        We will emit events on it later - Those events will 
-        affect all sockets which belong to that session.
+      Store that socket's session for later use.
+      We will emit events on it later - Those events will 
+      affect all sockets which belong to that session.
     */
     activeSessions[socket.session.id] = socket.session;
     
