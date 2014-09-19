@@ -468,3 +468,7 @@ The SocketCluster client was run on the largest possible 32-core Amazon EC2 c3.8
 #### Screenshot
 
 ![SC screenshot](https://raw.github.com/topcloud/socketcluster/master/assets/benchmarks/sc_42k_clients.png)
+
+## License
+
+MIT
