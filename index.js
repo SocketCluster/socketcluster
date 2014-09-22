@@ -58,7 +58,7 @@ SocketCluster.prototype._init = function (options) {
     maxHttpBufferSize: null,
     origins: '*:*',
     matchOriginProtocol: true,
-    addressSocketLimit: null,
+    addressSocketLimit: 0,
     socketEventLimit: 100,
     pollingDuration: 30,
     heartbeatInterval: 25,
@@ -227,16 +227,7 @@ SocketCluster.prototype._init = function (options) {
   self._slashSequenceRegex = /\/+/g;
   self._startSlashRegex = /^\//;
 
-  self._minAddressSocketLimit = 30;
   self._dataExpiryAccuracy = 5000;
-
-  if (self.options.addressSocketLimit == null) {
-    var limit = self.options.sessionTimeout / 40;
-    if (limit < self._minAddressSocketLimit) {
-      limit = self._minAddressSocketLimit;
-    }
-    self.options.addressSocketLimit = limit;
-  }
 
   self._clusterEngine = require(self.options.clusterEngine);
 
