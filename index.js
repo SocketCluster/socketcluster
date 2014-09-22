@@ -70,7 +70,7 @@ SocketCluster.prototype._init = function (options) {
     balancerController: null,
     storeController: null,
     rebootOnSignal: true,
-    useSmartBalancing: false,
+    useSmartBalancing: true,
     downgradeToUser: false,
     path: null,
     socketRoot: null,
