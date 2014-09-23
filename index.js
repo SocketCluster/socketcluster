@@ -14,6 +14,7 @@ var SocketCluster = function (options) {
   self.EVENT_FAIL = 'fail';
   self.EVENT_NOTICE = 'notice';
   self.EVENT_READY = 'ready';
+  self.EVENT_WORKER = 'worker';
   
   // These events don't get triggered on SocketCluster (yet)
   self.EVENT_INFO = 'info';
@@ -460,6 +461,8 @@ SocketCluster.prototype._workerReadyHandler = function (worker) {
     }
     self._active = true;
   }
+  
+  self.emit(self.EVENT_WORKER, worker);
 };
 
 SocketCluster.prototype._handleWorkerExit = function (worker, code, signal) {
