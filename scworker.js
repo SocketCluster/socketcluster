@@ -82,6 +82,8 @@ SCWorker.prototype._init = function (options) {
   this.global = this._ioClusterClient.global();
 
   this._server = http.createServer();
+  this._server.global = this.global;
+  
   this._errorDomain.add(this._server);
   
   var secure = this.options.protocol == 'https' ? 1 : 0;
