@@ -9,8 +9,8 @@ module.exports.run = function (worker) {
   
   // Get a reference to our raw Node HTTP server
   var httpServer = worker.getHTTPServer();
-  // Get a reference to our WebSocket server
-  var wsServer = worker.getSCServer();
+  // Get a reference to our realtime SocketCluster server
+  var scServer = worker.getSCServer();
   
   app.use(serveStatic(__dirname + '/public'));
 
@@ -21,10 +21,10 @@ module.exports.run = function (worker) {
   var count = 0;
 
   /*
-    In here we handle our incoming WebSocket connections and listen for events.
+    In here we handle our incoming realtime connections and listen for events.
     From here onwards is just like Socket.io but with some additional features.
   */
-  wsServer.on('connection', function (socket) {
+  scServer.on('connection', function (socket) {
     /*
       Store that socket's session for later use.
       We will emit events on it later - Those events will 
@@ -35,11 +35,11 @@ module.exports.run = function (worker) {
     socket.on('ping', function (data) {
       count++;
       console.log('PING', data);
-      wsServer.global.publish('pong', count);
+      scServer.global.publish('pong', count);
     });
   });
   
-  wsServer.on('sessionend', function (ssid) {
+  scServer.on('sessionend', function (ssid) {
     delete activeSessions[ssid];
   });
   
