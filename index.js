@@ -18,7 +18,6 @@ var SocketCluster = function (options) {
   
   // These events don't get triggered on SocketCluster (yet)
   self.EVENT_INFO = 'info';
-  self.EVENT_LEADER_START = 'leaderstart';
 
   self._errorDomain = domain.create();
   self._errorDomain.on('error', function (err) {
@@ -427,13 +426,6 @@ SocketCluster.prototype._workerReadyHandler = function (worker) {
   var self = this;
   
   self._workers.push(worker);
-  
-  if (!worker.id) {
-    worker.send({
-      type: 'emit',
-      event: self.EVENT_LEADER_START
-    });
-  }
 
   if (self._active && self.options.logLevel > 0) {
     self.log('Worker ' + worker.id + ' was respawned');

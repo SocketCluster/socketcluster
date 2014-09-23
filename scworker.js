@@ -14,11 +14,6 @@ var SCWorker = function (options) {
   self.EVENT_EXIT = 'exit';
   self.EVENT_READY = 'ready';
   self.EVENT_CONNECTION = 'connection';
-  
-  /*
-    This event comes from the SocketCluster master process
-  */
-  self.EVENT_LEADER_START = 'leaderstart';
 
   this._errorDomain = domain.create();
   this._errorDomain.on('error', function () {
