@@ -42,6 +42,9 @@ SCWorker.prototype._init = function (options) {
     this.options[i] = options[i];
   }
   
+  this.id = this.options.workerId;
+  this.isLeader = this.options.isLeader;
+  
   if (this.options.downgradeToUser && process.setuid) {
     try {
       process.setuid(this.options.downgradeToUser);

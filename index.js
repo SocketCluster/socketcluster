@@ -506,7 +506,7 @@ SocketCluster.prototype._launchWorker = function (workerId, respawn) {
   workerOpts.socketName = self._getWorkerSocketName(workerId);
   workerOpts.stores = self._getStoreSocketPaths();
   workerOpts.dataKey = self._dataKey;
-  workerOpts.lead = workerId ? 0 : 1;
+  workerOpts.isLeader = workerId ? false : true;
 
   worker.send({
     type: 'init',
