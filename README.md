@@ -125,9 +125,8 @@ var socketCluster = new SocketCluster({
     workerController: 'worker.js',
     // balancerController: 'firewall.js', // Optional
     // storeController: 'store.js', // Optional
-    // useSmartBalancing: true, // Optional - If true, load balancing will be based on session id instead of IP address. Defaults to false.
-    rebootWorkerOnCrash: false, // Optional, makes debugging easier - Defaults to true (should be true in production),
-    addressSocketLimit: 50 // Optional, prevents malicious clients from hogging up unlimited sockets (memory) on your server - Defaults to 30
+    // useSmartBalancing: true, // Optional - If true, load balancing will be based on session id instead of IP address. Defaults to true.
+    rebootWorkerOnCrash: false // Optional, makes debugging easier - Defaults to true (should be true in production),
 });
 ```
 
