@@ -9,9 +9,11 @@ var async = require('async');
 var SCBalancer = function (options) {
   var self = this;
 
+  this._socketHangUpMessage = 'socket hang up';
+  
   this._errorDomain = domain.create();
   this._errorDomain.on('error', function (err) {
-    if (!err.message || (err.message != 'read ECONNRESET' && err.message != 'socket hang up')) {
+    if (!err.message || (err.message != 'read ECONNRESET' && err.message != self._socketHangUpMessage)) {
       self.emit('error', err);
     }
   });
@@ -115,7 +117,10 @@ SCBalancer.prototype._defaultErrorHandler = function (err, req, res) {
 SCBalancer.prototype._handleError = function (error, req, res) {
   var self = this;
 
-  this.emit('notice', error.message || error);
+  var errorMessage = error.message || error;
+  if (errorMessage != this._socketHangUpMessage) {
+    this.emit('notice', errorMessage);
+  }
   
   var errorMiddleware = this._middleware[this.MIDDLEWARE_ERROR];
   if (errorMiddleware.length) {
