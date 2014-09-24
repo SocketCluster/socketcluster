@@ -207,6 +207,19 @@ SCWorker.prototype._httpRequestHandler = function (req, res) {
     }
     req.session = this._ioClusterClient.session(ssid);
     req.global = this.global;
+    
+    var forwardedFor = req.headers['x-forwarded-for'];
+    
+    if (forwardedFor) {
+      var forwardedClientIP;
+      if (forwardedFor.indexOf(',') > -1) {
+        forwardedClientIP = forwardedFor.split(',')[0];
+      } else {
+        forwardedClientIP = forwardedFor;
+      }
+      req.clientAddress = forwardedClientIP;
+    }
+    
     this._server.emit('req', req, res);
   }
 };
