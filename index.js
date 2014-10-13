@@ -76,6 +76,7 @@ SocketCluster.prototype._init = function (options) {
     socketRoot: null,
     schedulingPolicy: null,
     allowClientPublish: true,
+    addSessionToHTTPRequest: true,
     clusterEngine: 'iocluster'
   };
 

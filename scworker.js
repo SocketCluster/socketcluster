@@ -205,7 +205,9 @@ SCWorker.prototype._httpRequestHandler = function (req, res) {
         writeHead.apply(res, arguments);
       };
     }
-    req.session = this._ioClusterClient.session(ssid);
+    if (self.options.addSessionToHTTPRequest) {
+      req.session = this._ioClusterClient.session(ssid);
+    }
     req.global = this.global;
     
     var forwardedFor = req.headers['x-forwarded-for'];
