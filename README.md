@@ -1,7 +1,7 @@
 SocketCluster
 ======
 
-![SocketCluster logo](https://raw.github.com/topcloud/socketcluster/master/assets/logo.png)
+[![SocketCluster logo](https://raw.github.com/topcloud/socketcluster/master/assets/logo.png)](http://socketcluster.io/)
 
 Complete documentation available at: http://socketcluster.io/
 
