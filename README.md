@@ -3,7 +3,7 @@ SocketCluster
 
 ![SocketCluster logo](https://raw.github.com/topcloud/socketcluster/master/assets/logo.png)
 
-**See bottom of page for benchmark tests.**
+Complete documentation available at: http://socketcluster.io/
 
 ## Introduction
 
