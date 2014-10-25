@@ -6,7 +6,7 @@ process.stdin.setEncoding('utf8');
 var wrench = require('wrench');
 var fs = require('fs');
 var path = require('path');
-var argv = require('optimist').argv;
+var argv = require('minimist')(process.argv.slice(2));
 var childProcess = require('child_process');
 var exec = childProcess.exec;
 var spawn = childProcess.spawn;
