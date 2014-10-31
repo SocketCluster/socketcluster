@@ -29,6 +29,12 @@ scServer.on('message', function (m) {
         });
       },
       function (cb) {
+        socket.subscribe('pong', function (err) {
+          assert(!err);
+          cb(err);
+        });
+      },
+      function (cb) {
         socket.emit('ping');
         socket.on('pong', function (data) {
           var err;
