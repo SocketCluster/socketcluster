@@ -21,6 +21,12 @@
         }
       });
       
+      socket.subscribe('pong', function (err) {
+        if (err) {
+          console.log('Failed to subscribe to pong event channel');
+        }
+      });
+      
       socket.on('pong', function (num) {
         console.log('PONG:', num);
       });
