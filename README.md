@@ -5,6 +5,23 @@ SocketCluster
 
 Complete documentation available at: http://socketcluster.io/
 
+## Recent changes
+
+API changes introduced in v0.9.90:
+As a new security measure, you now have to explicitly subscribe to events if you want to receive them from a publish channel.
+So this:
+```js
+// Client side
+socket.on('channel.foo', handler, optionalCallback);
+```
+Should now be this:
+```js
+// Client side
+// First argument can also be an array of event channels
+socket.subscribe('channel.foo', optionalCallback);
+socket.on('channel.foo', handler);
+```
+
 ## Introduction
 
 SocketCluster is a fast, highly scalable HTTP + realtime server engine which lets you build multi-process 
