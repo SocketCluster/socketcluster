@@ -7,6 +7,10 @@ Complete documentation available at: http://socketcluster.io/
 
 ## Recent changes
 
+**1 November 2014**
+
+Updated http://socketcluster.io/ documentation
+
 API changes introduced in v0.9.90:
 As a new security measure, you now have to explicitly subscribe to events if you want to receive them from a publish channel.
 So this:
