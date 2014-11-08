@@ -16,8 +16,10 @@ scServer.on('message', function (m) {
   if (m.event == 'ready') {
     var socket = scClient.connect(options);
     
+    var pongChannel;
+    
     var tasks = [
-      function (cb) {
+      function (cb) { 
         socket.on('first', function (data) {
           var err;
           try {
@@ -35,8 +37,8 @@ scServer.on('message', function (m) {
         });
       },
       function (cb) {
-        socket.emit('ping');
-        socket.on('pong', function (data) {
+        pongChannel = socket.subscribe('pong');
+        pongChannel.watch(function (data) {
           var err;
           try {
             assert(JSON.stringify(data) == JSON.stringify({message: 'This is pong data'}),
@@ -46,10 +48,11 @@ scServer.on('message', function (m) {
           }
           cb(err);
         });
+        socket.emit('ping');
       },
       function (cb) {
-        socket.removeAllListeners('pong');
-        socket.on('pong', function (data) {
+        pongChannel.unwatch();
+        pongChannel.watch(function (data) {
           var err;
           try {
             assert(JSON.stringify(data) == JSON.stringify({message: 'published pong'}),

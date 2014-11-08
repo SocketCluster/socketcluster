@@ -58,7 +58,7 @@ var options = {
 };
 
 scServer.on('message', function (m) {
-  var numSockets = 200;
+  var numSockets = 100;
   var messageInterval = 2000;
   var socketCount = 0;
 
@@ -97,10 +97,57 @@ scServer.on('message', function (m) {
       });
     }
     
+    tasks.push(function (cb) {
+      console.log('Done connecting');
+      console.log();
+      console.log('Checking that a channel gets cleaned up after all clients unsubscribe from it');
+      
+      var numTest = 5;
+      var c = 0;
+      
+      for (var i in sockets) {
+        sockets[i].subscribe('foo');
+        if (c++ >= numTest) {
+          break;
+        }
+      }
+      
+      var checkResults = function () {
+        var channels = {};
+        for (var i in storeData) {
+          channels[i] = storeData[i].channels;
+        }
+        
+        var channelMapAsString = util.inspect(channels, {depth: 5});
+        console.log('Store channels after session timeouts:', channelMapAsString);
+        
+        var channelMapHasFoo = /foo/.test(channelMapAsString);
+        assert(!channelMapHasFoo, 'Channel was not cleaned up after all clients unsubscribed from it');
+
+        console.log('[Success] Store channel was cleaned up after all clients unsubscribed from it');
+        
+        cb();
+      };
+      
+      c = 0;
+
+      setTimeout(function () {
+        for (var i in sockets) {
+          sockets[i].unsubscribe('foo');
+          if (c++ >= numTest) {
+            break;
+          }
+        }
+        setTimeout(checkResults, 5000);
+      }, 3000);
+    });
+    
     var assertTimeout = null;
     
     tasks.push(function (cb) {
-      console.log('Done connecting');
+      console.log();
+      console.log('Checking that session data gets evenly distributed between stores');
+      
       setTimeout(function () {
         var sessionCounts = {};
         var sessionData;
@@ -132,6 +179,7 @@ scServer.on('message', function (m) {
     });
     
     tasks.push(function (cb) {
+      console.log();
       clearTimeout(assertTimeout);
       assertTimeout = setTimeout(timeoutError, 40000);
       
@@ -159,25 +207,26 @@ scServer.on('message', function (m) {
     });
     
     tasks.push(function (cb) {
-      console.log('Checking that channels/events get cleaned up after sessions time out');
+      console.log();
+      console.log('Checking that channels get cleaned up after sessions time out');
       
       var channels = {};
       for (var i in storeData) {
         channels[i] = storeData[i].channels;
       }
-      console.log('Store channels/events after session timeouts:', util.inspect(channels, {depth: 5}));
+      console.log('Store channels after session timeouts:', util.inspect(channels, {depth: 5}));
       
       for (var j in channels) {
         var isChannelMapEmpty = JSON.stringify(channels[j]).length < 50;
-        assert(isChannelMapEmpty, 'Channels/events were not cleaned up after sessions timed out');
+        assert(isChannelMapEmpty, 'Channels were not cleaned up after sessions timed out');
       }
-      console.log('[Success] Store channels/events were cleaned up after sessions timed out');
+      console.log('[Success] Store channels were cleaned up after sessions timed out');
       
       cb();
     });
     
     var timedTasks = [];
-    var timeoutMs = 5000;
+    var timeoutMs = 20000;
     
     var timeoutError = function () {
       throw new Error('Test timed out');
@@ -202,6 +251,7 @@ scServer.on('message', function (m) {
       if (err) {
         throw err;
       } else {
+        console.log();
         console.log('All tests passed!');
         endTest(function () {
           process.exit();
