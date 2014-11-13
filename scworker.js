@@ -131,7 +131,15 @@ SCWorker.prototype._init = function (options) {
   this._socketPathRegex = new RegExp('^' + this._socketPath);
   
   this._errorDomain.add(this._socketServer);
+  
+  // Make sure _httpRequestHandler is the first to handle HTTP requests
+  
+  var oldRequestListeners = this._server.listeners('request');
+  this._server.removeAllListeners('request');
   this._server.on('request', this._httpRequestHandler.bind(this));
+  for (var i in oldRequestListeners) {
+    this._server.on('request', oldRequestListeners[i]);
+  }
 
   this._socketServer.on('ready', function () {
     self.emit(self.EVENT_READY);
@@ -184,7 +192,7 @@ SCWorker.prototype._httpRequestHandler = function (req, res) {
   
   if (req.url == this._paths.statusURL) {
     this._handleStatusRequest(req, res);
-  } else if (!this._socketPathRegex.test(req.url)) {
+  } else {
     var ssid;
     if (req.headers) {
       ssid = this._parseSessionId(req.headers.cookie);
@@ -222,7 +230,9 @@ SCWorker.prototype._httpRequestHandler = function (req, res) {
       req.clientAddress = forwardedClientIP;
     }
     
-    this._server.emit('req', req, res);
+    if (!this._socketPathRegex.test(req.url)) {
+      this._server.emit('req', req, res);
+    }
   }
 };
 

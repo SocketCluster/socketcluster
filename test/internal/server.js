@@ -13,7 +13,8 @@ var socketCluster = new SocketCluster({
   socketEventLimit: 100,
   rebootWorkerOnCrash: true,
   useSmartBalancing: true,
-  sessionTimeout: 20
+  sessionTimeout: 20,
+  workerStatusInterval: 2
 });
 
 socketCluster.on('ready', function () {
