@@ -32,9 +32,9 @@ socket.subscribe('foo'); // We don't necessarily need the channel object
 ```
 
 ```js
-// New events
+// Subscribe events
 
-// Note that subscribe will only fail if explicitly blocked by middleware
+// Note that subscribe will only fail if explicitly blocked by middleware.
 // If the connection drops out, the subscription will stay pending until 
 // the connection comes back.
 
@@ -87,6 +87,21 @@ fooChannel.unsubscribe();  // unsubscribe from channel
 socket.unsubscribe('foo'); // unsubscribe using socket
 ```
 
+```js
+// Emit events between client and server.
+// This is the same as before.
+
+socket.emit('greeting', {from: 'alice', message: 'Hello'});
+```
+
+```js
+// Listen to events emitted on socket.
+// Same as before.
+
+socket.on('greeting', function (data) {
+ // ...
+});
+```
 
 **1 November 2014** (v0.9.90)
 
