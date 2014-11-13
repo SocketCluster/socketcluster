@@ -17,9 +17,9 @@
     "async": "0.7.0",
     "base64id": "0.1.0",
     "http-proxy": "1.4.3",
-    "iocluster": ">= 1.5.1",
+    "iocluster": ">= 1.6.0",
     "minimist": "1.1.0",
-    "socketcluster-server": ">= 0.9.43",
+    "socketcluster-server": ">= 0.9.44",
     "uid-number": "0.0.5",
     "wrench": "1.5.8"
   },
