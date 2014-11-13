@@ -103,24 +103,6 @@ socket.on('greeting', function (data) {
 });
 ```
 
-**1 November 2014** (v0.9.90)
-
-Updated http://socketcluster.io/ documentation.
-
-API changes introduced:
-As a new security measure, you now have to explicitly subscribe to events if you want to receive them from a publish channel.
-So this:
-```js
-// Client side
-socket.on('channel.foo', handler, optionalCallback);
-```
-Should now be this:
-```js
-// Client side
-// First argument can also be an array of event channels
-socket.subscribe('channel.foo', optionalCallback);
-socket.on('channel.foo', handler);
-```
 
 ## Introduction
 
