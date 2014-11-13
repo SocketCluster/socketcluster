@@ -7,11 +7,92 @@ Complete documentation available at: http://socketcluster.io/
 
 ## Recent changes
 
-**1 November 2014**
+**14 November 2014** (v1.0.1)
 
-Updated http://socketcluster.io/ documentation
+Updated http://socketcluster.io/ documentation (partially).
 
-API changes introduced in v0.9.90:
+v1.0.1 is not a drop-in upgrade. It involves some major changes to the client-side API (documented on website).
+Before this version, SC made no explicit distinction between pub/sub channels and regular client <=> server events.
+By listening to an event, the socket was implicitly subscribing to a channel by the same name.
+This feature was nice but it also masked a lot of the complexity behind SC and made handling events vs channels ambiguous and took
+away flexibility from the developer.
+
+The goal of this release is to make SC a viable open-source alternative to commercial realtime services like PubNub, Pusher, Firebase, etc...
+But without you having to give up control over your backend.
+
+Here is some sample code which demonstrates how to use the new API:
+
+```js
+// Subscribe to a channel
+
+var fooChannel = socket.subscribe('foo');
+// or
+socket.subscribe('foo'); // We don't necessarily need the channel object
+
+```
+
+```js
+// New events
+
+// Note that subscribe will only fail if explicitly blocked by middleware
+// If the connection drops out, the subscription will stay pending until 
+// the connection comes back.
+
+fooChannel.on('subscribeFail', function (err, channelName) {
+ // ...
+});
+
+fooChannel.on('subscribe', function (channelName) {
+ // ...
+});
+
+socket.on('subscribeFail', function (err, channelName) {
+  // ...
+});
+
+socket.on('subscribe', function (channelName) {
+  // ...
+});
+```
+
+```js
+// Watch incoming channel data
+
+fooChannel.watch(function (data) {
+  // This function will run whenever data is published
+  // to the foo channel.
+});
+// or
+socket.watch('foo', function (data) {
+  // This function will run whenever data is published
+  // to the foo channel.
+});
+```
+
+```js
+// Publish data to a channel
+
+fooChannel.publish(12345);             // publish from channel
+// or
+socket.channel('foo').publish(12345);  // same as above
+// or
+socket.publish('foo', 12345);          // publish from socket
+// or
+socket.publish('foo', {a: 123, b: 4}); // objects are valid too
+```
+
+```js
+fooChannel.unsubscribe();  // unsubscribe from channel
+// or
+socket.unsubscribe('foo'); // unsubscribe using socket
+```
+
+
+**1 November 2014** (v0.9.90)
+
+Updated http://socketcluster.io/ documentation.
+
+API changes introduced:
 As a new security measure, you now have to explicitly subscribe to events if you want to receive them from a publish channel.
 So this:
 ```js
