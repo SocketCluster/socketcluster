@@ -19,7 +19,7 @@ scServer.on('message', function (m) {
     var pongChannel;
     
     var tasks = [
-      function (cb) { 
+      function (cb) {
         socket.on('first', function (data) {
           var err;
           try {
@@ -27,12 +27,6 @@ scServer.on('message', function (m) {
           } catch (e) {
             err = e;
           }
-          cb(err);
-        });
-      },
-      function (cb) {
-        socket.subscribe('pong', function (err) {
-          assert(!err);
           cb(err);
         });
       },
