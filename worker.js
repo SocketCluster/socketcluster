@@ -58,7 +58,6 @@ process.on('message', function (m) {
 });
 
 process.on('SIGTERM', function () {
-console.log(111111);
   if (worker) {
     worker.close(function () {
       process.exit();
