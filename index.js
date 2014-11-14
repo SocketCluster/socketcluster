@@ -30,7 +30,9 @@ var SocketCluster = function (options) {
   });
   
   process.on('SIGTERM', function () {
+    self.killBalancers();
     self.killWorkers();
+    self.killStores();
     process.exit();
   });
 };
