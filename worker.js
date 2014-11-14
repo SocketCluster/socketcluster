@@ -1,5 +1,6 @@
 var SCWorker = require('./scworker');
 var worker;
+var processTermTimeout = 10000;
 
 var handleError = function (err) {
   var error;
@@ -32,7 +33,11 @@ var handleExit = function () {
 process.on('message', function (m) {
   if (m.type == 'init') {
     worker = new SCWorker(m.data);
-
+    
+    if (m.data.processTermTimeout) {
+      processTermTimeout = m.data.processTermTimeout;
+    }
+    
     if (m.data.propagateErrors) {
       worker.on('error', handleError);
       worker.on('notice', handleNotice);
@@ -49,5 +54,19 @@ process.on('message', function (m) {
     } else {
       worker.handleMasterEvent(m.event);
     }
+  }
+});
+
+process.on('SIGTERM', function () {
+console.log(111111);
+  if (worker) {
+    worker.close(function () {
+      process.exit();
+    });
+    setTimeout(function () {
+      process.exit();
+    }, processTermTimeout);
+  } else {
+    process.exit();
   }
 });

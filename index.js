@@ -28,6 +28,11 @@ var SocketCluster = function (options) {
   self._errorDomain.run(function () {
     self._init(options);
   });
+  
+  process.on('SIGTERM', function () {
+    self.killWorkers();
+    process.exit(0);
+  });
 };
 
 SocketCluster.prototype = Object.create(EventEmitter.prototype);
@@ -64,6 +69,7 @@ SocketCluster.prototype._init = function (options) {
     heartbeatInterval: 25,
     heartbeatTimeout: 60,
     workerStatusInterval: 10,
+    processTermTimeout: 10,
     propagateErrors: true,
     host: null,
     workerController: null,
@@ -366,9 +372,10 @@ SocketCluster.prototype._initLoadBalancer = function () {
       protocol: this.options.protocol,
       protocolOptions: this.options.protocolOptions,
       useSmartBalancing: this.options.useSmartBalancing,
-      checkStatusTimeout: this.options.connectTimeout * 1000,
       statusURL: this._paths.statusURL,
+      checkStatusTimeout: this.options.connectTimeout * 1000,
       statusCheckInterval: this.options.workerStatusInterval * 1000,
+      processTermTimeout: this.options.processTermTimeout * 1000,
       downgradeToUser: this.options.downgradeToUser,
       schedulingPolicy: this.options.schedulingPolicy,
       appBalancerControllerPath: this._paths.appBalancerControllerPath
@@ -500,6 +507,7 @@ SocketCluster.prototype._launchWorker = function (workerId, respawn) {
   worker.id = workerId;
 
   var workerOpts = self._cloneObject(self.options);
+  workerOpts.processTermTimeout *= 1000;
   workerOpts.paths = self._paths;
   workerOpts.workerId = workerId;
   workerOpts.sourcePort = self.options.port;
@@ -571,6 +579,7 @@ SocketCluster.prototype._start = function () {
       dataKey: self._dataKey,
       expiryAccuracy: self._dataExpiryAccuracy,
       downgradeToUser: self.options.downgradeToUser,
+      processTermTimeout: self.options.processTermTimeout * 1000,
       appStoreControllerPath: self._paths.appStoreControllerPath
     });
 
@@ -586,7 +595,19 @@ SocketCluster.prototype._start = function () {
 
 SocketCluster.prototype.killWorkers = function () {
   for (var i in this._workers) {
-    this._workers[i].kill();
+    this._workers[i].kill('SIGTERM');
+  }
+};
+
+SocketCluster.prototype.killBalancers = function () {
+  if (this._balancer) {
+    this._balancer.kill('SIGTERM');
+  }
+};
+
+SocketCluster.prototype.killStores = function () {
+  if (this._ioCluster) {
+    this._ioCluster.destroy();
   }
 };
 

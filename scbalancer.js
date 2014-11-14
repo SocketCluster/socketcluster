@@ -100,6 +100,10 @@ SCBalancer.prototype.start = function () {
   }
 };
 
+SCBalancer.prototype.close = function (callback) {
+  this._server.close(callback);
+};
+
 SCBalancer.prototype.addMiddleware = function (type, middleware) {
   this._middleware[type].push(middleware);
 };

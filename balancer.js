@@ -2,10 +2,12 @@ var cluster = require('cluster');
 var SCBalancer = require('./scbalancer');
 
 var balancer;
+var processTermTimeout = 10000;
 
 if (cluster.isMaster) {
+  var balancers;
+  
   process.on('message', function (m) {
-    var balancers;
     if (m.type == 'init') {
       cluster.schedulingPolicy = m.data.schedulingPolicy || cluster.SCHED_NONE;
       var balancerCount = m.data.balancerCount;
@@ -49,6 +51,14 @@ if (cluster.isMaster) {
       }
     }
   });
+  
+  process.on('SIGTERM', function () {
+    for (var i in balancers) {
+      balancers[i].kill('SIGTERM');
+    }
+    process.exit();
+  });
+  
 } else {
   var handleError = function (err, notice) {
     var error;
@@ -76,6 +86,10 @@ if (cluster.isMaster) {
 
   process.on('message', function (m) {
     if (m.type == 'init') {
+      if (m.data.processTermTimeout) {
+        processTermTimeout = m.data.processTermTimeout;
+      }
+      
       if (m.data && m.data.protocolOptions && m.data.protocolOptions.pfx) {
         m.data.protocolOptions.pfx = new Buffer(m.data.protocolOptions.pfx, 'base64');
       }
@@ -86,6 +100,19 @@ if (cluster.isMaster) {
       handleReady();
     } else if (m.type == 'setWorkers') {
       balancer.setWorkers(m.data);
+    }
+  });
+  
+  process.on('SIGTERM', function () {
+    if (balancer) {
+      balancer.close(function () {
+        process.exit();
+      });
+      setTimeout(function () {
+        process.exit();
+      }, processTermTimeout);
+    } else {
+      process.exit();
     }
   });
 }

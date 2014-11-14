@@ -146,6 +146,10 @@ SCWorker.prototype._init = function (options) {
   });
 };
 
+SCWorker.prototype.close = function (callback) {
+  this._server.close(callback);
+};
+
 SCWorker.prototype._generateSessionId = function () {
   return this._idPrefix + base64id.generateId();
 };
