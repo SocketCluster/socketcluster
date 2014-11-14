@@ -6,10 +6,17 @@ var processTermTimeout = 10000;
 
 if (cluster.isMaster) {
   var balancers;
+  var alive = true;
+  var terminatedCount = 0;
   
   process.on('message', function (m) {
     if (m.type == 'init') {
       cluster.schedulingPolicy = m.data.schedulingPolicy || cluster.SCHED_NONE;
+      
+      if (m.data.processTermTimeout) {
+        processTermTimeout = m.data.processTermTimeout;
+      }
+      
       var balancerCount = m.data.balancerCount;
       var readyCount = 0;
       var isReady = false;
@@ -37,7 +44,11 @@ if (cluster.isMaster) {
         });
         
         balancer.on('exit', function () {
-          launchBalancer(i);
+          if (alive) {
+            launchBalancer(i);
+          } else if (++terminatedCount >= balancers.length) {
+            process.exit();
+          }
         })
         balancer.send(m);
       };
@@ -53,10 +64,13 @@ if (cluster.isMaster) {
   });
   
   process.on('SIGTERM', function () {
+    alive = false;
     for (var i in balancers) {
       balancers[i].kill('SIGTERM');
     }
-    process.exit();
+    setTimeout(function () {
+      process.exit();
+    }, processTermTimeout);
   });
   
 } else {
