@@ -31,7 +31,7 @@ var SocketCluster = function (options) {
   
   process.on('SIGTERM', function () {
     self.killWorkers();
-    process.exit(0);
+    process.exit();
   });
 };
 
