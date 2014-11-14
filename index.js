@@ -494,7 +494,7 @@ SocketCluster.prototype._handleWorkerExit = function (worker, code, signal) {
     if (this.options.logLevel > 0) {
       this.log('Respawning worker ' + worker.id);
     }
-    this._launchWorker(worker.id);
+    this._launchWorker(worker.id, true);
   }
 };
 

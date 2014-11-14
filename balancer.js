@@ -42,7 +42,7 @@ if (cluster.isMaster) {
         balancer.send(m);
       };
 
-      for (var i=0; i<balancerCount; i++) {
+      for (var i = 0; i < balancerCount; i++) {
         launchBalancer(i);
       }
     } else {
