@@ -22,6 +22,8 @@ module.exports.run = function (fileName, args) {
   var runMaster = function () {
     scMaster = fork(fileName, args, {silent: true});
     
+    logMessage('>>>> Spawned master - PID: ' + scMaster.pid + '\n');
+    
     scMaster.stdout.on('data', logMessage);
     scMaster.stderr.on('data', logMessage);
     
