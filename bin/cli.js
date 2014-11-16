@@ -10,8 +10,10 @@ var argv = require('minimist')(process.argv.slice(2));
 var childProcess = require('child_process');
 var exec = childProcess.exec;
 var spawn = childProcess.spawn;
+var run = require('./runner').run;
 
 var command = argv._[0];
+var commandRawArgs = process.argv.slice(3);
 var arg1 = argv._[1];
 var force = argv.force ? true : false;
 
@@ -193,6 +195,10 @@ if (command == 'create') {
     showCorrectUsage();
     process.exit();
   }
+} else if (command == 'run') {
+  var masterFileName = commandRawArgs[0];
+  var masterArgs = commandRawArgs.slice(1);
+  run(masterFileName, masterArgs);
 } else {
 	errorMessage("'" + command + "' is not a valid SocketCluster command.");
 	showCorrectUsage();
