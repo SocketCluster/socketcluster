@@ -48,7 +48,8 @@ var showCorrectUsage = function() {
 	console.log('  --force       Force all necessary directory modifications without prompts');
 	console.log();
 	console.log('Commands:');
-	console.log('  create <appname>   Create a new boilerplate app structure in working directory');
+	console.log('  create <appname>            Create a new boilerplate app in working directory');
+	console.log('  run <scriptname> <args...>  Run a Node.js script with auto-respawn and logging');
 }
 
 var failedToRemoveDirMessage = function(dirPath) {

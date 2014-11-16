@@ -1,5 +1,6 @@
 var fork = require('child_process').fork;
 var fs = require('fs');
+var forever = require('forever-monitor');
 
 var scMaster;
 var logFileName = process.cwd() + '/socketcluster.out';
@@ -13,38 +14,34 @@ var logMessage = function (message) {
 };
 
 module.exports.run = function (fileName, args) {
-  if (scMaster) {
-    scMaster.kill('SIGTERM');
-  }
+  var maxRestarts = 1000;
   
-  logMessage('>>>> SocketCluster runner launched - PID: ' + process.pid + '\n');
+  logMessage('>>>> SocketCluster monitor launched - PID: ' + process.pid + '\n');
   
-  var runMaster = function () {
-    scMaster = fork(fileName, args, {silent: true});
-    
-    logMessage('>>>> Spawned master - PID: ' + scMaster.pid + '\n');
-    
-    scMaster.stdout.on('data', logMessage);
-    scMaster.stderr.on('data', logMessage);
-    
-    scMaster.on('exit', function (code, signal) {
-      try {
-        logMessage(Date.now() + ' - SocketCluster master exited with code: ' + code + ', signal: ' + signal + '\n');
-      } catch (e) {
-        console.log("Could not write to log file '" + logFileName + "' -", e.stack || e.message);
-      }
-      runMaster();
-    });
-  };
+  var child = new (forever.Monitor)(fileName, {
+    max: maxRestarts,
+    silent: true,
+    args: args
+  });
   
-  runMaster();
+  child.on('stdout', logMessage);
+  child.on('stderr', logMessage);
+  
+  child.on('start', function (process, data) {
+    logMessage(Date.now() + ' - Master script started - PID: ' + data.pid + '\n');
+  });
+  
+  child.on('restart', function (process, data) {
+    logMessage(Date.now() + ' - Master script restarted - PID: ' + data.pid + '\n');
+  });
+  
+  child.on('exit:code', function (code) {
+    logMessage('Master script exited with code ' + code + '\n');
+  });
+  
+  child.on('exit', function () {
+    logMessage('>>>> SocketCluster monitor exceeded maximum restart count of ' + maxRestarts + ' for file ' + fileName);
+  });
+
+  child.start();
 };
-
-process.on('SIGTERM', function () {
-  logMessage('>>>> SocketCluster runner was terminated by SIGTERM\n');
-  scMaster.kill('SIGTERM');
-  process.exit();
-});
-
-// Capture SIGHUP and ignore
-process.on('SIGHUP', function () {});
