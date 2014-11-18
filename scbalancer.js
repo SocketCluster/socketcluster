@@ -32,7 +32,7 @@ var SCBalancer = function (options) {
 
   this.sourcePort = options.sourcePort;
 
-  this.dataKey = options.dataKey;
+  this.secretKey = options.secretKey;
   this.statusCheckInterval = options.statusCheckInterval || 5000;
   this.checkStatusTimeout = options.checkStatusTimeout || 10000;
   this.statusURL = options.statusURL || '/~status';
@@ -280,7 +280,7 @@ SCBalancer.prototype._updateStatus = function () {
   var workerCount = this.workers.length;
 
   var body = {
-    dataKey: self.dataKey
+    secretKey: self.secretKey
   };
 
   for (var i in this.workers) {

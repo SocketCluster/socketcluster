@@ -55,10 +55,6 @@ SCWorker.prototype._init = function (options) {
     }
   }
 
-  if (this.options.dataKey == null) {
-    this.options.dataKey = crypto.randomBytes(32).toString('hex');
-  }
-
   this._clusterEngine = require(this.options.clusterEngine);
 
   this._paths = options.paths;
@@ -70,7 +66,7 @@ SCWorker.prototype._init = function (options) {
 
   this._ioClusterClient = new this._clusterEngine.IOClusterClient({
     stores: this.options.stores,
-    dataKey: this.options.dataKey,
+    secretKey: this.options.secretKey,
     connectTimeout: this.options.connectTimeout,
     dataExpiry: this.options.sessionTimeout,
     heartRate: this.options.sessionHeartRate,
@@ -268,7 +264,7 @@ SCWorker.prototype._handleStatusRequest = function (req, res) {
         statusReq = JSON.parse(Buffer.concat(buffers).toString());
       } catch (e) {}
 
-      if (statusReq && statusReq.dataKey == self.options.dataKey) {
+      if (statusReq && statusReq.secretKey == self.options.secretKey) {
         var status = JSON.stringify(self.getStatus());
         res.writeHead(200, {
           'Content-Type': 'application/json'
