@@ -136,13 +136,18 @@ SCWorker.prototype._init = function (options) {
   for (var i in oldRequestListeners) {
     this._server.on('request', oldRequestListeners[i]);
   }
-
+  
   this._socketServer.on('ready', function () {
     self.emit(self.EVENT_READY);
   });
 };
 
+SCWorker.prototype.open = function () {
+  this._startServer();
+};
+
 SCWorker.prototype.close = function (callback) {
+  this._socketServer.close();
   this._server.close(callback);
 };
 
@@ -164,7 +169,17 @@ SCWorker.prototype.getSocketURL = function () {
   return this._socketPath;
 };
 
+SCWorker.prototype._startServer = function () {
+  var socketPath = this.options.socketDirPath + this.options.socketName;
+  if (process.platform != 'win32' && fs.existsSync(socketPath)) {
+    fs.unlinkSync(socketPath);
+  }
+  this._server.listen(socketPath);
+};
+
 SCWorker.prototype._start = function () {
+  var self = this;
+  
   this._httpRequestCount = 0;
   this._ioRequestCount = 0;
   this._httpRPM = 0;
@@ -175,14 +190,22 @@ SCWorker.prototype._start = function () {
   }
   this._statusInterval = setInterval(this._calculateStatus.bind(this), this.options.workerStatusInterval * 1000);
 
+  // Monkey patch Node.js http server such that only requests to unreserved URLs trigger a 'request' event. 
+  // To listen to all requests (including those for reserved URLs), allow listening to a 'requestRaw' event.
+  var serverOn = this._server.on;
+  this._server.on = function (event) {
+    if (event == 'request') {
+      arguments[0] = 'req';
+    } else if (event == 'rawRequest') {
+      arguments[0] = 'request';
+    }
+    serverOn.apply(self._server, arguments);
+  };
+  
   this._workerController = require(this._paths.appWorkerControllerPath);
   this._workerController.run(this);
   
-  var socketPath = this.options.socketDirPath + this.options.socketName;
-  if (process.platform != 'win32' && fs.existsSync(socketPath)) {
-    fs.unlinkSync(socketPath);
-  }
-  this._server.listen(socketPath);
+  this._startServer();
 };
 
 SCWorker.prototype._httpRequestHandler = function (req, res) {
