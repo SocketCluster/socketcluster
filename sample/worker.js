@@ -39,7 +39,7 @@ module.exports.run = function (worker) {
     });
   });
   
-  scServer.on('sessionend', function (ssid) {
+  scServer.on('sessionEnd', function (ssid) {
     delete activeSessions[ssid];
   });
   

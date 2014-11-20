@@ -35,7 +35,7 @@ module.exports.run = function (worker) {
     });
   });
   
-  wsServer.on('sessionend', function (ssid) {
+  wsServer.on('sessionEnd', function (ssid) {
     delete activeSessions[ssid];
   });
 };

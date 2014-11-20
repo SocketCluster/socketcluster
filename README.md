@@ -296,7 +296,7 @@ module.exports.run = function (worker) {
         console.log('Socket ' + socket.id + ' was disconnected');
     });
     
-    scServer.on('sessionend', function (ssid) {
+    scServer.on('sessionEnd', function (ssid) {
         delete activeSessions[ssid];
     });
     

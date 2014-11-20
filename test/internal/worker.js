@@ -29,7 +29,7 @@ module.exports.run = function (worker) {
     activeSessions[socket.session.id] = socket.session;
   });
   
-  wsServer.on('sessionend', function (ssid) {
+  wsServer.on('sessionEnd', function (ssid) {
     delete activeSessions[ssid];
   });
 };
