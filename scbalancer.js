@@ -10,7 +10,7 @@ var SCBalancer = function (options) {
   var self = this;
 
   this._socketHangUpMessage = 'socket hang up';
-  
+
   this._errorDomain = domain.create();
   this._errorDomain.on('error', function (err) {
     if (!err.message || (err.message != 'read ECONNRESET' && err.message != self._socketHangUpMessage)) {
@@ -26,6 +26,8 @@ var SCBalancer = function (options) {
   this._middleware[this.MIDDLEWARE_REQUEST] = [];
   this._middleware[this.MIDDLEWARE_UPGRADE] = [];
   this._middleware[this.MIDDLEWARE_ERROR] = [];
+
+  this.options = options.balancerOptions;
 
   this.protocol = options.protocol;
   this.protocolOptions = options.protocolOptions;

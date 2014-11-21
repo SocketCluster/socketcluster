@@ -77,6 +77,8 @@ SocketCluster.prototype._init = function (options) {
     workerController: null,
     balancerController: null,
     storeController: null,
+    balancerOptions: null,
+    storeOptions: null,
     rebootOnSignal: true,
     useSmartBalancing: true,
     downgradeToUser: false,
@@ -371,6 +373,7 @@ SocketCluster.prototype._initLoadBalancer = function () {
       socketDirPath: this._socketDirPath,
       workers: this._getWorkerSocketNames(),
       balancerCount: this.options.balancers,
+      balancerOptions: this.options.balancerOptions,
       protocol: this.options.protocol,
       protocolOptions: this.options.protocolOptions,
       useSmartBalancing: this.options.useSmartBalancing,
@@ -582,6 +585,7 @@ SocketCluster.prototype._start = function () {
       expiryAccuracy: self._dataExpiryAccuracy,
       downgradeToUser: self.options.downgradeToUser,
       processTermTimeout: self.options.processTermTimeout * 1000,
+      storeOptions: self.options.storeOptions,
       appStoreControllerPath: self._paths.appStoreControllerPath
     });
 
