@@ -12,5 +12,5 @@ var socketCluster = new SocketCluster({
   storeController: __dirname + '/store.js',
   addressSocketLimit: 0,
   socketEventLimit: 100,
-  rebootWorkerOnCrash: true
+  rebootWorkerOnCrash: !argv.debug
 });
