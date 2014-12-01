@@ -301,6 +301,36 @@ SocketCluster.prototype._getStoreSocketPaths = function () {
   return socketPaths;
 };
 
+SocketCluster.prototype._capitaliseFirstLetter = function (str) {
+  if (str == null) {
+    str = '';
+  }
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+SocketCluster.prototype._logObject = function (obj, objType, time) {
+  if (!objType) {
+    objType = 'Error';
+  }
+  if (!obj.origin) {
+    obj.origin = {};
+  }
+  if (!obj.origin.type) {
+    obj.origin.type = 'Undefined';
+  }
+  var output = obj.stack || obj.message || obj;
+  
+  var logMessage;
+  if (obj.origin.pid == null) {
+    logMessage = 'Origin: ' + this._capitaliseFirstLetter(obj.origin.type) + '\n    ' +
+      objType + ': ' + output;
+  } else {
+    logMessage = 'Origin: ' + this._capitaliseFirstLetter(obj.origin.type) + ' (PID ' + obj.origin.pid + ')\n    ' +
+      objType + ': ' + output;
+  }
+  this.log(logMessage, time);
+};
+
 SocketCluster.prototype.errorHandler = function (err, origin) {
   if (err.stack == null) {
     if (!(err instanceof Object)) {
@@ -316,9 +346,9 @@ SocketCluster.prototype.errorHandler = function (err, origin) {
     };
   }
   err.time = Date.now();
-
   this.emit(this.EVENT_FAIL, err);
-  this.log(err.stack);
+  
+  this._logObject(err, 'Error');
 };
 
 SocketCluster.prototype.noticeHandler = function (notice, origin) {
@@ -340,7 +370,7 @@ SocketCluster.prototype.noticeHandler = function (notice, origin) {
   this.emit(this.EVENT_NOTICE, notice);
   
   if (this.options.logLevel > 1) {
-    this.log(notice.stack);
+    this._logObject(notice, 'Notice');
   }
 };
 
@@ -353,13 +383,13 @@ SocketCluster.prototype.triggerInfo = function (info, origin) {
     }
     var infoData = {
       origin: origin,
-      info: info,
+      message: info,
       time: Date.now()
     };
     this.emit(this.EVENT_INFO, infoData);
 
     if (this.options.logLevel > 0) {
-      this.log(info, infoData.time);
+      this._logObject(infoData, 'Info', infoData.time)
     }
   }
 };
