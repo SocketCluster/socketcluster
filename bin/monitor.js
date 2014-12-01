@@ -30,6 +30,10 @@ var child = new (forever.Monitor)(fileName, {
 
 child.on('stdout', logMessage);
 child.on('stderr', logMessage);
+child.on('error', function (err) {
+  logMessage(Date.now() + ' - SocketCluster monitor error - ' + err + '\n');
+  child.restart();
+});
 
 child.on('start', function (process, data) {
   logMessage(Date.now() + ' - Master script started - PID: ' + data.pid + '\n');
