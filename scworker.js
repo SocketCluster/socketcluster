@@ -250,7 +250,8 @@ SCWorker.prototype._httpRequestHandler = function (req, res) {
       } else {
         forwardedClientIP = forwardedFor;
       }
-      req.clientAddress = forwardedClientIP;
+      // TODO: Deprecate clientAddress in favor of remoteAddress
+      req.remoteAddress = req.clientAddress = forwardedClientIP;
     }
     
     if (!this._socketPathRegex.test(req.url)) {
