@@ -71,7 +71,7 @@ SCWorker.prototype._init = function (options) {
     dataExpiry: this.options.sessionTimeout,
     heartRate: this.options.sessionHeartRate,
     addressSocketLimit: this.options.addressSocketLimit,
-    socketEventLimit: this.options.socketEventLimit
+    socketChannelLimit: this.options.socketChannelLimit
   });
 
   this._errorDomain.add(this._ioClusterClient);
