@@ -131,15 +131,15 @@ SocketCluster.prototype._init = function (options) {
   var pathHash = pathHasher.digest('hex').substr(0, 10);
 
   if (process.platform == 'win32') {
-    if (this.options.socketRoot) {
-      self._socketDirPath = this.options.socketRoot + '_';
+    if (self.options.socketRoot) {
+      self._socketDirPath = self.options.socketRoot + '_';
     } else {
       self._socketDirPath = '\\\\.\\pipe\\socketcluster_' + self.options.appName + '_' + pathHash + '_';
     }
   } else {
     var socketDir, socketParentDir;
-    if (this.options.socketRoot) {
-      socketDir = this.options.socketRoot.replace(/\/$/, '') + '/';
+    if (self.options.socketRoot) {
+      socketDir = self.options.socketRoot.replace(/\/$/, '') + '/';
     } else {
       socketParentDir = os.tmpdir() + '/socketcluster/';
       socketDir = socketParentDir + self.options.appName + '_' + pathHash + '/';
