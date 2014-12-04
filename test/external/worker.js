@@ -30,8 +30,16 @@ module.exports.run = function (worker) {
     
     socket.emit('first', 'This is the first event');
 
-    socket.on('ping', function (data) {
+    socket.on('ping', function () {
       wsServer.global.publish('pong', pongData);
+    });
+    
+    socket.on('killWorker', function () {
+      process.exit();
+    });
+    
+    socket.on('new', function () {
+      console.log('Received new event');
     });
   });
   

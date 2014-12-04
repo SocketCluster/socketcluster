@@ -27,6 +27,7 @@ scServer.on('message', function (m) {
           } catch (e) {
             err = e;
           }
+          socket.removeAllListeners('first');
           cb(err);
         });
       },
@@ -40,12 +41,12 @@ scServer.on('message', function (m) {
           } catch (e) {
             err = e;
           }
+          pongChannel.unwatch();
           cb(err);
         });
         socket.emit('ping');
       },
       function (cb) {
-        pongChannel.unwatch();
         pongChannel.watch(function (data) {
           var err;
           try {
@@ -55,13 +56,101 @@ scServer.on('message', function (m) {
             err = e;
           }
           cb(err);
+          pongChannel.unwatch();
         });
         socket.publish('pong', {message: 'published pong'});
+      },
+      function (cb) {
+        socket.unsubscribe('pong');
+        var fooChannel = socket.subscribe('foo');
+        fooChannel.on('subscribe', function () {
+          var err;
+          try {
+            var subscriptions = socket.subscriptions();
+            assert(JSON.stringify(subscriptions) == JSON.stringify(['foo']), 
+              'Expected subscriptions() array to contain one "foo" channel');
+          } catch (e) {
+            err = e;
+          }
+          fooChannel.removeAllListeners('subscribe');
+          cb(err);
+        });
+      },
+      function (cb) {
+        socket.subscribe('foo2');
+        
+        setTimeout(function () {
+          socket.unsubscribe('foo2');
+          
+          setTimeout(function () {
+            cb();
+          }, 1000);
+        }, 1000);
+      },
+      function (cb) {
+        socket.emit('killWorker');
+        var err;
+        
+        setTimeout(function () {
+          try {
+            var subscriptions = socket.subscriptions();
+            assert(JSON.stringify(subscriptions) == JSON.stringify([]),
+              'Did not unsubscribe from channels on disconnect');
+          } catch (e) {
+            err = e;
+          }
+          cb(err);
+        }, 1000);
+      },
+      function (cb) {
+        setTimeout(function () {
+          socket.emit('new');
+          var err;
+          
+          setTimeout(function () {
+            try {
+              var subscriptions = socket.subscriptions();
+
+              assert(JSON.stringify(subscriptions) == JSON.stringify(['foo']),
+                'Did not automatically resubscribe to the correct channels which were unsubscribed due to disconnection');
+            } catch (e) {
+              err = e;
+            }
+            cb(err);
+          }, 2000);
+        }, 1000);
+      },
+      function (cb) {
+        socket.subscribe('test');
+        setTimeout(function () {
+          var unsubscribeEmitted = false;
+          
+          socket.on('unsubscribe', function (channel) {
+            if (channel == 'test') {
+              unsubscribeEmitted = true;
+            }
+          });
+        
+          socket.unsubscribe('test');
+          var err;
+          
+          setTimeout(function () {
+            try {
+              var subscriptions = socket.subscriptions();
+
+              assert(unsubscribeEmitted,
+                'Socket did not emit unsubscribe event after calling socket.unsubscribe(channelName) method');
+            } catch (e) {
+              err = e;
+            }
+            cb(err);
+          }, 2000);
+        }, 1000);
       }
     ];
     
     var timedTasks = [];
-    var timeoutMs = 5000;
+    var timeoutMs = 20000;
     
     var timeoutError = function () {
       throw new Error('Test timed out');
