@@ -4,16 +4,16 @@ var scClient = require('socketcluster-client');
 var assert = require('assert');
 var http = require('http');
 var util = require('util');
-var wrench = require('wrench');
+var fs = require('fs');
 var getTestSocketPath = require('./testsocketpath').getTestSocketPath;
 
 var scServer = childProcess.fork(__dirname + '/server.js');
 var resultSocketPath = getTestSocketPath();
 
 if (process.platform != 'win32') {
-  try {
-    wrench.mkdirSyncRecursive(resultSocketPath);
-  } catch (err) {}
+  if (fs.existsSync(resultSocketPath)) {
+    fs.unlinkSync(resultSocketPath);
+  }
 }
 
 var storeData = {};

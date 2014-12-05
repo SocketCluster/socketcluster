@@ -1,4 +1,4 @@
-var SocketCluster = require('socketcluster').SocketCluster;
+var SocketCluster = require('../../index').SocketCluster;
 
 var socketCluster = new SocketCluster({
   balancers: 2,
