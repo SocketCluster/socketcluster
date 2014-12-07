@@ -39,7 +39,7 @@ var SCBalancer = function (options) {
   this.checkStatusTimeout = options.checkStatusTimeout || 10000;
   this.statusURL = options.statusURL || '/~status';
   this.balancerCount = options.balancerCount || 1;
-  this.appBalancerControllerPath = options.appBalancerControllerPath;
+  this.balancerControllerPath = options.balancerControllerPath;
   this.useSmartBalancing = options.useSmartBalancing;
   this.downgradeToUser = options.downgradeToUser;
   this.socketDirPath = options.socketDirPath;
@@ -82,9 +82,9 @@ SCBalancer.prototype = Object.create(EventEmitter.prototype);
 SCBalancer.prototype.start = function () {
   var self = this;
 
-  if (this.appBalancerControllerPath) {
+  if (this.balancerControllerPath) {
     this._errorDomain.run(function () {
-      self.balancerController = require(self.appBalancerControllerPath);
+      self.balancerController = require(self.balancerControllerPath);
       self.balancerController.run(self);
     });
   }
@@ -337,7 +337,9 @@ SCBalancer.prototype._updateStatus = function () {
 SCBalancer.prototype._hash = function (str, maxValue) {
   var ch;
   var hash = 0;
-  if (str.length == 0) return hash;
+  if (str == null || str.length == 0) {
+    return hash;
+  }
   for (var i = 0; i < str.length; i++) {
     ch = str.charCodeAt(i);
     hash = ((hash << 5) - hash) + ch;

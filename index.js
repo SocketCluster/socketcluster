@@ -161,9 +161,9 @@ SocketCluster.prototype._init = function (options) {
   }
 
   if (self.options.balancerController) {
-    self._paths.appBalancerControllerPath = path.resolve(self.options.balancerController);
+    self._paths.balancerControllerPath = path.resolve(self.options.balancerController);
   } else {
-    self._paths.appBalancerControllerPath = null;
+    self._paths.balancerControllerPath = null;
   }
   
   if (self.options.storeController) {
@@ -413,7 +413,7 @@ SocketCluster.prototype._initLoadBalancer = function () {
       processTermTimeout: this.options.processTermTimeout * 1000,
       downgradeToUser: this.options.downgradeToUser,
       schedulingPolicy: this.options.schedulingPolicy,
-      appBalancerControllerPath: this._paths.appBalancerControllerPath
+      balancerControllerPath: this._paths.balancerControllerPath
     }
   });
 };
