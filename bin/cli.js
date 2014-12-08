@@ -19,30 +19,30 @@ var commandRawArgs = process.argv.slice(3);
 var arg1 = argv._[1];
 var force = argv.force ? true : false;
 
-var parsePackageFile = function(moduleDir) {
+var parsePackageFile = function (moduleDir) {
   var packageFile = moduleDir + '/package.json';
   try {
     if (fs.existsSync(packageFile)) {
       return JSON.parse(fs.readFileSync(packageFile, 'utf8'));
     }
-  } catch(e) {}
+  } catch (e) {}
   
   return {};
 }
 
-var errorMessage = function(message) {
+var errorMessage = function (message) {
   console.log('\033[0;31m[Error]\033[0m ' + message);
 }
 
-var successMessage = function(message) {
+var successMessage = function (message) {
   console.log('\033[0;32m[Success]\033[0m ' + message);
 }
 
-var warningMessage = function(message) {
+var warningMessage = function (message) {
   console.log('\033[0;33m[Warning]\033[0m ' + message);
 }
 
-var showCorrectUsage = function() {
+var showCorrectUsage = function () {
   console.log('Usage: socketcluster [options] [command]\n');
   console.log('Options:');
   console.log("  -v            Get the version of the current SocketCluster installation");
@@ -54,15 +54,15 @@ var showCorrectUsage = function() {
   console.log('  run <scriptname> <args...>  Run a Node.js script with auto-respawn and logging');
 }
 
-var failedToRemoveDirMessage = function(dirPath) {
+var failedToRemoveDirMessage = function (dirPath) {
   errorMessage('Failed to remove existing directory at ' + dirPath + '. This directory may be used by another program or you may not have the permission to remove it.');
 }
 
-var failedToCreateMessage = function() {
+var failedToCreateMessage = function () {
   errorMessage('Failed to create necessary files. Please check your permissions and try again.');
 }
 
-var prompt = function(message, callback) {
+var prompt = function (message, callback) {
   process.stdout.write(message + ' ');
   process.stdin.on('data', function inputHandler(text) {
     process.stdin.removeListener('data', inputHandler);
@@ -70,28 +70,28 @@ var prompt = function(message, callback) {
   });
 }
 
-var promptConfirm = function(message, callback) {
-  prompt(message, function(data) {
+var promptConfirm = function (message, callback) {
+  prompt(message, function (data) {
     data = data.toLowerCase().replace(/[\r\n]/g, '');
     callback(data == 'y' || data == 'yes');
   });
 }
 
-var copyDirRecursive = function(src, dest) {
+var copyDirRecursive = function (src, dest) {
   try {
     wrench.copyDirSyncRecursive(src, dest);
     return true;
-  } catch(e) {
+  } catch (e) {
     failedToCreateMessage();
   }
   return false;
 }
 
-var rmdirRecursive = function(dirname) {
+var rmdirRecursive = function (dirname) {
   try {
     wrench.rmdirSyncRecursive(dirname);
     return true;
-  } catch(e) {
+  } catch (e) {
     failedToRemoveDirMessage(dirname);
   }
   return false;
