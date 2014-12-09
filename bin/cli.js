@@ -23,7 +23,7 @@ var parsePackageFile = function (moduleDir) {
   var packageFile = moduleDir + '/package.json';
   try {
     if (fs.existsSync(packageFile)) {
-      return JSON.parse(fs.readFileSync(packageFile, 'utf8'));
+      return JSON.parse(fs.readFileSync(packageFile, {encoding: 'utf8'}));
     }
   } catch (e) {}
   
