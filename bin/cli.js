@@ -152,7 +152,7 @@ var createSuccess = function () {
           clientFileDestPath + "' - Try copying it manually.");
       }
     }
-    process.exit();
+    process.exit(code);
   });
   
   npmProcess.stdin.end();
