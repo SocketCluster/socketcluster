@@ -274,8 +274,10 @@ scServer.addMiddleware(scServer.MIDDLEWARE_EVENT, function (socket, event, data,
 
 ## Contribute to SocketCluster
 
-- More test cases needed - Add unit tests.
+- More integration test cases needed
+- Unit tests
 - Efficiency/speed - faster is better!
+- Suggestions?
 
 To contribute; clone this repo, then cd inside it and then run npm install to install all dependencies.
 
