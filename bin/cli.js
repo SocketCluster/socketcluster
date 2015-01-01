@@ -12,8 +12,6 @@ var exec = childProcess.exec;
 var spawn = childProcess.spawn;
 var fork = childProcess.fork;
 
-var monitorFilePath = __dirname + '/monitor.js';
-
 var command = argv._[0];
 var commandRawArgs = process.argv.slice(3);
 var arg1 = argv._[1];
@@ -51,7 +49,6 @@ var showCorrectUsage = function () {
   console.log();
   console.log('Commands:');
   console.log('  create <appname>            Create a new boilerplate app in working directory');
-  console.log('  run <scriptname> <args...>  Run a Node.js script with auto-respawn and logging');
 }
 
 var failedToRemoveDirMessage = function (dirPath) {
@@ -198,9 +195,6 @@ if (command == 'create') {
     showCorrectUsage();
     process.exit();
   }
-} else if (command == 'run') {
-  fork(monitorFilePath, commandRawArgs);
-  process.exit();
 } else {
   errorMessage("'" + command + "' is not a valid SocketCluster command.");
   showCorrectUsage();
