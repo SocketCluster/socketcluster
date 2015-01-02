@@ -54,6 +54,8 @@ SCWorker.prototype._init = function (options) {
         ' to switch to it.'));
     }
   }
+  
+  http.globalAgent.maxSockets = this.options.maxHttpSockets || Infinity;
 
   this._clusterEngine = require(this.options.clusterEngine);
 
