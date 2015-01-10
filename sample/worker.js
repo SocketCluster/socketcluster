@@ -1,6 +1,7 @@
 var fs = require('fs');
 var express = require('express');
 var serveStatic = require('serve-static');
+var path = require('path');
 
 module.exports.run = function (worker) {
   console.log('   >> Worker PID:', process.pid);
@@ -12,7 +13,7 @@ module.exports.run = function (worker) {
   // Get a reference to our realtime SocketCluster server
   var scServer = worker.getSCServer();
   
-  app.use(serveStatic(__dirname + '/public'));
+  app.use(serveStatic(path.resolve(__dirname, 'public')));
 
   httpServer.on('req', app);
 
