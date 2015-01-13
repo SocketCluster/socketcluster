@@ -51,7 +51,7 @@ module.exports.run = function (worker) {
       belong to the same session (I.e. All open tabs within the same browser).
     */
     for (var i in activeSessions) {
-      activeSessions[i].emit('rand', {rand: Math.floor(Math.random() * 100)});
+      activeSessions[i].emit('rand', {rand: Math.floor(Math.random() * 5)});
     }
   }, 1000);
 };

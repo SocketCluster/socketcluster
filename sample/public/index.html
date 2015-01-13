@@ -1,24 +1,37 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<script type="text/javascript" src="/socketcluster.js"></script>
-		<script type="text/javascript">
-			// Initiate the connection to the server
-			var socket = socketCluster.connect();
+  <head>
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <script type="text/javascript" src="/socketcluster.js"></script>
+  </head>
+  <body>
+    <div class="content">
+      <img src="img/logo.png" alt="SocketCluster logo">
+      <p>Thank you for installing SocketCluster <span id="face-container">:)</span><br />
+      For documentation, go to <a href="http://socketcluster.io/">http://socketcluster.io/</a></p>
+    </div>
+    <script type="text/javascript">
+      // Initiate the connection to the server
+      var socket = socketCluster.connect();
       
       socket.on('error', function (err) {
         throw 'Socket error - ' + err;
       });
       
-			socket.on('connect', function () {
-				console.log('CONNECTED');
-			});
+      socket.on('connect', function () {
+        console.log('CONNECTED');
+      });
       
-      socket.on('rand', function (num) {
-        console.log('RANDOM:', num);
-        if (num.rand) {
-          document.body.innerHTML = 'RANDOM: ' + num.rand + '<br />';
-        }
+      var positiveFaces = [';p', ':D', ':)', ':3', ';)'];
+      var negativeFaces = [':(', '>:[', ':\'(', ':[', '>:\\'];
+      
+      var faces = positiveFaces;
+      var faceContainer = document.getElementById('face-container');
+      
+      socket.on('rand', function (data) {
+        var face = faces[data.rand];
+        console.log('RANDOM:', data.rand, face);
+        faceContainer.innerHTML = face;
       });
       
       var pongChannel = socket.subscribe('pong');
@@ -27,11 +40,12 @@
         console.log('Failed to subscribe to PONG channel due to error: ' + err);
       });
       
+      var c = 0;
+      
       pongChannel.watch(function (num) {
+        faces = c++ % 2 ? positiveFaces : negativeFaces;
         console.log('PONG:', num);
       });
-		</script>
-	</head>
-	<body>
-	</body>
+    </script>
+  </body>
 </html>

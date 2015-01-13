@@ -1,0 +1,18 @@
+
+.content {
+  text-align: center;
+  padding-top: 40px;
+  line-height: 1.5;
+}
+
+#face-container {
+  display: inline-block;
+  text-align: left;
+  width: 20px;
+}
+
+p {
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  margin: 0;
+}
