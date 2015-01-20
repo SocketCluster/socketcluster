@@ -1,3 +1,4 @@
+var cluster = require('cluster');
 var SCWorker = require('./scworker');
 var worker;
 var processTermTimeout = 10000;

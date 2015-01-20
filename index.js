@@ -5,7 +5,7 @@ var domain = require('domain');
 var fork = require('child_process').fork;
 var os = require('os');
 var fs = require('fs');
-var uidNumber = require("uid-number");
+var uidNumber = require('uid-number');
 var wrench = require('wrench');
 
 var SocketCluster = function (options) {
@@ -30,7 +30,6 @@ var SocketCluster = function (options) {
   });
   
   process.on('SIGTERM', function () {
-    self.killBalancers();
     self.killWorkers();
     self.killStores();
     process.exit();
@@ -47,7 +46,6 @@ SocketCluster.prototype._init = function (options) {
 
   self.options = {
     port: 8000,
-    balancers: null,
     workers: null,
     stores: null,
     appName: null,
@@ -76,12 +74,9 @@ SocketCluster.prototype._init = function (options) {
     propagateErrors: true,
     host: null,
     workerController: null,
-    balancerController: null,
     storeController: null,
-    balancerOptions: null,
     storeOptions: null,
     rebootOnSignal: true,
-    useSmartBalancing: true,
     downgradeToUser: false,
     path: null,
     socketRoot: null,
@@ -160,12 +155,6 @@ SocketCluster.prototype._init = function (options) {
     }
     self._socketDirPath = socketDir;
   }
-
-  if (self.options.balancerController) {
-    self._paths.balancerControllerPath = path.resolve(self.options.balancerController);
-  } else {
-    self._paths.balancerControllerPath = null;
-  }
   
   if (self.options.storeController) {
     self._paths.appStoreControllerPath = path.resolve(self.options.storeController);
@@ -223,16 +212,6 @@ SocketCluster.prototype._init = function (options) {
   }
   if (typeof self.options.workers != 'number') {
     throw new Error('The workers option must be a number');
-  }
-
-  if (!self.options.balancers) {
-    self.options.balancers = Math.floor(self.options.workers / 2);
-    if (self.options.balancers < 1) {
-      self.options.balancers = 1;
-    }
-  }
-  if (typeof self.options.balancers != 'number') {
-    throw new Error('The balancers option must be a number');
   }
 
   self._extRegex = /[.][^\/\\]*$/;
@@ -395,61 +374,6 @@ SocketCluster.prototype.triggerInfo = function (info, origin) {
   }
 };
 
-SocketCluster.prototype._initLoadBalancer = function () {
-  this._balancer.send({
-    type: 'init',
-    data: {
-      secretKey: this._secretKey,
-      sourcePort: this.options.port,
-      socketDirPath: this._socketDirPath,
-      workers: this._getWorkerSocketNames(),
-      balancerCount: this.options.balancers,
-      balancerOptions: this.options.balancerOptions,
-      protocol: this.options.protocol,
-      protocolOptions: this.options.protocolOptions,
-      useSmartBalancing: this.options.useSmartBalancing,
-      statusURL: this._paths.statusURL,
-      checkStatusTimeout: this.options.connectTimeout * 1000,
-      statusCheckInterval: this.options.workerStatusInterval * 1000,
-      processTermTimeout: this.options.processTermTimeout * 1000,
-      downgradeToUser: this.options.downgradeToUser,
-      schedulingPolicy: this.options.schedulingPolicy,
-      balancerControllerPath: this._paths.balancerControllerPath
-    }
-  });
-};
-
-SocketCluster.prototype._launchLoadBalancer = function (callback) {
-  var self = this;
-
-  var balancerErrorHandler = function (err) {
-    self.errorHandler(err, {type: 'balancer'});
-  };
-
-  var balancerNoticeHandler = function (noticeMessage) {
-    self.noticeHandler(noticeMessage, {type: 'balancer'});
-  };
-
-  self._balancer = fork(__dirname + '/balancer.js');
-  self._balancer.on('error', balancerErrorHandler);
-  self._balancer.on('notice', balancerNoticeHandler);
-
-  self._balancer.on('exit', self._launchLoadBalancer.bind(self));
-  self._balancer.on('message', function (m) {
-    if (m.type == 'error') {
-      balancerErrorHandler(m.data);
-    } else if (m.type == 'notice') {
-      balancerNoticeHandler(m.data);
-    } else if (m.type == 'ready') {
-      callback && callback();
-    }
-  });
-
-  if (self._workersActive) {
-    self._initLoadBalancer();
-  }
-};
-
 SocketCluster.prototype._workerErrorHandler = function (worker, err) {
   var origin = {
     type: 'worker',
@@ -480,8 +404,8 @@ SocketCluster.prototype._workerReadyHandler = function (worker) {
       self._firstTime = false;
 
       if (!self._workersActive) {
-        self._initLoadBalancer();
         self._workersActive = true;
+        self._logDeploymentDetails();
       }
       
       if (self.options.rebootOnSignal) {
@@ -489,11 +413,6 @@ SocketCluster.prototype._workerReadyHandler = function (worker) {
           self.killWorkers();
         });
       }
-    } else {
-      self._balancer.send({
-        type: 'setWorkers',
-        data: self._getWorkerSocketNames()
-      });
     }
     self._active = true;
   }
@@ -519,10 +438,6 @@ SocketCluster.prototype._handleWorkerExit = function (worker, code, signal) {
   }
 
   this._workers = newWorkers;
-  this._balancer.send({
-    type: 'setWorkers',
-    data: newWorkerSockets
-  });
 
   this.errorHandler(new Error(message), {type: 'master'});
 
@@ -534,6 +449,13 @@ SocketCluster.prototype._handleWorkerExit = function (worker, code, signal) {
   }
 };
 
+SocketCluster.prototype._launchWorkers = function (workerId, respawn) {
+  // TODO: Handle error event
+  // TODO: Respawn workerCluster when it crashes
+  var workerCluster = fork(__dirname + '/workercluster.js');
+};
+
+// TODO: Remove
 SocketCluster.prototype._launchWorker = function (workerId, respawn) {
   var self = this;
   
@@ -573,6 +495,18 @@ SocketCluster.prototype._launchWorker = function (workerId, respawn) {
   worker.on('exit', self._handleWorkerExit.bind(self, worker));
 };
 
+SocketCluster.prototype._logDeploymentDetails = function () {
+  if (this.options.logLevel > 0) {
+    console.log('   ' + this.colorText('[Active]', 'green') + ' SocketCluster started');
+    console.log('            Port: ' + this.options.port);
+    console.log('            Master PID: ' + process.pid);
+    console.log('            Worker count: ' + this.options.workers);
+    console.log('            Store count: ' + this.options.stores);
+    console.log();
+  }
+  this.emit(this.EVENT_READY);
+};
+
 SocketCluster.prototype._start = function () {
   var self = this;
   
@@ -583,20 +517,6 @@ SocketCluster.prototype._start = function () {
 
   self._firstTime = true;
   self._workersActive = false;
-
-  // Load balancers are last to launch
-  self._launchLoadBalancer(function () {
-    if (self.options.logLevel > 0) {
-      console.log('   ' + self.colorText('[Active]', 'green') + ' SocketCluster started');
-      console.log('            Port: ' + self.options.port);
-      console.log('            Master PID: ' + process.pid);
-      console.log('            Balancer count: ' + self.options.balancers);
-      console.log('            Worker count: ' + self.options.workers);
-      console.log('            Store count: ' + self.options.stores);
-      console.log();
-    }
-    self.emit(self.EVENT_READY);
-  });
   
   self._workerIdCounter = 1;
 
@@ -633,12 +553,6 @@ SocketCluster.prototype._start = function () {
 SocketCluster.prototype.killWorkers = function () {
   for (var i in this._workers) {
     this._workers[i].kill('SIGTERM');
-  }
-};
-
-SocketCluster.prototype.killBalancers = function () {
-  if (this._balancer) {
-    this._balancer.kill('SIGTERM');
   }
 };
 

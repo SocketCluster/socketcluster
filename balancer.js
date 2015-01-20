@@ -4,11 +4,7 @@ var SCBalancer = require('./scbalancer');
 var balancer;
 var processTermTimeout = 10000;
 
-if (cluster.isMaster) {
-  var balancers;
-  var alive = true;
-  var terminatedCount = 0;
-  
+if (cluster.isMaster) {  
   process.on('message', function (m) {
     if (m.type == 'init') {
       cluster.schedulingPolicy = m.data.schedulingPolicy || cluster.SCHED_NONE;
