@@ -5,7 +5,7 @@ var domain = require('domain');
 var fork = require('child_process').fork;
 var os = require('os');
 var fs = require('fs');
-var uidNumber = require("uid-number");
+var uidNumber = require('uid-number');
 var wrench = require('wrench');
 
 var SocketCluster = function (options) {
@@ -14,14 +14,17 @@ var SocketCluster = function (options) {
   self.EVENT_FAIL = 'fail';
   self.EVENT_NOTICE = 'notice';
   self.EVENT_READY = 'ready';
-  self.EVENT_WORKER = 'worker';
+  self.EVENT_WORKER_START = 'workerStart';
+  self.EVENT_WORKER_EXIT = 'workerExit';
   
   // These events don't get triggered on SocketCluster (yet)
   self.EVENT_INFO = 'info';
 
   self._errorDomain = domain.create();
   self._errorDomain.on('error', function (err) {
-    self.errorHandler(err, 'master');
+    self.errorHandler(err, {
+      type: 'master'
+    });
   });
   self._errorDomain.add(self);
 
@@ -30,7 +33,6 @@ var SocketCluster = function (options) {
   });
   
   process.on('SIGTERM', function () {
-    self.killBalancers();
     self.killWorkers();
     self.killStores();
     process.exit();
@@ -47,7 +49,6 @@ SocketCluster.prototype._init = function (options) {
 
   self.options = {
     port: 8000,
-    balancers: null,
     workers: null,
     stores: null,
     appName: null,
@@ -60,8 +61,6 @@ SocketCluster.prototype._init = function (options) {
     connectTimeout: 10,
     ackTimeout: 10,
     socketUpgradeTimeout: 1,
-    sessionTimeout: 1200,
-    sessionHeartRate: 4,
     maxHttpBufferSize: null,
     maxHttpSockets: null,
     origins: '*:*',
@@ -75,22 +74,19 @@ SocketCluster.prototype._init = function (options) {
     propagateErrors: true,
     host: null,
     workerController: null,
-    balancerController: null,
     storeController: null,
-    balancerOptions: null,
     storeOptions: null,
     rebootOnSignal: true,
-    useSmartBalancing: true,
     downgradeToUser: false,
     path: null,
     socketRoot: null,
     schedulingPolicy: null,
     allowClientPublish: true,
-    addSessionToHTTPRequest: true,
     clusterEngine: 'iocluster'
   };
 
   self._active = false;
+  self._workerCluster = null;
   
   self._colorCodes = {
     red: 31,
@@ -111,13 +107,6 @@ SocketCluster.prototype._init = function (options) {
     throw new Error("Compulsory option 'workerController' was not specified " +
       "- It needs to be a path to a JavaScript file which will act as the " +
       "boot controller for each worker in the cluster");
-  }
-
-  if (self.options.sessionTimeout < 60) {
-    console.log('   ' + self.colorText('[Warning]', 'yellow') +
-      " The sessionTimeout option should be at least 60 seconds " +
-      "- A low sessionTimeout requires fast heartbeats which may use " +
-      "a lot of CPU at high concurrency levels.");
   }
 
   self._paths = {
@@ -158,12 +147,6 @@ SocketCluster.prototype._init = function (options) {
       } catch (err) {}
     }
     self._socketDirPath = socketDir;
-  }
-
-  if (self.options.balancerController) {
-    self._paths.balancerControllerPath = path.resolve(self.options.balancerController);
-  } else {
-    self._paths.balancerControllerPath = null;
   }
   
   if (self.options.storeController) {
@@ -223,16 +206,6 @@ SocketCluster.prototype._init = function (options) {
     throw new Error('The workers option must be a number');
   }
 
-  if (!self.options.balancers) {
-    self.options.balancers = Math.floor(self.options.workers / 2);
-    if (self.options.balancers < 1) {
-      self.options.balancers = 1;
-    }
-  }
-  if (typeof self.options.balancers != 'number') {
-    throw new Error('The balancers option must be a number');
-  }
-
   self._extRegex = /[.][^\/\\]*$/;
   self._slashSequenceRegex = /\/+/g;
   self._startSlashRegex = /^\//;
@@ -276,18 +249,6 @@ SocketCluster.prototype._init = function (options) {
   }
 };
 
-SocketCluster.prototype._getWorkerSocketName = function (workerId) {
-  return 'w' + workerId;
-};
-
-SocketCluster.prototype._getWorkerSocketNames = function () {
-  var socketNames = [];
-  for (var i = 0; i < this.options.workers; i++) {
-    socketNames.push(this._getWorkerSocketName(i));
-  }
-  return socketNames;
-};
-
 SocketCluster.prototype._getStoreSocketName = function (storeId) {
   return 's' + storeId;
 };
@@ -321,11 +282,11 @@ SocketCluster.prototype._logObject = function (obj, objType, time) {
   
   var logMessage;
   if (obj.origin.pid == null) {
-    logMessage = 'Origin: ' + this._capitaliseFirstLetter(obj.origin.type) + '\n    ' +
-      objType + ': ' + output;
+    logMessage = 'Origin: ' + this._capitaliseFirstLetter(obj.origin.type) + '\n' +
+      '    [' + objType + '] ' + output;
   } else {
-    logMessage = 'Origin: ' + this._capitaliseFirstLetter(obj.origin.type) + ' (PID ' + obj.origin.pid + ')\n    ' +
-      objType + ': ' + output;
+    logMessage = 'Origin: ' + this._capitaliseFirstLetter(obj.origin.type) + ' (PID ' + obj.origin.pid + ')\n' +
+      '    [' + objType + '] ' + output;
   }
   this.log(logMessage, time);
 };
@@ -337,13 +298,7 @@ SocketCluster.prototype.errorHandler = function (err, origin) {
     }
     err.stack = err.message;
   }
-  if (origin instanceof Object) {
-    err.origin = origin;
-  } else {
-    err.origin = {
-      type: origin
-    };
-  }
+  err.origin = origin;
   err.time = Date.now();
   this.emit(this.EVENT_FAIL, err);
   
@@ -357,13 +312,13 @@ SocketCluster.prototype.noticeHandler = function (notice, origin) {
     }
     notice.stack = notice.message;
   }
-  if (origin instanceof Object) {
-    notice.origin = origin;
+ if (origin instanceof Object) {
+    
   } else {
     notice.origin = {
       type: origin
     };
-  }
+  };
   notice.time = Date.now();
 
   this.emit(this.EVENT_NOTICE, notice);
@@ -393,218 +348,121 @@ SocketCluster.prototype.triggerInfo = function (info, origin) {
   }
 };
 
-SocketCluster.prototype._initLoadBalancer = function () {
-  this._balancer.send({
-    type: 'init',
-    data: {
-      secretKey: this._secretKey,
-      sourcePort: this.options.port,
-      socketDirPath: this._socketDirPath,
-      workers: this._getWorkerSocketNames(),
-      balancerCount: this.options.balancers,
-      balancerOptions: this.options.balancerOptions,
-      protocol: this.options.protocol,
-      protocolOptions: this.options.protocolOptions,
-      useSmartBalancing: this.options.useSmartBalancing,
-      statusURL: this._paths.statusURL,
-      checkStatusTimeout: this.options.connectTimeout * 1000,
-      statusCheckInterval: this.options.workerStatusInterval * 1000,
-      processTermTimeout: this.options.processTermTimeout * 1000,
-      downgradeToUser: this.options.downgradeToUser,
-      schedulingPolicy: this.options.schedulingPolicy,
-      balancerControllerPath: this._paths.balancerControllerPath
-    }
+SocketCluster.prototype._workerErrorHandler = function (workerPid, errorData) {
+  this.errorHandler(errorData, {
+    type: 'worker',
+    pid: workerPid
   });
 };
 
-SocketCluster.prototype._launchLoadBalancer = function (callback) {
-  var self = this;
-
-  var balancerErrorHandler = function (err) {
-    self.errorHandler(err, {type: 'balancer'});
-  };
-
-  var balancerNoticeHandler = function (noticeMessage) {
-    self.noticeHandler(noticeMessage, {type: 'balancer'});
-  };
-
-  self._balancer = fork(__dirname + '/balancer.js');
-  self._balancer.on('error', balancerErrorHandler);
-  self._balancer.on('notice', balancerNoticeHandler);
-
-  self._balancer.on('exit', self._launchLoadBalancer.bind(self));
-  self._balancer.on('message', function (m) {
-    if (m.type == 'error') {
-      balancerErrorHandler(m.data);
-    } else if (m.type == 'notice') {
-      balancerNoticeHandler(m.data);
-    } else if (m.type == 'ready') {
-      callback && callback();
-    }
-  });
-
-  if (self._workersActive) {
-    self._initLoadBalancer();
-  }
-};
-
-SocketCluster.prototype._workerErrorHandler = function (worker, err) {
+SocketCluster.prototype._workerNoticeHandler = function (workerPid, noticeData) {
   var origin = {
     type: 'worker',
-    pid: worker.pid
+    pid: workerPid
   };
-  this.errorHandler(err, origin);
+  this.noticeHandler(noticeData, origin);
 };
 
-SocketCluster.prototype._workerNoticeHandler = function (worker, noticeMessage) {
-  var origin = {
-    type: 'worker',
-    pid: worker.pid
-  };
-  this.noticeHandler(noticeMessage, origin);
-};
-
-SocketCluster.prototype._workerReadyHandler = function (worker) {
+SocketCluster.prototype._workerClusterReadyHandler = function () {
   var self = this;
   
-  self._workers.push(worker);
-
-  if (self._active && self.options.logLevel > 0) {
-    self.log('Worker ' + worker.id + ' was respawned');
-  }
-
-  if (self._workers.length >= self.options.workers) {
-    if (self._firstTime) {
-      self._firstTime = false;
-
-      if (!self._workersActive) {
-        self._initLoadBalancer();
-        self._workersActive = true;
-      }
-      
-      if (self.options.rebootOnSignal) {
-        process.on('SIGUSR2', function () {
-          self.killWorkers();
-        });
-      }
-    } else {
-      self._balancer.send({
-        type: 'setWorkers',
-        data: self._getWorkerSocketNames()
+  if (!this._active) {
+    if (this.options.rebootOnSignal) {
+      process.on('SIGUSR2', function () {
+        self.killWorkers();
       });
     }
-    self._active = true;
+    
+    this._active = true;
+    this._logDeploymentDetails();
   }
-  
-  self.emit(self.EVENT_WORKER, worker);
 };
 
-SocketCluster.prototype._handleWorkerExit = function (worker, code, signal) {
-  this._errorDomain.remove(worker);
-  var message = '   Worker ' + worker.id + ' died - Exit code: ' + code;
-
-  if (signal) {
-    message += ', signal: ' + signal;
-  }
-
-  var newWorkers = [];
-  var newWorkerSockets = [];
-  for (var i in this._workers) {
-    if (this._workers[i].id != worker.id) {
-      newWorkers.push(this._workers[i]);
-      newWorkerSockets.push(this._getWorkerSocketName(this._workers[i].id));
+SocketCluster.prototype._workerExitHandler = function (workerInfo) {
+  if (this.options.logLevel > 0) {
+    var message = 'Worker ' + workerInfo.id + ' exited - Exit code: ' + workerInfo.code;
+    if (workerInfo.signal) {
+      message += ', signal: ' + workerInfo.signal;
     }
+    this.log(message);
   }
+  this.emit(this.EVENT_WORKER_EXIT, workerInfo);
+};
 
-  this._workers = newWorkers;
-  this._balancer.send({
-    type: 'setWorkers',
-    data: newWorkerSockets
+SocketCluster.prototype._workerStartHandler = function (workerInfo) {
+  if (this._active && this.options.logLevel > 0 && workerInfo.respawn) {
+    this.log('Worker ' + workerInfo.id + ' was respawned');
+  }
+  this.emit(this.EVENT_WORKER_START, workerInfo);
+};
+
+SocketCluster.prototype._handleWorkerClusterExit = function (errorCode) {
+  var errorData = {
+    message: 'workerCluster exited with code: ' + errorCode
+  };
+  this.errorHandler(errorData, {
+    type: 'workerCluster'
   });
-
-  this.errorHandler(new Error(message), {type: 'master'});
-
-  if (this.options.rebootWorkerOnCrash) {
-    if (this.options.logLevel > 0) {
-      this.log('Respawning worker ' + worker.id);
-    }
-    this._launchWorker(worker.id, true);
-  }
+  
+  this._launchWorkerCluster();
 };
 
-SocketCluster.prototype._launchWorker = function (workerId, respawn) {
+SocketCluster.prototype._launchWorkerCluster = function () {
   var self = this;
   
-  var worker = fork(__dirname + '/worker.js');
-  worker.on('error', self._workerErrorHandler.bind(self, worker));
+  this._workerCluster = fork(__dirname + '/lib/workercluster.js');
   
-  worker.id = workerId;
-
-  var workerOpts = self._cloneObject(self.options);
+  var workerOpts = this._cloneObject(this.options);
   workerOpts.processTermTimeout *= 1000;
-  workerOpts.paths = self._paths;
-  workerOpts.workerId = workerId;
-  workerOpts.sourcePort = self.options.port;
-  workerOpts.socketDirPath = self._socketDirPath;
-  workerOpts.socketName = self._getWorkerSocketName(workerId);
-  workerOpts.stores = self._getStoreSocketPaths();
-  workerOpts.secretKey = self._secretKey;
-  workerOpts.isLeader = workerId ? false : true;
+  workerOpts.paths = this._paths;
+  workerOpts.sourcePort = this.options.port;
+  workerOpts.workerCount = this.options.workers;
+  workerOpts.stores = this._getStoreSocketPaths();
+  workerOpts.secretKey = this._secretKey;
 
-  worker.send({
+  this._workerCluster.send({
     type: 'init',
     data: workerOpts
   });
 
-  worker.on('message', function workerHandler(m) {
+  this._workerCluster.on('message', function workerHandler(m) {
     if (m.type == 'error') {
-      self._workerErrorHandler(worker, m.data);
+      self._workerErrorHandler(m.data.workerPid, m.data.error);
     } else if (m.type == 'notice') {
-      self._workerNoticeHandler(worker, m.data);
+      self._workerNoticeHandler(m.data.workerPid, m.data.error);
     } else if (m.type == 'ready') {
-      if (self._firstTime || respawn) {
-        self._workerReadyHandler(worker, m);
-      }
+      self._workerClusterReadyHandler();
+    } else if (m.type == 'workerStart') {
+      self._workerStartHandler(m.data);
+    } else if (m.type == 'workerExit') {
+      self._workerExitHandler(m.data);
     }
   });
+  
+  this._workerCluster.on('exit', this._handleWorkerClusterExit.bind(this));
+};
 
-  worker.on('exit', self._handleWorkerExit.bind(self, worker));
+SocketCluster.prototype._logDeploymentDetails = function () {
+  if (this.options.logLevel > 0) {
+    console.log('   ' + this.colorText('[Active]', 'green') + ' SocketCluster started');
+    console.log('            Port: ' + this.options.port);
+    console.log('            Master PID: ' + process.pid);
+    console.log('            Worker count: ' + this.options.workers);
+    console.log('            Store count: ' + this.options.stores);
+    console.log();
+  }
+  this.emit(this.EVENT_READY);
 };
 
 SocketCluster.prototype._start = function () {
   var self = this;
   
   self._secretKey = crypto.randomBytes(32).toString('hex');
-
-  self._workers = [];
   self._active = false;
-
-  self._firstTime = true;
-  self._workersActive = false;
-
-  // Load balancers are last to launch
-  self._launchLoadBalancer(function () {
-    if (self.options.logLevel > 0) {
-      console.log('   ' + self.colorText('[Active]', 'green') + ' SocketCluster started');
-      console.log('            Port: ' + self.options.port);
-      console.log('            Master PID: ' + process.pid);
-      console.log('            Balancer count: ' + self.options.balancers);
-      console.log('            Worker count: ' + self.options.workers);
-      console.log('            Store count: ' + self.options.stores);
-      console.log();
-    }
-    self.emit(self.EVENT_READY);
-  });
-  
-  self._workerIdCounter = 1;
 
   var ioClusterReady = function () {
     self._ioCluster.removeListener('ready', ioClusterReady);
-
-    var len = self.options.workers;
-    for (var j = 0; j < len; j++) {
-      self._launchWorker(j);
-    }
+    self._launchWorkerCluster();
   };
 
   var launchIOCluster = function () {
@@ -629,14 +487,8 @@ SocketCluster.prototype._start = function () {
 };
 
 SocketCluster.prototype.killWorkers = function () {
-  for (var i in this._workers) {
-    this._workers[i].kill('SIGTERM');
-  }
-};
-
-SocketCluster.prototype.killBalancers = function () {
-  if (this._balancer) {
-    this._balancer.kill('SIGTERM');
+  if (this._workerCluster) {
+    this._workerCluster.kill('SIGTERM');
   }
 };
 

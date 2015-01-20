@@ -12,7 +12,6 @@ var socketCluster = new SocketCluster({
   socketChannelLimit: 100,
   rebootWorkerOnCrash: true,
   useSmartBalancing: true,
-  sessionTimeout: 20,
   workerStatusInterval: 2
 });
 
