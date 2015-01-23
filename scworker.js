@@ -72,7 +72,6 @@ SCWorker.prototype._init = function (options) {
     connectTimeout: this.options.connectTimeout,
     dataExpiry: this.options.sessionTimeout,
     heartRate: this.options.sessionHeartRate,
-    addressSocketLimit: this.options.addressSocketLimit,
     socketChannelLimit: this.options.socketChannelLimit
   });
 

@@ -9,7 +9,6 @@ var socketCluster = new SocketCluster({
   workerController: __dirname + '/worker.js',
   balancerController: __dirname + '/balancer.js',
   storeController: __dirname + '/store.js',
-  addressSocketLimit: 0,
   socketChannelLimit: 100,
   rebootWorkerOnCrash: true,
   useSmartBalancing: false
