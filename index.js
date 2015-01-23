@@ -206,7 +206,6 @@ SocketCluster.prototype._init = function (options) {
           'Please provide either a key and cert pair or a pfx certificate';
         throw new Error(message);
       }
-      process.exit();
     }
   }
 
