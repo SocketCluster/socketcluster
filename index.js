@@ -312,13 +312,7 @@ SocketCluster.prototype.noticeHandler = function (notice, origin) {
     }
     notice.stack = notice.message;
   }
- if (origin instanceof Object) {
-    
-  } else {
-    notice.origin = {
-      type: origin
-    };
-  };
+  notice.origin = origin;
   notice.time = Date.now();
 
   this.emit(this.EVENT_NOTICE, notice);
