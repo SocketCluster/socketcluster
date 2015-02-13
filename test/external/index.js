@@ -178,6 +178,7 @@ scServer.on('message', function (m) {
       } else {
         console.log('All tests passed!');
       }
+      process.exit();
     });
   }
 });

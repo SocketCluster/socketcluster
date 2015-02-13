@@ -21,7 +21,6 @@ module.exports.run = function (worker) {
 
   /*
     In here we handle our incoming realtime connections and listen for events.
-    From here onwards is just like Socket.io but with some additional features.
   */
   scServer.on('connection', function (socket) {
     socket.on('ping', function (data) {

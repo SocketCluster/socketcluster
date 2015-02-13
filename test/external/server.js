@@ -1,7 +1,6 @@
 var SocketCluster = require('../../index').SocketCluster;
 
 var socketCluster = new SocketCluster({
-  balancers: 1,
   workers: 1,
   stores: 1,
   port: 8000,
@@ -10,8 +9,7 @@ var socketCluster = new SocketCluster({
   balancerController: __dirname + '/balancer.js',
   storeController: __dirname + '/store.js',
   socketChannelLimit: 100,
-  rebootWorkerOnCrash: true,
-  useSmartBalancing: false
+  rebootWorkerOnCrash: true
 });
 
 socketCluster.on('ready', function () {

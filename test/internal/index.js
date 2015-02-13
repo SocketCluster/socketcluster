@@ -70,7 +70,7 @@ scServer.on('message', function (m) {
       tasks.push(function (cb) {
         var socket = scClient.connect(options);
         socket.once('connect', function () {
-          if (socket.connected) {
+          if (socket.getState() == socket.CONNECTED) {
             // Subscribe to some events
             socket.on('event1', function () {});
             socket.on('event2', function () {});
@@ -80,7 +80,7 @@ scServer.on('message', function (m) {
             console.log('#' + ++socketCount + ' - Socket ' + socket.id + ' connected');
  
             var interval = setInterval(function () {
-              if (socket.connected) {
+              if (socket.getState() == socket.CONNECTED) {
                 socket.emit('test', {id: socket.id});
               } else {
                 clearInterval(interval);
@@ -90,7 +90,7 @@ scServer.on('message', function (m) {
             
             cb();
           } else {
-            cb(new Error('The client socket\'s connected property should be true once it emits a connect event'));
+            cb(new Error('The client socket\'s getState() should return socket.CONNECTED after it emits a connect event'));
           }
         });
         sockets.push(socket);
@@ -119,7 +119,7 @@ scServer.on('message', function (m) {
         }
         
         var channelMapAsString = util.inspect(channels, {depth: 5});
-        console.log('Store channels after session timeouts:', channelMapAsString);
+        console.log('Store channels after unsubscribe:', channelMapAsString);
         
         var channelMapHasFoo = /foo/.test(channelMapAsString);
         assert(!channelMapHasFoo, 'Channel was not cleaned up after all clients unsubscribed from it');
@@ -138,7 +138,7 @@ scServer.on('message', function (m) {
             break;
           }
         }
-        setTimeout(checkResults, 5000);
+        setTimeout(checkResults, 2000);
       }, 3000);
     });
     
@@ -146,44 +146,10 @@ scServer.on('message', function (m) {
     
     tasks.push(function (cb) {
       console.log();
-      console.log('Checking that session data gets evenly distributed between stores');
-      
-      setTimeout(function () {
-        var sessionCounts = {};
-        var sessionData;
-        var storeCount = 0;
-        var totalSessions = 0;
-        
-        for (var i in storeData) {
-          storeCount++;
-          sessionData = storeData[i].sessionData;
-          sessionCounts[i] = 0;
-          for (var j in sessionData) {
-            sessionCounts[i]++;
-            totalSessions++;
-          }
-        }
-        
-        console.log('Store session distribution: ', sessionCounts);
-        
-        var meanSessionCount = totalSessions / storeCount;
-        var similarityThreshold = .3; // 30%
-        var isCloseToMean;
-        for (var k in sessionCounts) {
-          isCloseToMean = Math.abs(sessionCounts[k] - meanSessionCount) < meanSessionCount * similarityThreshold;
-          assert(isCloseToMean, 'Session data was not evenly distributed between stores');
-        }
-        console.log('[Success] Session data was evenly distributed between stores');
-        cb();
-      }, 2000);
-    });
-    
-    tasks.push(function (cb) {
-      console.log();
       clearTimeout(assertTimeout);
-      assertTimeout = setTimeout(timeoutError, 40000);
+      assertTimeout = setTimeout(timeoutError, 10000);
       
-      console.log('Checking that store data gets cleaned up after sessions time out - This will take 30 seconds');
+      console.log('Checking that store data is empty after disconnecting all sockets');
       
       for (var i in sockets) {
         sockets[i].disconnect();
@@ -194,33 +160,33 @@ scServer.on('message', function (m) {
         for (var i in storeData) {
           allData[i] = storeData[i].all;
         }
-        console.log('Store data after session timeouts:', util.inspect(allData, {depth: 5}));
+        console.log('Store data after disconnecting all sockets:', util.inspect(allData, {depth: 5}));
         
         for (var j in allData) {
           var isStoreDataEmpty = JSON.stringify(allData[j]).length < 70;
-          assert(isStoreDataEmpty, 'Store data was not cleaned up after sessions timed out');
+          assert(isStoreDataEmpty, 'Store data was not cleaned up after all sockets were disconnected');
         }
-        console.log('[Success] Store data was cleaned up after sessions timed out');
+        console.log('[Success] Store data was cleaned up after all sockets were disconnected');
         
         cb();
-      }, 30000);
+      }, 2000);
     });
     
     tasks.push(function (cb) {
       console.log();
-      console.log('Checking that channels get cleaned up after sessions time out');
+      console.log('Checking that channels get cleaned up after all sockets were disconnected');
       
       var channels = {};
       for (var i in storeData) {
         channels[i] = storeData[i].channels;
       }
-      console.log('Store channels after session timeouts:', util.inspect(channels, {depth: 5}));
+      console.log('Store channels after disconnecting all sockets:', util.inspect(channels, {depth: 5}));
       
       for (var j in channels) {
         var isChannelMapEmpty = JSON.stringify(channels[j]).length < 50;
-        assert(isChannelMapEmpty, 'Channels were not cleaned up after sessions timed out');
+        assert(isChannelMapEmpty, 'Channels were not cleaned up after disconnecting all sockets');
       }
-      console.log('[Success] Store channels were cleaned up after sessions timed out');
+      console.log('[Success] Store channels were cleaned up after disconnecting all sockets');
       
       cb();
     });
