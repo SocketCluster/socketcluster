@@ -1,6 +1,8 @@
 SocketCluster
 ======
 
+[![Join the chat at https://gitter.im/TopCloud/socketcluster](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/TopCloud/socketcluster?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![SocketCluster logo](https://raw.github.com/topcloud/socketcluster/master/assets/logo.png)](http://socketcluster.io/)
 
 Complete documentation available at: http://socketcluster.io/
