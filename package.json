@@ -18,6 +18,7 @@
     "base64id": "0.1.0",
     "forever-monitor": "1.5.2",
     "iocluster": "1.6.x",
+    "jsonwebtoken": "3.2.2",
     "minimist": "1.1.0",
     "uid-number": "0.0.5",
     "wrench": "1.5.8",

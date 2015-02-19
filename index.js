@@ -403,7 +403,7 @@ SocketCluster.prototype._handleWorkerClusterExit = function (errorCode) {
 
 SocketCluster.prototype._launchWorkerCluster = function () {
   var self = this;
-  
+
   this._workerCluster = fork(__dirname + '/lib/workercluster.js');
   
   var workerOpts = this._cloneObject(this.options);
@@ -413,7 +413,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
   workerOpts.workerCount = this.options.workers;
   workerOpts.stores = this._getStoreSocketPaths();
   workerOpts.secretKey = this._secretKey;
-
+  
   this._workerCluster.send({
     type: 'init',
     data: workerOpts
