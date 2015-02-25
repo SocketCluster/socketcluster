@@ -1,5 +1,5 @@
 var argv = require('minimist')(process.argv.slice(2));
-var SocketCluster = require('socketcluster').SocketCluster;
+var SocketCluster = require('sc2').SocketCluster;
 
 var socketCluster = new SocketCluster({
   balancers: Number(argv.b) || 1,

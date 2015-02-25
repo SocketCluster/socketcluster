@@ -41,7 +41,7 @@ var warningMessage = function (message) {
 }
 
 var showCorrectUsage = function () {
-  console.log('Usage: socketcluster [options] [command]\n');
+  console.log('Usage: sc2 [options] [command]\n');
   console.log('Options:');
   console.log("  -v            Get the version of the current SocketCluster installation");
   console.log('  --help        Get info on how to use this command');
@@ -110,7 +110,7 @@ var wd = process.cwd();
 
 var sampleDir = __dirname + '/../sample';
 var destDir = path.normalize(wd + '/' + arg1);
-var clientFileSourcePath = path.normalize(destDir + '/node_modules/socketcluster-client/socketcluster.js');
+var clientFileSourcePath = path.normalize(destDir + '/node_modules/sc2-client/socketcluster.js');
 var clientFileDestPath = path.normalize(destDir + '/public/socketcluster.js');
 
 var createFail = function () {
