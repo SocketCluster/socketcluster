@@ -1,7 +1,7 @@
 {
   "name": "sc2",
   "description": "SocketCluster - A Highly parallelized WebSocket server cluster to make the most of multi-core machines/instances.",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "homepage": "http://socketcluster.io",
   "contributors": [
     {
@@ -25,7 +25,7 @@
     "ws": "0.7.1"
   },
   "bin": {
-    "socl": "bin/cli.js"
+    "sc2": "bin/cli.js"
   },
   "keywords": [
     "websocket",
