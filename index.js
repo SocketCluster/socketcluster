@@ -60,8 +60,6 @@ SocketCluster.prototype._init = function (options) {
     connectTimeout: 10,
     ackTimeout: 10,
     socketUpgradeTimeout: 1,
-    sessionTimeout: 1200,
-    sessionHeartRate: 4,
     maxHttpBufferSize: null,
     maxHttpSockets: null,
     origins: '*:*',
@@ -82,11 +80,11 @@ SocketCluster.prototype._init = function (options) {
     rebootOnSignal: true,
     useSmartBalancing: true,
     downgradeToUser: false,
+    socketCookieName: null,
     path: null,
     socketRoot: null,
     schedulingPolicy: null,
     allowClientPublish: true,
-    addSessionToHTTPRequest: true,
     clusterEngine: 'iocluster'
   };
 
@@ -112,12 +110,9 @@ SocketCluster.prototype._init = function (options) {
       "- It needs to be a path to a JavaScript file which will act as the " +
       "boot controller for each worker in the cluster");
   }
-
-  if (self.options.sessionTimeout < 60) {
-    console.log('   ' + self.colorText('[Warning]', 'yellow') +
-      " The sessionTimeout option should be at least 60 seconds " +
-      "- A low sessionTimeout requires fast heartbeats which may use " +
-      "a lot of CPU at high concurrency levels.");
+  
+  if (self.options.socketCookieName == null) {
+    self.options.socketCookieName = 'n/' + self.options.appName + '/io';
   }
 
   self._paths = {
@@ -412,6 +407,7 @@ SocketCluster.prototype._initLoadBalancer = function () {
       processTermTimeout: this.options.processTermTimeout * 1000,
       downgradeToUser: this.options.downgradeToUser,
       schedulingPolicy: this.options.schedulingPolicy,
+      socketCookieName: this.options.socketCookieName,
       balancerControllerPath: this._paths.balancerControllerPath
     }
   });
