@@ -1,6 +1,6 @@
 var async = require('async');
 var childProcess = require('child_process');
-var scClient = require('socketcluster-client');
+var scClient = require('sc2-client');
 var assert = require('assert');
 
 var scServer = childProcess.fork(__dirname + '/server.js');

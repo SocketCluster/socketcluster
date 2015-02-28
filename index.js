@@ -71,6 +71,7 @@ SocketCluster.prototype._init = function (options) {
     heartbeatTimeout: 60,
     workerStatusInterval: 10,
     processTermTimeout: 10,
+    defaultAuthTokenExpiryInMinutes: 1440,
     propagateErrors: true,
     host: null,
     workerController: null,
@@ -82,6 +83,7 @@ SocketCluster.prototype._init = function (options) {
     socketRoot: null,
     schedulingPolicy: null,
     allowClientPublish: true,
+    authCookieName: null,
     clusterEngine: 'iocluster'
   };
 
