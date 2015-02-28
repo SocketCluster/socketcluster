@@ -20,7 +20,7 @@
     "http-proxy": "1.6.2",
     "iocluster": "1.6.x",
     "minimist": "1.1.0",
-    "socketcluster-server": "0.9.x",
+    "engine.io": "1.4.3",
     "uid-number": "0.0.5",
     "wrench": "1.5.8"
   },
