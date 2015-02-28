@@ -5,7 +5,7 @@ var domain = require('domain');
 var fork = require('child_process').fork;
 var os = require('os');
 var fs = require('fs');
-var uidNumber = require("uid-number");
+var uidNumber = require('uid-number');
 var wrench = require('wrench');
 
 var SocketCluster = function (options) {
@@ -428,7 +428,7 @@ SocketCluster.prototype._launchLoadBalancer = function (callback) {
     self.noticeHandler(noticeMessage, {type: 'balancer'});
   };
 
-  self._balancer = fork(__dirname + '/balancer.js');
+  self._balancer = fork(__dirname + '/lib/balancer.js');
   self._balancer.on('error', balancerErrorHandler);
   self._balancer.on('notice', balancerNoticeHandler);
 
@@ -535,7 +535,7 @@ SocketCluster.prototype._handleWorkerExit = function (worker, code, signal) {
 SocketCluster.prototype._launchWorker = function (workerId, respawn) {
   var self = this;
   
-  var worker = fork(__dirname + '/worker.js');
+  var worker = fork(__dirname + '/lib/worker.js');
   worker.on('error', self._workerErrorHandler.bind(self, worker));
   
   worker.id = workerId;
