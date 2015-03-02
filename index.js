@@ -409,7 +409,6 @@ SocketCluster.prototype._initLoadBalancer = function () {
       processTermTimeout: this.options.processTermTimeout * 1000,
       downgradeToUser: this.options.downgradeToUser,
       schedulingPolicy: this.options.schedulingPolicy,
-      socketCookieName: this.options.socketCookieName,
       balancerControllerPath: this._paths.balancerControllerPath
     }
   });

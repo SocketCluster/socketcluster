@@ -15,43 +15,28 @@ module.exports.run = function (worker) {
   
   app.use(serveStatic(path.resolve(__dirname, 'public')));
 
-  httpServer.on('req', app);
-
-  var activeSessions = {};
+  httpServer.on('request', app);
 
   var count = 0;
 
   /*
     In here we handle our incoming realtime connections and listen for events.
-    From here onwards is just like Socket.io but with some additional features.
   */
   scServer.on('connection', function (socket) {
-    /*
-      Store that socket's session for later use.
-      We will emit events on it later - Those events will 
-      affect all sockets which belong to that session.
-    */
-    activeSessions[socket.session.id] = socket.session;
-    
     socket.on('ping', function (data) {
       count++;
       console.log('PING', data);
       scServer.global.publish('pong', count);
     });
+    
+    var interval = setInterval(function () {
+      socket.emit('rand', {
+        rand: Math.floor(Math.random() * 5)
+      });
+    }, 1000);
+    
+    socket.on('disconnect', function () {
+      clearInterval(interval);
+    });
   });
-  
-  scServer.on('sessionEnd', function (ssid) {
-    delete activeSessions[ssid];
-  });
-  
-  setInterval(function () {
-    /*
-      Emit a 'rand' event on each active session.
-      Note that in this case the random number emitted will be the same across all sockets which
-      belong to the same session (I.e. All open tabs within the same browser).
-    */
-    for (var i in activeSessions) {
-      activeSessions[i].emit('rand', {rand: Math.floor(Math.random() * 5)});
-    }
-  }, 1000);
 };
