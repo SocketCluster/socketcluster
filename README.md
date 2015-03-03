@@ -23,6 +23,7 @@ The main differences between v1 and v2 are performance and architecture:
 Since v1 is still the official version, if you want to use v2, you will need to use a different npm command:
 
 ```bash
+// Instead of 'npm install -g socketcluster'
 npm install -g sc2
 ```
 
