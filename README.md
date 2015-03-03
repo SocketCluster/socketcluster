@@ -7,101 +7,42 @@ Complete documentation available at: http://socketcluster.io/
 
 ## Change log
 
-**14 November 2014** (v1.0.1)
+### SocketCluster v2 Early Release
 
-Updated http://socketcluster.io/ documentation (partially).
+**3 March 2015** (v2.0.2)
 
-v1.0.1 is not a drop-in upgrade. It involves some major changes to the client-side API (documented on website).
-Before this version, SC made no explicit distinction between pub/sub channels and regular client <=> server events.
-By listening to an event, the socket was implicitly subscribing to a channel by the same name.
-This feature was nice but it also masked a lot of the complexity behind SC and made handling events vs channels ambiguous and took
-away flexibility from the developer.
+Updated http://socketcluster.io/ documentation.
 
-The goal of this release is to make SC a viable open-source alternative to commercial realtime services like PubNub, Pusher, Firebase, etc...
-But without you having to give up control over your backend.
+SocketCluster v2 is now available for download. This version will be maintained and supported in parallel with v1 (fully backwards compatible).
+Version 1 will remain the official version until it makes sense to switch to v2 (based on feedback from the community).
+The main differences between v1 and v2 are performance and architecture:
 
-Here is some sample code which demonstrates how to use the new API:
+- V2 uses plain WebSockets (no HTTP long polling fallback)
+- Thanks to WebSockets, v2 doesn't have any load balancer processes (gives you more room for workers)
 
-```js
-// Subscribe to a channel
+Since v1 is still the official version, if you want to use v2, you will need to use a different npm command:
 
-var fooChannel = socket.subscribe('foo');
-// or
-socket.subscribe('foo'); // We don't necessarily need the channel object
-
+```bash
+npm install -g sc2
 ```
 
-```js
-// Subscribe events
+Once installed, you should be able to invoke the 'sc2' command.
+The sc2 command has the exact same sub-commands as the v1 'socketcluster' command.
+For details, run:
 
-// Note that subscribe will only fail if explicitly blocked by middleware.
-// If the connection drops out, the subscription will stay pending until 
-// the connection comes back.
-
-fooChannel.on('subscribeFail', function (err, channelName) {
- // ...
-});
-
-fooChannel.on('subscribe', function (channelName) {
- // ...
-});
-
-socket.on('subscribeFail', function (err, channelName) {
-  // ...
-});
-
-socket.on('subscribe', function (channelName) {
-  // ...
-});
+```bash
+sc2 --help
 ```
 
-```js
-// Watch incoming channel data
+### API changes
 
-fooChannel.watch(function (data) {
-  // This function will run whenever data is published
-  // to the foo channel.
-});
-// or
-socket.watch('foo', function (data) {
-  // This function will run whenever data is published
-  // to the foo channel.
-});
-```
-
-```js
-// Publish data to a channel
-
-fooChannel.publish(12345);             // publish from channel
-// or
-socket.channel('foo').publish(12345);  // same as above
-// or
-socket.publish('foo', 12345);          // publish from socket
-// or
-socket.publish('foo', {a: 123, b: 4}); // objects are valid too
-```
-
-```js
-fooChannel.unsubscribe();  // unsubscribe from channel
-// or
-socket.unsubscribe('foo'); // unsubscribe using socket
-```
-
-```js
-// Emit events between client and server.
-// This is the same as before.
-
-socket.emit('greeting', {from: 'alice', message: 'Hello'});
-```
-
-```js
-// Listen to events emitted on socket.
-// Same as before.
-
-socket.on('greeting', function (data) {
- // ...
-});
-```
+Along with the v2 release, some general changes were made to the API which also affect v1:
+- The Session object (socket.session) on the server is now deprecated.
+The concept of a session has been superseded by a token-based authentication system (based on JWT: https://tools.ietf.org/html/draft-ietf-oauth-json-web-token-32).
+- Server-side channel entities were introduced - The scServer.global (http://socketcluster.io/#!/docs/api-global) object's subscribe() and channel() methods now 
+return a server-side Channel object whose API matches that of the client-side SCChannel object (http://socketcluster.io/#!/docs/api-scchannel).
+- The client-side socket (http://socketcluster.io/#!/docs/api-scsocket-client) object now emits a 'ready' event along with useful status info such as whether or not
+the socket is authenticated with the server (has a valid auth token and hence the user doesn't need to login again).
 
 
 ## Introduction
