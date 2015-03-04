@@ -35,7 +35,7 @@ module.exports.run = function (worker) {
       });
     }, 1000);
     
-    socket.on('close', function () {
+    socket.on('disconnect', function () {
       clearInterval(interval);
     });
   });
