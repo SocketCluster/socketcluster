@@ -18,7 +18,7 @@
         throw 'Socket error - ' + err;
       });
       
-      socket.on('connect', function () {
+      socket.on('open', function () {
         console.log('CONNECTED');
       });
       
