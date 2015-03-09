@@ -16,7 +16,7 @@ Updated http://socketcluster.io/ documentation.
 In order to prepare SocketCluster for a smooth transition to version 2 over the next few years, some big changes were 
 made to the API which will affect v1:
 - The Session object (socket.session) on the server no longer exists as of version 1.3.0.
-The concept of a session has been superseded by a token-based authentication system (based on JWT: https://tools.ietf.org/html/draft-ietf-oauth-json-web-token-32).
+The concept of a session has been superseded by a token-based authentication system (See http://socketcluster.io/#!/docs/authentication).
 - Server-side channel entities were introduced - The scServer.global (http://socketcluster.io/#!/docs/api-global) object's subscribe() and channel() methods now 
 return a server-side Channel object whose API matches that of the client-side SCChannel object (http://socketcluster.io/#!/docs/api-scchannel).
 - The client-side socket (http://socketcluster.io/#!/docs/api-scsocket-client) object now emits a 'ready' event along with useful status info such as whether or not
