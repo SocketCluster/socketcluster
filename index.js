@@ -415,7 +415,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
   workerOpts.sourcePort = this.options.port;
   workerOpts.workerCount = this.options.workers;
   workerOpts.stores = this._getStoreSocketPaths();
-  workerOpts.secretKey = this._secretKey;
+  workerOpts.secretKey = this.options.secretKey;
   
   this._workerCluster.send({
     type: 'init',
@@ -454,7 +454,9 @@ SocketCluster.prototype._logDeploymentDetails = function () {
 SocketCluster.prototype._start = function () {
   var self = this;
   
-  self._secretKey = crypto.randomBytes(32).toString('hex');
+  if (self.options.secretKey == null) {
+    self.options.secretKey = crypto.randomBytes(32).toString('hex');
+  }
   self._active = false;
 
   var ioClusterReady = function () {
@@ -465,7 +467,7 @@ SocketCluster.prototype._start = function () {
   var launchIOCluster = function () {
     self._ioCluster = new self._clusterEngine.IOCluster({
       stores: self._getStoreSocketPaths(),
-      secretKey: self._secretKey,
+      secretKey: self.options.secretKey,
       expiryAccuracy: self._dataExpiryAccuracy,
       downgradeToUser: self.options.downgradeToUser,
       processTermTimeout: self.options.processTermTimeout * 1000,
