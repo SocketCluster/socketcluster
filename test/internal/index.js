@@ -70,7 +70,7 @@ scServer.on('message', function (m) {
       tasks.push(function (cb) {
         var socket = scClient.connect(options);
         socket.once('ready', function () {
-          if (socket.getState() == socket.CONNECTED) {
+          if (socket.getState() == socket.OPEN) {
             // Subscribe to some events
             socket.on('event1', function () {});
             socket.on('event2', function () {});
@@ -80,7 +80,7 @@ scServer.on('message', function (m) {
             console.log('#' + ++socketCount + ' - Socket ' + socket.id + ' connected');
  
             var interval = setInterval(function () {
-              if (socket.getState() == socket.CONNECTED) {
+              if (socket.getState() == socket.OPEN) {
                 socket.emit('test', {id: socket.id});
               } else {
                 clearInterval(interval);
@@ -90,7 +90,7 @@ scServer.on('message', function (m) {
             
             cb();
           } else {
-            cb(new Error('The client socket\'s getState() should return socket.CONNECTED after it emits a connect event'));
+            cb(new Error('The client socket\'s getState() should return socket.OPEN after it emits a connect event'));
           }
         });
         sockets.push(socket);
