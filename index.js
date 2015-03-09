@@ -60,8 +60,6 @@ SocketCluster.prototype._init = function (options) {
     connectTimeout: 10,
     ackTimeout: 10,
     socketUpgradeTimeout: 1,
-    sessionTimeout: 1200,
-    sessionHeartRate: 4,
     maxHttpBufferSize: null,
     maxHttpSockets: null,
     origins: '*:*',
@@ -72,7 +70,9 @@ SocketCluster.prototype._init = function (options) {
     heartbeatTimeout: 60,
     workerStatusInterval: 10,
     processTermTimeout: 10,
+    defaultAuthTokenExpiryInMinutes: 1440,
     propagateErrors: true,
+    propagateNotices: true,
     host: null,
     workerController: null,
     balancerController: null,
@@ -82,11 +82,12 @@ SocketCluster.prototype._init = function (options) {
     rebootOnSignal: true,
     useSmartBalancing: true,
     downgradeToUser: false,
+    socketCookieName: null,
+    authCookieName: null,
     path: null,
     socketRoot: null,
     schedulingPolicy: null,
     allowClientPublish: true,
-    addSessionToHTTPRequest: true,
     clusterEngine: 'iocluster'
   };
 
@@ -112,12 +113,9 @@ SocketCluster.prototype._init = function (options) {
       "- It needs to be a path to a JavaScript file which will act as the " +
       "boot controller for each worker in the cluster");
   }
-
-  if (self.options.sessionTimeout < 60) {
-    console.log('   ' + self.colorText('[Warning]', 'yellow') +
-      " The sessionTimeout option should be at least 60 seconds " +
-      "- A low sessionTimeout requires fast heartbeats which may use " +
-      "a lot of CPU at high concurrency levels.");
+  
+  if (self.options.socketCookieName == null) {
+    self.options.socketCookieName = 'n/' + self.options.appName + '/io';
   }
 
   self._paths = {
@@ -397,7 +395,7 @@ SocketCluster.prototype._initLoadBalancer = function () {
   this._balancer.send({
     type: 'init',
     data: {
-      secretKey: this._secretKey,
+      secretKey: this.options.secretKey,
       sourcePort: this.options.port,
       socketDirPath: this._socketDirPath,
       workers: this._getWorkerSocketNames(),
@@ -548,7 +546,7 @@ SocketCluster.prototype._launchWorker = function (workerId, respawn) {
   workerOpts.socketDirPath = self._socketDirPath;
   workerOpts.socketName = self._getWorkerSocketName(workerId);
   workerOpts.stores = self._getStoreSocketPaths();
-  workerOpts.secretKey = self._secretKey;
+  workerOpts.secretKey = self.options.secretKey;
   workerOpts.isLeader = workerId ? false : true;
 
   worker.send({
@@ -574,7 +572,9 @@ SocketCluster.prototype._launchWorker = function (workerId, respawn) {
 SocketCluster.prototype._start = function () {
   var self = this;
   
-  self._secretKey = crypto.randomBytes(32).toString('hex');
+  if (self.options.secretKey == null) {
+    self.options.secretKey = crypto.randomBytes(32).toString('hex');
+  }
 
   self._workers = [];
   self._active = false;
@@ -610,7 +610,7 @@ SocketCluster.prototype._start = function () {
   var launchIOCluster = function () {
     self._ioCluster = new self._clusterEngine.IOCluster({
       stores: self._getStoreSocketPaths(),
-      secretKey: self._secretKey,
+      secretKey: self.options.secretKey,
       expiryAccuracy: self._dataExpiryAccuracy,
       downgradeToUser: self.options.downgradeToUser,
       processTermTimeout: self.options.processTermTimeout * 1000,

@@ -15,7 +15,6 @@ module.exports.run = function (store) {
     for (var i in socketChannelData) {
       channels = channels.concat(Object.keys(socketChannelData[i]));
     }
-    var sessionData = Object.keys(store.dataMap.get(['__iocl', 'sed']) || {});
     
     var req = http.request({
       socketPath: resultSocketPath,
@@ -28,12 +27,6 @@ module.exports.run = function (store) {
       });
     });
     req.write(JSON.stringify([
-      {
-        origin: 'store',
-        pid: process.pid,
-        type: 'sessionData',
-        data: sessionData
-      },
       {
         origin: 'store',
         pid: process.pid,
