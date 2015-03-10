@@ -60,6 +60,8 @@ SocketCluster.prototype._init = function (options) {
     logLevel: 2,
     connectTimeout: 10,
     ackTimeout: 10,
+    pingInterval: 25,
+    pingTimeout: 60,
     maxHttpSockets: null,
     origins: '*:*',
     matchOriginProtocol: true,
