@@ -30,11 +30,9 @@ module.exports.run = function (worker) {
     });
     
     var interval = setInterval(function () {
-      if (socket.getState() === socket.OPEN) {
-        socket.emit('rand', {
-          rand: Math.floor(Math.random() * 5)
-        });
-      }
+      socket.emit('rand', {
+        rand: Math.floor(Math.random() * 5)
+      });
     }, 1000);
     
     socket.on('disconnect', function () {
