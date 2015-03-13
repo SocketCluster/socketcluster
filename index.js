@@ -52,6 +52,7 @@ SocketCluster.prototype._init = function (options) {
     stores: null,
     appName: null,
     secretKey: null,
+    authKey: null,
     rebootWorkerOnCrash: true,
     protocol: 'http',
     protocolOptions: null,
@@ -547,6 +548,7 @@ SocketCluster.prototype._launchWorker = function (workerId, respawn) {
   workerOpts.socketName = self._getWorkerSocketName(workerId);
   workerOpts.stores = self._getStoreSocketPaths();
   workerOpts.secretKey = self.options.secretKey;
+  workerOpts.authKey = self.options.authKey;
   workerOpts.isLeader = workerId ? false : true;
 
   worker.send({
@@ -574,6 +576,9 @@ SocketCluster.prototype._start = function () {
   
   if (self.options.secretKey == null) {
     self.options.secretKey = crypto.randomBytes(32).toString('hex');
+  }
+  if (self.options.authKey == null) {
+    self.options.authKey = crypto.randomBytes(32).toString('hex');
   }
 
   self._workers = [];
