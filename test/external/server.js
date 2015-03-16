@@ -9,7 +9,9 @@ var socketCluster = new SocketCluster({
   balancerController: __dirname + '/balancer.js',
   storeController: __dirname + '/store.js',
   socketChannelLimit: 100,
-  rebootWorkerOnCrash: true
+  rebootWorkerOnCrash: true,
+  pingTimeout: 3,
+  pingInterval: 1
 });
 
 socketCluster.on('ready', function () {

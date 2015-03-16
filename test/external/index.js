@@ -89,9 +89,18 @@ scServer.on('message', function (m) {
       },
       function (cb) {
         socket.emit('killWorker');
-        var err;
+        socket.once('error', function (err) {
+          console.log('Caught:', err);
+        });
         
-        setTimeout(function () {
+        var notUnsubscribedTimeout = setTimeout(function () {
+          cb('Did not unsubscribe from channels on disconnect');
+        }, 3000);
+        
+        socket.once('unsubscribe', function () {
+          clearTimeout(notUnsubscribedTimeout);
+          var err;
+          
           try {
             var subscriptions = socket.subscriptions();
             assert(JSON.stringify(subscriptions) == JSON.stringify([]),
@@ -100,7 +109,7 @@ scServer.on('message', function (m) {
             err = e;
           }
           cb(err);
-        }, 1000);
+        });
       },
       function (cb) {
         setTimeout(function () {
