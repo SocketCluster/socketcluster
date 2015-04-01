@@ -21,6 +21,8 @@ The concept of a session has been superseded by a token-based authentication sys
 return a server-side Channel object whose API matches that of the client-side SCChannel object (http://socketcluster.io/#!/docs/api-scchannel).
 - The client-side socket (http://socketcluster.io/#!/docs/api-scsocket-client) object now emits a 'ready' event along with useful status info such as whether or not
 the socket is authenticated with the server (has a valid auth token and hence the user doesn't need to login again).
+- The second 'res' argument provided to the listener function in socket.on(event, listener) is now a function instead of an object with end() and error() methods.
+To send an error, just call res('This is an error') or if you want to send back an error code; res(1234, 'This is the error message'). For success, just set the first argument to null; res(null, 'This is a normal response').
 
 All these changes have been noted on the website.
 
