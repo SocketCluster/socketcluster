@@ -1,7 +1,7 @@
 {
   "name": "sc2",
   "description": "SocketCluster - A Highly parallelized WebSocket server cluster to make the most of multi-core machines/instances.",
-  "version": "2.0.28",
+  "version": "2.1.0",
   "homepage": "http://socketcluster.io",
   "contributors": [
     {
@@ -17,7 +17,7 @@
     "async": "0.7.0",
     "base64id": "0.1.0",
     "forever-monitor": "1.5.2",
-    "iocluster": "2.1.x",
+    "iocluster": "2.2.x",
     "jsonwebtoken": "3.2.2",
     "minimist": "1.1.0",
     "uid-number": "0.0.5",
