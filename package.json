@@ -16,7 +16,6 @@
   "dependencies": {
     "async": "0.7.0",
     "base64id": "0.1.0",
-    "forever-monitor": "1.5.2",
     "http-proxy": "1.6.2",
     "iocluster": "2.1.x",
     "jsonwebtoken": "3.2.2",
