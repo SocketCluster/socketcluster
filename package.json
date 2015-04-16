@@ -17,7 +17,7 @@
     "async": "0.7.0",
     "base64id": "0.1.0",
     "iocluster": "2.2.x",
-    "jsonwebtoken": "3.2.2",
+    "jsonwebtoken": "5.0.0",
     "minimist": "1.1.0",
     "uid-number": "0.0.5",
     "wrench": "1.5.8",
