@@ -7,8 +7,14 @@
   <body>
     <div class="content">
       <img src="img/logo.png" alt="SocketCluster logo">
-      <p>Thank you for installing SocketCluster <span id="face-container">:)</span><br />
-      For documentation, go to <a href="http://socketcluster.io/">http://socketcluster.io/</a></p>
+      <p>
+        Thank you for installing SocketCluster <span id="face-container">:)</span><br />
+        For documentation, go to <a href="http://socketcluster.io/">http://socketcluster.io/</a>
+      </p>
+      <p>
+        <br />
+        <iframe src="https://ghbtns.com/github-btn.html?user=topcloud&repo=socketcluster&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
+      </p>
     </div>
     <script type="text/javascript">
       // Initiate the connection to the server
@@ -22,10 +28,7 @@
         console.log('CONNECTED');
       });
       
-      var positiveFaces = [';p', ':D', ':)', ':3', ';)'];
-      var negativeFaces = [':(', '>:[', ':\'(', ':[', '>:\\'];
-      
-      var faces = positiveFaces;
+      var faces = [';p', ':D', ':)', ':3', ';)'];
       var faceContainer = document.getElementById('face-container');
       
       socket.on('rand', function (data) {
@@ -40,10 +43,7 @@
         console.log('Failed to subscribe to PONG channel due to error: ' + err);
       });
       
-      var c = 0;
-      
       pongChannel.watch(function (num) {
-        faces = c++ % 2 ? positiveFaces : negativeFaces;
         console.log('PONG:', num);
       });
     </script>
