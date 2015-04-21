@@ -53,6 +53,7 @@ SocketCluster.prototype._init = function (options) {
     workers: null,
     stores: null,
     appName: null,
+    instanceId: null,
     secretKey: null,
     authKey: null,
     rebootWorkerOnCrash: true,
