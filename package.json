@@ -1,7 +1,7 @@
 {
   "name": "sc2",
   "description": "SocketCluster - A Highly parallelized WebSocket server cluster to make the most of multi-core machines/instances.",
-  "version": "2.1.9",
+  "version": "2.1.10",
   "homepage": "http://socketcluster.io",
   "contributors": [
     {
