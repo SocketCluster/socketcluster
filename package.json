@@ -19,6 +19,7 @@
     "iocluster": "2.2.x",
     "jsonwebtoken": "5.0.0",
     "minimist": "1.1.0",
+    "node-uuid": "1.4.3",
     "uid-number": "0.0.5",
     "wrench": "1.5.8",
     "ws": "0.7.1"
