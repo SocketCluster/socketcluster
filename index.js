@@ -7,6 +7,7 @@ var os = require('os');
 var fs = require('fs');
 var uidNumber = require('uid-number');
 var wrench = require('wrench');
+var uuid = require('node-uuid');
 
 var SocketCluster = function (options) {
   var self = this;
@@ -51,6 +52,7 @@ SocketCluster.prototype._init = function (options) {
     workers: null,
     stores: null,
     appName: null,
+    instanceId: null,
     secretKey: null,
     authKey: null,
     rebootWorkerOnCrash: true,
@@ -583,6 +585,9 @@ SocketCluster.prototype._start = function () {
   if (self.options.authKey == null) {
     self.options.authKey = crypto.randomBytes(32).toString('hex');
   }
+  if (self.options.instanceId == null) {
+    self.options.instanceId = uuid.v4();
+  }
 
   self._workers = [];
   self._active = false;
@@ -618,6 +623,7 @@ SocketCluster.prototype._start = function () {
   var launchIOCluster = function () {
     self._ioCluster = new self._clusterEngine.IOCluster({
       stores: self._getStoreSocketPaths(),
+      instanceId: self.options.instanceId,
       secretKey: self.options.secretKey,
       expiryAccuracy: self._dataExpiryAccuracy,
       downgradeToUser: self.options.downgradeToUser,
