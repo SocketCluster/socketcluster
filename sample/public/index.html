@@ -1,51 +1,91 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel="stylesheet" type="text/css" href="css/main.css">
-    <script type="text/javascript" src="/socketcluster.js"></script>
+  <title>SocketCluster</title>
+  <link href='//fonts.googleapis.com/css?family=Roboto:100,300' rel='stylesheet' type='text/css'>
+  <script type="text/javascript" src="/socketcluster.js"></script>
+  <style>
+    html {
+      height: 100%;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%; 
+      height: 100%;
+      color: #666666;
+      display: table;
+      font-weight: 100;
+      font-family: 'Roboto';
+    }
+    a {
+      font-weight: 300;
+      color: #72B963;
+    }
+    .container {
+      display: table-cell;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .content {
+      text-align: center;
+      display: inline-block;
+    }
+
+    .title {
+      font-size: 96px;
+      margin-bottom: 20px;
+    }
+
+    .text {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .small {
+      font-size: 18px;
+    }
+  </style>
   </head>
   <body>
-    <div class="content">
-      <img src="img/logo.png" alt="SocketCluster logo">
-      <p>
-        Thank you for installing SocketCluster <span id="face-container">:)</span><br />
-        For documentation, go to <a href="http://socketcluster.io/">http://socketcluster.io/</a>
-      </p>
-      <p>
-        <br />
-        <iframe src="https://ghbtns.com/github-btn.html?user=topcloud&repo=socketcluster&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
-      </p>
+    <div class="container">
+      <div class="content">
+        <div class="title">
+          SocketCluster.io
+        </div>
+        <div class="text">
+          Design is not just what it looks like and feels like. Design is how it works. &mdash; Steve Jobs
+        </div>
+        <div class="small">
+          <a href="">Getting Started</a> <strong>&middot;</strong>
+          <a href="">Demos</a> <strong>&middot;</strong>
+          <a href="">Documentation</a> 
+        </div>
+      </div>
     </div>
-    <script type="text/javascript">
-      // Initiate the connection to the server
-      var socket = socketCluster.connect();
-      
-      socket.on('error', function (err) {
-        throw 'Socket error - ' + err;
-      });
-      
-      socket.on('connect', function () {
-        console.log('CONNECTED');
-      });
-      
-      var faces = [';p', ':D', ':)', ':3', ';)'];
-      var faceContainer = document.getElementById('face-container');
-      
-      socket.on('rand', function (data) {
-        var face = faces[data.rand];
-        console.log('RANDOM:', data.rand, face);
-        faceContainer.innerHTML = face;
-      });
-      
-      var pongChannel = socket.subscribe('pong');
-      
-      pongChannel.on('subscribeFail', function (err) {
-        console.log('Failed to subscribe to PONG channel due to error: ' + err);
-      });
-      
-      pongChannel.watch(function (num) {
-        console.log('PONG:', num);
-      });
-    </script>
+  <script type="text/javascript">
+    // Initiate the connection to the server
+    var socket = socketCluster.connect();
+
+    socket.on('error', function (err) {
+      throw 'Socket error - ' + err;
+    });
+
+    socket.on('connect', function () {
+      console.log('CONNECTED');
+    });
+
+    var pongChannel = socket.subscribe('pong');
+
+    pongChannel.on('subscribeFail', function (err) {
+      console.log('Failed to subscribe to PONG channel due to error: ' + err);
+    });
+
+    var c = 0;
+
+    pongChannel.watch(function (num) {
+      faces = c++ % 2 ? positiveFaces : negativeFaces;
+      console.log('PONG:', num);
+    });
+  </script>
   </body>
 </html>
