@@ -2,7 +2,7 @@
 <html>
   <head>
   <title>SocketCluster</title>
-  <link href='//fonts.googleapis.com/css?family=Roboto:100,300' rel='stylesheet' type='text/css'>
+  <link href="//fonts.googleapis.com/css?family=Roboto:100,300" rel="stylesheet" type="text/css">
   <script type="text/javascript" src="/socketcluster.js"></script>
   <style>
     html {
@@ -16,7 +16,7 @@
       color: #666666;
       display: table;
       font-weight: 100;
-      font-family: 'Roboto';
+      font-family: 'Roboto', Helvetica, sans-serif;
     }
     a {
       font-weight: 300;
@@ -68,33 +68,33 @@
         </p>
       </div>
     </div>
-  <script type="text/javascript">
-    // Initiate the connection to the server
-    var socket = socketCluster.connect();
+    <script type="text/javascript">
+      // Initiate the connection to the server
+      var socket = socketCluster.connect();
 
-    socket.on('error', function (err) {
-      throw 'Socket error - ' + err;
-    });
+      socket.on('error', function (err) {
+        throw 'Socket error - ' + err;
+      });
 
-    socket.on('connect', function () {
-      console.log('CONNECTED');
-    });
-    
-    socket.on('rand', function (data) {
-      console.log('RANDOM STREAM: ' + data.rand);
-    });
+      socket.on('connect', function () {
+        console.log('CONNECTED');
+      });
+      
+      socket.on('rand', function (data) {
+        console.log('RANDOM STREAM: ' + data.rand);
+      });
 
-    var pongChannel = socket.subscribe('pong');
+      var pongChannel = socket.subscribe('pong');
 
-    pongChannel.on('subscribeFail', function (err) {
-      console.log('Failed to subscribe to PONG channel due to error: ' + err);
-    });
+      pongChannel.on('subscribeFail', function (err) {
+        console.log('Failed to subscribe to PONG channel due to error: ' + err);
+      });
 
-    var c = 0;
+      var c = 0;
 
-    pongChannel.watch(function (num) {
-      console.log('PONG:', num);
-    });
-  </script>
+      pongChannel.watch(function (num) {
+        console.log('PONG:', num);
+      });
+    </script>
   </body>
 </html>
