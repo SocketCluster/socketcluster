@@ -44,22 +44,28 @@
     .small {
       font-size: 18px;
     }
+    
+    .github-button {
+      padding-top: 10px;
+    }
   </style>
   </head>
   <body>
     <div class="container">
       <div class="content">
         <div class="title">
-          SocketCluster.io
+          SocketCluster
         </div>
         <div class="text">
           Design is not just what it looks like and feels like. Design is how it works. &mdash; Steve Jobs
         </div>
         <div class="small">
-          <a href="">Getting Started</a> <strong>&middot;</strong>
-          <a href="">Demos</a> <strong>&middot;</strong>
-          <a href="">Documentation</a> 
+          <a href="http://socketcluster.io/#!/docs/getting-started">Getting Started</a> <strong>&middot;</strong>
+          <a href="http://socketcluster.io/#!/docs">Documentation</a> 
         </div>
+        <p class="github-button">
+          <iframe src="https://ghbtns.com/github-btn.html?user=topcloud&repo=socketcluster&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
+        </p>
       </div>
     </div>
   <script type="text/javascript">
@@ -73,6 +79,10 @@
     socket.on('connect', function () {
       console.log('CONNECTED');
     });
+    
+    socket.on('rand', function (data) {
+      console.log('RANDOM STREAM: ' + data.rand);
+    });
 
     var pongChannel = socket.subscribe('pong');
 
@@ -83,7 +93,6 @@
     var c = 0;
 
     pongChannel.watch(function (num) {
-      faces = c++ % 2 ? positiveFaces : negativeFaces;
       console.log('PONG:', num);
     });
   </script>
