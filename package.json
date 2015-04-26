@@ -18,7 +18,7 @@
     "base64id": "0.1.0",
     "engine.io": "1.4.3",
     "http-proxy": "1.11.0",
-    "iocluster": "2.2.x",
+    "iocluster": "2.3.x",
     "jsonwebtoken": "5.0.0",
     "minimist": "1.1.0",
     "node-uuid": "1.4.3",
