@@ -61,16 +61,15 @@ SocketCluster.prototype._init = function (options) {
     protocolOptions: null,
     transports: ['polling', 'websocket'],
     logLevel: 2,
-    connectTimeout: 10,
-    ackTimeout: 10,
-    pingInterval: 25,
-    pingTimeout: 60,
+    ackTimeout: 10000,
+    pingInterval: 25000,
+    pingTimeout: 60000,
     maxHttpSockets: null,
     origins: '*:*',
     matchOriginProtocol: true,
     socketChannelLimit: 100,
-    workerStatusInterval: 10,
-    processTermTimeout: 10,
+    workerStatusInterval: 10000,
+    processTermTimeout: 10000,
     defaultAuthTokenExpiryInMinutes: 1440,
     propagateErrors: true,
     propagateNotices: true,
@@ -104,13 +103,12 @@ SocketCluster.prototype._init = function (options) {
   var maxTimeout = Math.pow(2, 31) - 1;
   
   var verifyDuration = function (propertyName) {
-    var value = self.options[propertyName];
-    if (value && value * 1000 > maxTimeout) {
-      throw new Error('The ' + propertyName + ' value provided exceeded the maximum amount allowed');
+    if (self.options[propertyName] > maxTimeout) {
+      throw new Error('The ' + propertyName +
+        ' value provided exceeded the maximum amount allowed');
     }
   };
   
-  verifyDuration('connectTimeout');
   verifyDuration('ackTimeout');
   verifyDuration('pingInterval');
   verifyDuration('pingTimeout');
@@ -426,7 +424,6 @@ SocketCluster.prototype._launchWorkerCluster = function () {
   this._workerCluster = fork(__dirname + '/lib/workercluster.js');
   
   var workerOpts = this._cloneObject(this.options);
-  workerOpts.processTermTimeout *= 1000;
   workerOpts.paths = this._paths;
   workerOpts.sourcePort = this.options.port;
   workerOpts.workerCount = this.options.workers;
@@ -495,7 +492,7 @@ SocketCluster.prototype._start = function () {
       secretKey: self.options.secretKey,
       expiryAccuracy: self._dataExpiryAccuracy,
       downgradeToUser: self.options.downgradeToUser,
-      processTermTimeout: self.options.processTermTimeout * 1000,
+      processTermTimeout: self.options.processTermTimeout,
       storeOptions: self.options.storeOptions,
       appStoreControllerPath: self._paths.appStoreControllerPath
     });
