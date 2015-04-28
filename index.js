@@ -60,19 +60,19 @@ SocketCluster.prototype._init = function (options) {
     protocolOptions: null,
     transports: ['polling', 'websocket'],
     logLevel: 2,
-    connectTimeout: 10,
-    ackTimeout: 10,
-    pingInterval: 25,
-    pingTimeout: 60,
-    socketUpgradeTimeout: 1,
+    connectTimeout: 10000,
+    ackTimeout: 10000,
+    pingInterval: 25000,
+    pingTimeout: 60000,
+    socketUpgradeTimeout: 1000,
     maxHttpBufferSize: null,
     maxHttpSockets: null,
     origins: '*:*',
     matchOriginProtocol: true,
     socketChannelLimit: 100,
-    pollingDuration: 30,
-    workerStatusInterval: 10,
-    processTermTimeout: 10,
+    pollingDuration: 30000,
+    workerStatusInterval: 10000,
+    processTermTimeout: 10000,
     defaultAuthTokenExpiryInMinutes: 1440,
     propagateErrors: true,
     propagateNotices: true,
@@ -408,9 +408,9 @@ SocketCluster.prototype._initLoadBalancer = function () {
       protocolOptions: this.options.protocolOptions,
       useSmartBalancing: this.options.useSmartBalancing,
       statusURL: this._paths.statusURL,
-      checkStatusTimeout: this.options.connectTimeout * 1000,
-      statusCheckInterval: this.options.workerStatusInterval * 1000,
-      processTermTimeout: this.options.processTermTimeout * 1000,
+      checkStatusTimeout: this.options.connectTimeout,
+      statusCheckInterval: this.options.workerStatusInterval,
+      processTermTimeout: this.options.processTermTimeout,
       downgradeToUser: this.options.downgradeToUser,
       schedulingPolicy: this.options.schedulingPolicy,
       balancerControllerPath: this._paths.balancerControllerPath
@@ -542,7 +542,7 @@ SocketCluster.prototype._launchWorker = function (workerId, respawn) {
   worker.id = workerId;
 
   var workerOpts = self._cloneObject(self.options);
-  workerOpts.processTermTimeout *= 1000;
+  workerOpts.processTermTimeout;
   workerOpts.paths = self._paths;
   workerOpts.workerId = workerId;
   workerOpts.sourcePort = self.options.port;
@@ -624,7 +624,7 @@ SocketCluster.prototype._start = function () {
       secretKey: self.options.secretKey,
       expiryAccuracy: self._dataExpiryAccuracy,
       downgradeToUser: self.options.downgradeToUser,
-      processTermTimeout: self.options.processTermTimeout * 1000,
+      processTermTimeout: self.options.processTermTimeout,
       storeOptions: self.options.storeOptions,
       appStoreControllerPath: self._paths.appStoreControllerPath
     });
