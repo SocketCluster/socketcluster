@@ -7,9 +7,9 @@ Complete documentation available at: http://socketcluster.io/
 
 ## Change log
 
-**29 April 2015** (v2.2.4)
-
 ### API changes
+
+**29 April 2015** (v2.2.4)
 
 - All timeout and interval values provided to SocketCluster constructor now have to be in milliseconds instead of seconds.
 
@@ -17,8 +17,6 @@ Complete documentation available at: http://socketcluster.io/
 **8 March 2015** (v2.0.2)
 
 Updated http://socketcluster.io/ documentation.
-
-### API changes
 
 In order to prepare SocketCluster for a smooth transition to version 2 over the next few years, some big changes were 
 made to the API which will affect v1:
