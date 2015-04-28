@@ -100,6 +100,22 @@ SocketCluster.prototype._init = function (options) {
   for (var i in options) {
     self.options[i] = options[i];
   }
+  
+  var maxTimeout = Math.pow(2, 31) - 1;
+  
+  var verifyDuration = function (propertyName) {
+    var value = self.options[propertyName];
+    if (value && value * 1000 > maxTimeout) {
+      throw new Error('The ' + propertyName + ' value provided exceeded the maximum amount allowed');
+    }
+  };
+  
+  verifyDuration('connectTimeout');
+  verifyDuration('ackTimeout');
+  verifyDuration('pingInterval');
+  verifyDuration('pingTimeout');
+  verifyDuration('workerStatusInterval');
+  verifyDuration('processTermTimeout');
 
   if (self.options.appName == null) {
     throw new Error("Compulsory option 'appName' was not specified " +
