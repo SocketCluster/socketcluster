@@ -7,14 +7,20 @@ Complete documentation available at: http://socketcluster.io/
 
 ## Change log
 
-**29 April 2015** (v2.2.4)
+**1 May 2015**
+
+- SocketCluster client - Renamed 'ready' event to 'status' - The word 'ready' falsely implies that the event is only triggered 
+once when the socket initializes for the first time - But it may in fact be triggered multiple times in case of a reconnect.
+The word 'status' is more accurate.
+
+**29 April 2015**
 
 - All timeout and interval values provided to SocketCluster constructor now have to be in milliseconds instead of seconds.
 
-
-**8 March 2015** (v2.0.2)
+**8 March 2015**
 
 Updated http://socketcluster.io/ documentation.
+
 
 ### API changes
 
