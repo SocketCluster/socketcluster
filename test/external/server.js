@@ -10,8 +10,8 @@ var socketCluster = new SocketCluster({
   storeController: __dirname + '/store.js',
   socketChannelLimit: 100,
   rebootWorkerOnCrash: true,
-  pingTimeout: 3,
-  pingInterval: 1
+  pingTimeout: 3000,
+  pingInterval: 1000
 });
 
 socketCluster.on('ready', function () {
