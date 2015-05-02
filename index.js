@@ -20,6 +20,10 @@ var SocketCluster = function (options) {
   
   // These events don't get triggered on SocketCluster (yet)
   self.EVENT_INFO = 'info';
+  
+  self._errorAnnotations = {
+    'listen EADDRINUSE': 'Failed to bind to a port because it was already used by another process.'
+  };
 
   self._errorDomain = domain.create();
   self._errorDomain.on('error', function (err) {
@@ -315,6 +319,12 @@ SocketCluster.prototype.errorHandler = function (err, origin) {
     }
     err.stack = err.message;
   }
+  
+  var annotation = this._errorAnnotations[err.message];
+  if (annotation) {
+    err.stack += '\n    ' + this.colorText('!!', 'red') + ' ' + annotation;
+  }
+  
   err.origin = origin;
   err.time = Date.now();
   this.emit(this.EVENT_FAIL, err);
