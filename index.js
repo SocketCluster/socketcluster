@@ -421,7 +421,7 @@ SocketCluster.prototype._handleWorkerClusterExit = function (errorCode) {
 SocketCluster.prototype._launchWorkerCluster = function () {
   var self = this;
 
-  this._workerCluster = fork(__dirname + '/lib/workercluster.js');
+  this._workerCluster = fork(__dirname + '/lib/workercluster.js', process.argv.slice(2));
   
   var workerOpts = this._cloneObject(this.options);
   workerOpts.paths = this._paths;
