@@ -429,7 +429,7 @@ SocketCluster.prototype._launchLoadBalancer = function (callback) {
     self.noticeHandler(noticeMessage, {type: 'balancer'});
   };
 
-  self._balancer = fork(__dirname + '/lib/balancer.js');
+  self._balancer = fork(__dirname + '/lib/balancer.js', process.argv.slice(2));
   self._balancer.on('error', balancerErrorHandler);
   self._balancer.on('notice', balancerNoticeHandler);
 
@@ -536,7 +536,7 @@ SocketCluster.prototype._handleWorkerExit = function (worker, code, signal) {
 SocketCluster.prototype._launchWorker = function (workerId, respawn) {
   var self = this;
   
-  var worker = fork(__dirname + '/lib/worker.js');
+  var worker = fork(__dirname + '/lib/worker.js', process.argv.slice(2));
   worker.on('error', self._workerErrorHandler.bind(self, worker));
   
   worker.id = workerId;
