@@ -31,7 +31,7 @@ var resultsServer = http.createServer(function (req, res) {
       result = results[i];
       if (result.origin == 'store') {
         if (storeData[result.pid] == null) {
-          storeData[result.pid] = {}
+          storeData[result.pid] = {};
         }
         storeData[result.pid][result.type] = result.data;
       }
@@ -69,7 +69,7 @@ scServer.on('message', function (m) {
     for (var i = 0; i < numSockets; i++) {
       tasks.push(function (cb) {
         var socket = scClient.connect(options);
-        socket.once('ready', function () {
+        socket.once('status', function () {
           if (socket.getState() == socket.OPEN) {
             // Subscribe to some events
             socket.on('event1', function () {});
