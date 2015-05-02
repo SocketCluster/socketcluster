@@ -7,10 +7,6 @@ module.exports.run = function (worker) {
   var httpServer = worker.getHTTPServer();
   // Get a reference to our WebSocket server
   var wsServer = worker.getSCServer();
-
-  wsServer.on('notice', function (notice) {
-		console.log('NOTICE:', notice);
-	});
   
   var pongData = {message: 'This is pong data'};
   
