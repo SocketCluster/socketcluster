@@ -8,6 +8,7 @@ var fs = require('fs');
 var uidNumber = require('uid-number');
 var wrench = require('wrench');
 var uuid = require('node-uuid');
+var pkg = require('./package.json');
 
 var SocketCluster = function (options) {
   var self = this;
@@ -466,6 +467,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
 SocketCluster.prototype._logDeploymentDetails = function () {
   if (this.options.logLevel > 0) {
     console.log('   ' + this.colorText('[Active]', 'green') + ' SocketCluster started');
+    console.log('            Version: ' + pkg.version);
     console.log('            Port: ' + this.options.port);
     console.log('            Master PID: ' + process.pid);
     console.log('            Worker count: ' + this.options.workers);
