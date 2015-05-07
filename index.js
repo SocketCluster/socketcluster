@@ -79,6 +79,7 @@ SocketCluster.prototype._init = function (options) {
     propagateErrors: true,
     propagateNotices: true,
     host: null,
+    tcpSynBacklog: null,
     workerController: null,
     storeController: null,
     storeOptions: null,
