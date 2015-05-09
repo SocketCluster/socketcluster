@@ -9,6 +9,28 @@ Complete documentation available at: http://socketcluster.io/
 
 ### API changes
 
+**4 May 2015** (v2.2.9)
+
+SC2 is not the default version of SocketCluster so to install SC2, it's now:
+
+```bash
+npm install -g socketcluster
+```
+
+```bash
+socketcluster create myProject
+```
+
+You can still install SC1, but the package name has changed:
+
+```bash
+npm install -g sc1
+```
+
+```bash
+sc1 create myProject
+```
+
 **1 May 2015** (v2.2.6)
 
 - SocketCluster client - Renamed 'ready' event to 'status' - The word 'ready' falsely implies that the event is only triggered 
