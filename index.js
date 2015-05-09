@@ -9,6 +9,7 @@ var uidNumber = require('uid-number');
 var wrench = require('wrench');
 var uuid = require('node-uuid');
 var pkg = require('./package.json');
+var argv = require('minimist')(process.argv.slice(2));
 
 var SocketCluster = function (options) {
   var self = this;
@@ -61,7 +62,7 @@ SocketCluster.prototype._init = function (options) {
     instanceId: null,
     secretKey: null,
     authKey: null,
-    rebootWorkerOnCrash: true,
+    rebootWorkerOnCrash: null,
     protocol: 'http',
     protocolOptions: null,
     transports: ['polling', 'websocket'],
@@ -90,6 +91,8 @@ SocketCluster.prototype._init = function (options) {
     schedulingPolicy: null,
     allowClientPublish: true,
     authCookieName: null,
+    defaultWorkerClusterDebugPort: 5858,
+    defaultStoreDebugPort: 6858,
     clusterEngine: 'iocluster'
   };
 
@@ -104,6 +107,11 @@ SocketCluster.prototype._init = function (options) {
 
   for (var i in options) {
     self.options[i] = options[i];
+  }
+  
+  if (self.options.rebootWorkerOnCrash == null) {
+    self.options.rebootWorkerOnCrash = !argv.debug && !argv['debug-brk']
+      && !argv['debug-workers'];
   }
   
   var maxTimeout = Math.pow(2, 31) - 1;
@@ -432,8 +440,22 @@ SocketCluster.prototype._handleWorkerClusterExit = function (errorCode) {
 
 SocketCluster.prototype._launchWorkerCluster = function () {
   var self = this;
-
-  this._workerCluster = fork(__dirname + '/lib/workercluster.js', process.argv.slice(2));
+  
+  var debugPort;
+  var execOptions = {
+    execArgv: []
+  };
+  
+  if (argv['debug-workers']) {
+    if (argv['debug-workers'] == true) {
+      debugPort = this.options.defaultWorkerClusterDebugPort;
+    } else {
+      debugPort = argv['debug-workers'];
+    }
+    execOptions.execArgv.push('--debug=' + (debugPort - 1));
+  }
+  
+  this._workerCluster = fork(__dirname + '/lib/workercluster.js', process.argv.slice(2), execOptions);
   
   var workerOpts = this._cloneObject(this.options);
   workerOpts.paths = this._paths;
@@ -497,10 +519,16 @@ SocketCluster.prototype._start = function () {
     self._ioCluster.removeListener('ready', ioClusterReady);
     self._launchWorkerCluster();
   };
-
+  
   var launchIOCluster = function () {
+    var storeDebugPort = argv['debug-stores'];
+    if (storeDebugPort == true) {
+      storeDebugPort = self.options.defaultStoreDebugPort;
+    }
+  
     self._ioCluster = new self._clusterEngine.IOCluster({
       stores: self._getStoreSocketPaths(),
+      debug: storeDebugPort,
       instanceId: self.options.instanceId,
       secretKey: self.options.secretKey,
       expiryAccuracy: self._dataExpiryAccuracy,
