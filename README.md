@@ -11,7 +11,7 @@ Complete documentation available at: http://socketcluster.io/
 
 **4 May 2015** (v2.2.9)
 
-SC2 is not the default version of SocketCluster so to install SC2, it's now:
+SC2 is now the default version of SocketCluster so to install SC2, it's now:
 
 ```bash
 npm install -g socketcluster
