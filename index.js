@@ -9,6 +9,7 @@ var uidNumber = require('uid-number');
 var wrench = require('wrench');
 var uuid = require('node-uuid');
 var pkg = require('./package.json');
+var argv = require('minimist')(process.argv.slice(2));
 
 var SocketCluster = function (options) {
   var self = this;
@@ -60,7 +61,7 @@ SocketCluster.prototype._init = function (options) {
     instanceId: null,
     secretKey: null,
     authKey: null,
-    rebootWorkerOnCrash: true,
+    rebootWorkerOnCrash: null,
     protocol: 'http',
     protocolOptions: null,
     transports: ['polling', 'websocket'],
@@ -92,6 +93,8 @@ SocketCluster.prototype._init = function (options) {
     downgradeToUser: false,
     socketCookieName: null,
     authCookieName: null,
+    defaultWorkerDebugPort: 5858,
+    defaultStoreDebugPort: 6858,
     path: null,
     socketRoot: null,
     schedulingPolicy: null,
@@ -547,7 +550,21 @@ SocketCluster.prototype._handleWorkerExit = function (worker, code, signal) {
 SocketCluster.prototype._launchWorker = function (workerId, respawn) {
   var self = this;
   
-  var worker = fork(__dirname + '/lib/worker.js', process.argv.slice(2));
+  var debugPort;
+  var execOptions = {
+    execArgv: []
+  };
+  
+  if (argv['debug-workers']) {
+    if (argv['debug-workers'] == true) {
+      debugPort = this.options.defaultWorkerDebugPort + workerId;
+    } else {
+      debugPort = argv['debug-workers'] + workerId;
+    }
+    execOptions.execArgv.push('--debug=' + debugPort);
+  }
+  
+  var worker = fork(__dirname + '/lib/worker.js', process.argv.slice(2), execOptions);
   worker.on('error', self._workerErrorHandler.bind(self, worker));
   
   worker.id = workerId;
@@ -630,8 +647,14 @@ SocketCluster.prototype._start = function () {
   };
 
   var launchIOCluster = function () {
+    var storeDebugPort = argv['debug-stores'];
+    if (storeDebugPort == true) {
+      storeDebugPort = self.options.defaultStoreDebugPort;
+    }
+    
     self._ioCluster = new self._clusterEngine.IOCluster({
       stores: self._getStoreSocketPaths(),
+      debug: storeDebugPort,
       instanceId: self.options.instanceId,
       secretKey: self.options.secretKey,
       expiryAccuracy: self._dataExpiryAccuracy,

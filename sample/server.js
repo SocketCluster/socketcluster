@@ -11,5 +11,5 @@ var socketCluster = new SocketCluster({
   balancerController: __dirname + '/balancer.js',
   storeController: __dirname + '/store.js',
   socketChannelLimit: 100,
-  rebootWorkerOnCrash: !argv.debug
+  rebootWorkerOnCrash: argv['auto-reboot'] != false
 });
