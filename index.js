@@ -8,6 +8,7 @@ var fs = require('fs');
 var uidNumber = require('uid-number');
 var wrench = require('wrench');
 var uuid = require('node-uuid');
+var pkg = require('./package.json');
 
 var SocketCluster = function (options) {
   var self = this;
@@ -606,6 +607,7 @@ SocketCluster.prototype._start = function () {
   self._launchLoadBalancer(function () {
     if (self.options.logLevel > 0) {
       console.log('   ' + self.colorText('[Active]', 'green') + ' SocketCluster started');
+      console.log('            Version: ' + pkg.version);
       console.log('            Port: ' + self.options.port);
       console.log('            Master PID: ' + process.pid);
       console.log('            Balancer count: ' + self.options.balancers);
