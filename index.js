@@ -91,7 +91,7 @@ SocketCluster.prototype._init = function (options) {
     schedulingPolicy: null,
     allowClientPublish: true,
     authCookieName: null,
-    defaultWorkerClusterDebugPort: 5858,
+    defaultWorkerDebugPort: 5858,
     defaultStoreDebugPort: 6858,
     clusterEngine: 'iocluster'
   };
@@ -107,11 +107,6 @@ SocketCluster.prototype._init = function (options) {
 
   for (var i in options) {
     self.options[i] = options[i];
-  }
-  
-  if (self.options.rebootWorkerOnCrash == null) {
-    self.options.rebootWorkerOnCrash = !argv.debug && !argv['debug-brk']
-      && !argv['debug-workers'];
   }
   
   var maxTimeout = Math.pow(2, 31) - 1;
@@ -448,7 +443,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
   
   if (argv['debug-workers']) {
     if (argv['debug-workers'] == true) {
-      debugPort = this.options.defaultWorkerClusterDebugPort;
+      debugPort = this.options.defaultWorkerDebugPort;
     } else {
       debugPort = argv['debug-workers'];
     }
