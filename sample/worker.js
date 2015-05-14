@@ -8,10 +8,8 @@ module.exports.run = function (worker) {
   
   var app = require('express')();
   
-  // Get a reference to our raw Node HTTP server
-  var httpServer = worker.getHTTPServer();
-  // Get a reference to our realtime SocketCluster server
-  var scServer = worker.getSCServer();
+  var httpServer = worker.httpServer;
+  var scServer = worker.scServer;
   
   app.use(serveStatic(path.resolve(__dirname, 'public')));
 
