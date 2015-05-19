@@ -20,9 +20,8 @@
     "websocket",
     "server",
     "realtime",
-    "engine.io",
     "cluster",
-    "parallelized"
+    "scalable"
   ],
   "readmeFilename": "README.md"
 }
