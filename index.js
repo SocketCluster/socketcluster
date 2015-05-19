@@ -65,7 +65,6 @@ SocketCluster.prototype._init = function (options) {
     rebootWorkerOnCrash: null,
     protocol: 'http',
     protocolOptions: null,
-    transports: ['polling', 'websocket'],
     logLevel: 2,
     ackTimeout: 10000,
     pingInterval: 25000,
@@ -125,8 +124,7 @@ SocketCluster.prototype._init = function (options) {
   verifyDuration('processTermTimeout');
 
   if (self.options.appName == null) {
-    throw new Error("Compulsory option 'appName' was not specified " +
-      "- It needs to be a string which uniquely identifies this application");
+    self.options.appName = uuid.v4();
   }
 
   if (self.options.workerController == null) {
