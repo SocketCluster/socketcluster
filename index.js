@@ -179,12 +179,6 @@ SocketCluster.prototype._init = function (options) {
     self._paths.appStoreControllerPath = null;
   }
 
-  if (self.options.logLevel > 3) {
-    process.env.DEBUG = 'engine*';
-  } else if (self.options.logLevel > 2) {
-    process.env.DEBUG = 'engine';
-  }
-
   if (self.options.protocolOptions) {
     var protoOpts = self.options.protocolOptions;
     if (protoOpts.key instanceof Buffer) {
