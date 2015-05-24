@@ -1,7 +1,7 @@
 SocketCluster
 ======
 
-[![SocketCluster logo](https://raw.github.com/topcloud/socketcluster/master/assets/logo.png)](http://socketcluster.io/)
+[![SocketCluster logo](https://raw.github.com/SocketCluster/socketcluster/master/assets/logo.png)](http://socketcluster.io/)
 
 Complete documentation available at: http://socketcluster.io/
 
@@ -165,7 +165,7 @@ npm install socketcluster-client
 
 The socketcluster-client script is called socketcluster.js (located in the main socketcluster-client directory) 
 - You should include it in your HTML page using a &lt;script&gt; tag in order to interact with SocketCluster.
-For more details on how to use socketcluster-client, go to https://github.com/topcloud/socketcluster-client
+For more details on how to use socketcluster-client, go to https://github.com/SocketCluster/socketcluster-client
 
 It is recommended that you use Node.js version >=0.10.22 due to memory leaks present in older versions.
 

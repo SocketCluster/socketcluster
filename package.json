@@ -11,7 +11,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/topcloud/socketcluster.git"
+    "url": "git://github.com/SocketCluster/socketcluster.git"
   },
   "dependencies": {
     "async": "0.7.0",
