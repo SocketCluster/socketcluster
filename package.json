@@ -16,11 +16,11 @@
   "dependencies": {
     "async": "0.7.0",
     "base64id": "0.1.0",
-    "component-emitter": "1.2.0",
     "iocluster": "2.4.x",
     "jsonwebtoken": "5.0.0",
     "minimist": "1.1.0",
     "node-uuid": "1.4.3",
+    "sc-emitter": "1.0.x",
     "uid-number": "0.0.5",
     "wrench": "1.5.8",
     "ws": "0.7.1"
