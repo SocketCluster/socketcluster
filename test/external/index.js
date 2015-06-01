@@ -2,6 +2,7 @@ var async = require('async');
 var childProcess = require('child_process');
 var scClient = require('socketcluster-client');
 var assert = require('assert');
+var domain = require('domain');
 
 var scServer = childProcess.fork(__dirname + '/server.js');
 
@@ -94,6 +95,7 @@ scServer.on('message', function (m) {
         });
         
         var notUnsubscribedTimeout = setTimeout(function () {
+          socket.off('error');
           cb('Did not unsubscribe from channels on disconnect');
         }, 3000);
         
@@ -108,6 +110,7 @@ scServer.on('message', function (m) {
           } catch (e) {
             err = e;
           }
+          socket.off('error');
           cb(err);
         });
       },
@@ -154,6 +157,111 @@ scServer.on('message', function (m) {
             }
             cb(err);
           }, 2000);
+        }, 1000);
+      },
+      function (cb) {
+        var actionSequence = [];
+      
+        socket.on('subscribe', function (channel) {
+          if (channel == 'channel1') {
+            actionSequence.push('subscribe');
+          }
+        });
+        
+        socket.on('unsubscribe', function (channel) {
+          if (channel == 'channel1') {
+            actionSequence.push('unsubscribe');
+          }
+        });
+      
+        socket.subscribe('channel1');
+        socket.unsubscribe('channel1');
+        socket.subscribe('channel1');
+        socket.unsubscribe('channel1');
+        
+        var expectedActionSequence = [];
+        
+        var err;
+        
+        setTimeout(function () {
+          socket.off('subscribe');
+          socket.off('unsubscribe');
+          
+          try {
+            assert(JSON.stringify(actionSequence) == JSON.stringify(expectedActionSequence),
+              'Subscribing and unsubscribing to channel1 multiple times in a sequence was not handled in an optimal way');
+          } catch (e) {
+            err = e;
+          }
+          cb(err);
+        }, 1000);
+      },
+      function (cb) {
+        var actionSequence = [];
+      
+        socket.subscribe('channel2');
+      
+        setTimeout(function () {
+          socket.on('subscribe', function (channel) {
+            if (channel == 'channel2') {
+              actionSequence.push('subscribe');
+            }
+          });
+          
+          socket.on('unsubscribe', function (channel) {
+            if (channel == 'channel2') {
+              actionSequence.push('unsubscribe');
+            }
+          });
+        
+          socket.unsubscribe('channel2');
+          socket.subscribe('channel2');
+          socket.unsubscribe('channel2');
+          socket.subscribe('channel2');
+          socket.unsubscribe('channel2');
+          socket.subscribe('channel2');
+          
+          var expectedActionSequence = [
+            'unsubscribe',
+            'subscribe'
+          ];
+          
+          var err;
+          
+          setTimeout(function () {
+            socket.off('subscribe');
+            socket.off('unsubscribe');
+            try {
+              assert(JSON.stringify(actionSequence) == JSON.stringify(expectedActionSequence),
+                'Subscribing and unsubscribing to channel2 multiple times in a sequence was not handled in an optimal way');
+            } catch (e) {
+              err = e;
+            }
+            cb(err);
+          }, 1000);
+        }, 1000);
+      },
+      function (cb) {
+        // TODO
+        var caughtError;
+        var socketDomain = domain.createDomain();
+        socketDomain.on('error', function (error) {
+          caughtError = error;
+        });
+        socketDomain.add(socket);
+        socket.emit('error', 'FAIL');
+        
+        var err;
+        
+        setTimeout(function () {
+          try {
+            var subscriptions = socket.subscriptions();
+            assert(caughtError == 'FAIL',
+              'Socket does not work with error domains');
+          } catch (e) {
+            err = e;
+          }
+          cb(err);
         }, 1000);
       }
     ];

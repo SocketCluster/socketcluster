@@ -69,7 +69,7 @@ scServer.on('message', function (m) {
     for (var i = 0; i < numSockets; i++) {
       tasks.push(function (cb) {
         var socket = scClient.connect(options);
-        socket.once('status', function () {
+        socket.once('connect', function () {
           if (socket.getState() == socket.OPEN) {
             // Subscribe to some events
             socket.on('event1', function () {});
