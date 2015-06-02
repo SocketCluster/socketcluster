@@ -242,7 +242,6 @@ scServer.on('message', function (m) {
         }, 1000);
       },
       function (cb) {
-        // TODO
         var caughtError;
         var socketDomain = domain.createDomain();
         socketDomain.on('error', function (error) {
@@ -255,7 +254,6 @@ scServer.on('message', function (m) {
         
         setTimeout(function () {
           try {
-            var subscriptions = socket.subscriptions();
             assert(caughtError == 'FAIL',
               'Socket does not work with error domains');
           } catch (e) {
@@ -263,6 +261,58 @@ scServer.on('message', function (m) {
           }
           cb(err);
         }, 1000);
+      },
+      function (cb) {
+        var err;
+        
+        socket.once('disconnect', function () {
+          socket.once('connect', function (status) {
+            try {
+              assert(!status.isAuthenticated,
+                'Socket should not be authenticated');
+            } catch (e) {
+              err = e;
+            }
+            cb(err);
+          });
+          socket.connect();
+        });
+        socket.disconnect();
+      },
+      function (cb) {
+        var err;
+        
+        socket.once('connect', function (status) {
+        
+          var authTokenIsSet = false;
+          socket.on('setAuthToken', function () {
+            authTokenIsSet = true;
+          });
+        
+          socket.emit('login', {username: 'john123'});
+          
+          setTimeout(function () {
+          
+            socket.once('connect', function (status) {
+              try {
+                assert(!!status.isAuthenticated,
+                  'Socket should be authenticated');
+                assert(authTokenIsSet,
+                  'setAuthToken event was never emitted');
+              } catch (e) {
+                err = e;
+              }
+              cb(err);
+            });
+          
+            socket.disconnect();
+            socket.connect();
+            
+          }, 1000);
+        });
+          
+        socket.disconnect();
+        socket.connect();
       }
     ];
     

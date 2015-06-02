@@ -21,6 +21,10 @@ module.exports.run = function (worker) {
       wsServer.global.publish('pong', pongData);
     });
     
+    socket.on('login', function (username) {
+      socket.setAuthToken({username: username});
+    });
+    
     socket.on('killWorker', function () {
       process.exit();
     });
