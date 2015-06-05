@@ -52,7 +52,7 @@ var endTest = function (callback) {
 
 var options = {
   protocol: 'http',
-  hostname: 'localhost',
+  hostname: '127.0.0.1',
   port: 8000,
   autoReconnect: true
 };
