@@ -9,7 +9,12 @@ Complete documentation available at: http://socketcluster.io/
 
 ## Change log
 
-### API changes
+**6 June 2015** (v2.2.25)
+
+- SocketCluster client - Major refactoring was undertaken - This should make the code much more robust and maintainable.
+- SocketCluster client - The 'status' event was removed - Instead, you can now get the status object as the first argument to the 'connect' event handler.
+- Authentication is now localStorage-based (it falls back to storing directly on the instance if localStorage is not supported) instead of cookie-based. This should allow the client authentication feature to work in more places including mobile.
+- Authentication is now fully customizable on both the client and server so it can integrate with any existing token-based solution - Details on how to do this will be posted on the website at some point.
 
 **4 May 2015** (v2.2.9)
 
