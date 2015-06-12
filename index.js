@@ -72,7 +72,7 @@ SocketCluster.prototype._init = function (options) {
     maxHttpSockets: null,
     origins: '*:*',
     matchOriginProtocol: true,
-    socketChannelLimit: 100,
+    socketChannelLimit: 1000,
     workerStatusInterval: 10000,
     processTermTimeout: 10000,
     defaultAuthTokenExpiryInMinutes: 1440,
