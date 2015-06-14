@@ -54,68 +54,6 @@ npm install -g sc1
 sc1 create myProject
 ```
 
-**1 May 2015** (v2.2.6)
-
-- SocketCluster client - Renamed 'ready' event to 'status' - The word 'ready' falsely implies that the event is only triggered 
-once when the socket initializes for the first time - But it may in fact be triggered multiple times in case of a reconnect.
-The word 'status' is more accurate.
-
-**29 April 2015** (v2.2.4)
-
-- All timeout and interval values provided to SocketCluster constructor now have to be in milliseconds instead of seconds.
-
-
-**8 March 2015** (v2.0.2)
-
-Updated http://socketcluster.io/ documentation.
-
-In order to prepare SocketCluster for a smooth transition to version 2 over the next few years, some big changes were 
-made to the API which will affect v1:
-- The Session object (socket.session) on the server no longer exists as of version 1.3.0.
-The concept of a session has been superseded by a token-based authentication system (based on JWT: https://tools.ietf.org/html/draft-ietf-oauth-json-web-token-32).
-- Server-side channel entities were introduced - The scServer.global (http://socketcluster.io/#!/docs/api-global) object's subscribe() and channel() methods now 
-return a server-side Channel object whose API matches that of the client-side SCChannel object (http://socketcluster.io/#!/docs/api-scchannel).
-- The client-side socket (http://socketcluster.io/#!/docs/api-scsocket-client) object now emits a 'ready' event along with useful status info such as whether or not
-the socket is authenticated with the server (has a valid auth token and hence the user doesn't need to login again).
-- The second 'res' argument provided to the listener function in socket.on(event, listener) is now a function instead of an object with end() and error() methods.
-To send an error, just call res('This is an error') or if you want to send back an error code; res(1234, 'This is the error message'). For success, just set the first argument to null; res(null, 'This is a normal response').
-
-All these changes have been noted on the website.
-
-### SocketCluster v2 Early Release
-
-SocketCluster v2 is now available for download. SC2 is our attempt to prepare SocketCluster for a WebSocket-enabled future, as such, SC2 is
-dropping support for all hacky long-polling fallback mechanisms which have been an architectural nightmare to manage in large deployments.
-The WebSocket adoption rate in the browser is currently estimated at 85%+ and so we would like SC to cater for forward-thinking
-developers/companies who are ready to make the bold move towards using pure WebSockets without fallback.
-The major trade-off of SC2 is reduced browser support in exchange for significantly increased speed and efficiency (including 
-significantly lower network IO overheads).
-
-Some cases where this trade-off may be worthwhile include:
-- Where the realtime aspect of the application is non-critical. For example, adding an optional chat feature to an existing app - Maybe users of older browsers can do without this feature.
-- Where having an up to date browser is critical to using the application. For example an MMORPG or other online game where support for cutting-edge browser features is essential (e.g. WebGL, LocalStorage, WebWorkers, etc...).
-
-V2 will be maintained and supported in parallel with v1 (fully backwards compatible).
-Version 1 will remain the official version until it makes sense to switch to v2 (based on feedback from the community).
-
-Since v1 is still the official version, if you want to use v2, you will need to use a different npm command:
-
-```bash
-// Instead of 'npm install -g socketcluster'
-npm install -g sc2
-```
-
-Once installed, you should be able to invoke the 'sc2' command.
-The sc2 command has the exact same sub-commands as the v1 'socketcluster' command.
-For details, run:
-
-```bash
-sc2 --help
-```
-
-The npm package name for the client is **sc2-client**.
-
-
 ## Introduction
 
 SocketCluster is a fast, highly scalable HTTP + realtime server engine which lets you build multi-process 
