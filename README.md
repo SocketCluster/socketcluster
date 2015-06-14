@@ -9,6 +9,22 @@ Complete documentation available at: http://socketcluster.io/
 
 ## Change log
 
+**14 June 2015** (v2.2.26)
+
+Note that there has been an important fix in iocluster (a submodule of SC).
+The iocluster module is the one which provides the scServer.global object. There was a major bug which prevented it from storing data properly.
+This has been fixed in iocluster v2.4.6.
+To update iocluster on an existing app, you should:
+
+1. Navigate to your app's node_modules/socketcluster/ directory
+2. Then from there, use the command: ```rm -R -f ./node_modules/iocluster```
+3. ```npm cache clean```
+4. ```npm install iocluster```
+5. Check ./node_modules/iocluster/package.json to confirm that the version number is '2.4.6'
+
+This is only relevant if you want to use the global object to store volatile data, otherwise it shouldn't affect 
+SC in any way.
+
 **6 June 2015** (v2.2.25)
 
 - SocketCluster client - Major refactoring was undertaken - This should make the code much more robust and maintainable.
