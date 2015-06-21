@@ -9,6 +9,13 @@ Complete documentation available at: http://socketcluster.io/
 
 ## Change log
 
+**21 June 2015** (v2.2.30)
+
+Added a 'handshake' event on SCServer - This event gets triggered as soon as the SCSocket object is
+created (before the 'connection' event is triggered). It's a good place to add error-handling logic on the socket or
+to decorate your SCSocket object with custom properties/plugins. You generally shouldn't start interacting with the
+SCSocket at this stage - You should do that in the 'connection' event; after handshake has been completed.
+
 **14 June 2015** (v2.2.26)
 
 Note that there has been an important fix in iocluster (a submodule of SC).
@@ -29,7 +36,7 @@ SC in any way.
 
 - SocketCluster client - Major refactoring was undertaken - This should make the code much more robust and maintainable.
 - SocketCluster client - The 'status' event was removed - Instead, you can now get the status object as the first argument to the 'connect' event handler.
-- Authentication is now localStorage-based (it falls back to storing directly on the instance if localStorage is not supported) instead of cookie-based. This should allow the client authentication feature to work in more places including mobile.
+- Authentication is now localStorage/sessionStorage-based (it falls back to storing directly on the instance if localStorage is not supported) instead of cookie-based. This should allow the client authentication feature to work in more places including mobile.
 - Authentication is now fully customizable on both the client and server so it can integrate with any existing token-based solution - Details on how to do this will be posted on the website at some point.
 
 **4 May 2015** (v2.2.9)
