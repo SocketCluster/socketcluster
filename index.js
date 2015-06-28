@@ -71,7 +71,6 @@ SocketCluster.prototype._init = function (options) {
     pingTimeout: 60000,
     maxHttpSockets: null,
     origins: '*:*',
-    matchOriginProtocol: true,
     socketChannelLimit: 1000,
     workerStatusInterval: 10000,
     processTermTimeout: 10000,
