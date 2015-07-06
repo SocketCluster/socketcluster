@@ -69,7 +69,6 @@ SocketCluster.prototype._init = function (options) {
     ackTimeout: 10000,
     pingInterval: 25000,
     pingTimeout: 60000,
-    maxHttpSockets: null,
     origins: '*:*',
     socketChannelLimit: 1000,
     workerStatusInterval: 10000,
