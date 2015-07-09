@@ -24,12 +24,11 @@ var socketCluster = new SocketCluster({
   anotherCustomStoreOption: 'foo',
   // ...
 });
+```
 
 This change was also implemented in **sc-redis** although we still use a storeOptions property to hold all store-related properties.
 So now, inside the storeController, we access the custom storeOptions property from ```store.options.storeOptions``` - This is for backwards compatibility.
 If you ```npm update socketcluster``` just make sure that you also ```npm update sc-redis``` - You shouldn't need to change any of your code.
-
-```
 
 **21 June 2015** (v2.2.30)
 
