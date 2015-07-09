@@ -80,7 +80,6 @@ SocketCluster.prototype._init = function (options) {
     tcpSynBacklog: null,
     workerController: null,
     storeController: null,
-    storeOptions: null,
     rebootOnSignal: true,
     downgradeToUser: false,
     path: null,
@@ -518,7 +517,7 @@ SocketCluster.prototype._start = function () {
       expiryAccuracy: self._dataExpiryAccuracy,
       downgradeToUser: self.options.downgradeToUser,
       processTermTimeout: self.options.processTermTimeout,
-      storeOptions: self.options.storeOptions,
+      storeOptions: self.options,
       appStoreControllerPath: self._paths.appStoreControllerPath
     });
 
