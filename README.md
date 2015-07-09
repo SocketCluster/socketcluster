@@ -9,6 +9,28 @@ Complete documentation available at: http://socketcluster.io/
 
 ## Change log
 
+**9 July 2015** (v2.2.38)
+
+The ```store.options``` property passed to the storeController's (store.js) run() method now holds the global options object
+(containing all settings passed to the master SocketCluster constructor) instead of just the content of storeOptions.
+To pass custom options to the store object, you can just add the directly to the master SocketCluster() constructor. E.g:
+
+```js
+var socketCluster = new SocketCluster({
+  workers: 1,
+  stores: 1,
+  // ...
+  myCustomStoreOption: 'bla',
+  anotherCustomStoreOption: 'foo',
+  // ...
+});
+
+This was changed in **sc-redis** although we still use the storeOptions to hold all store-related properties.
+So now, inside the storeController, we access the custom storeOptions property from ```store.options.storeOptions``` - This is for backwards compatibility.
+If you ```npm update socketcluster``` just make sure that you also ```npm update sc-redis``` but you won't have to change any of your code.
+
+```
+
 **21 June 2015** (v2.2.30)
 
 Added a 'handshake' event on SCServer - This event gets triggered as soon as the SCSocket object is
