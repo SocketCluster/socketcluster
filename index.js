@@ -88,6 +88,7 @@ SocketCluster.prototype._init = function (options) {
     allowClientPublish: true,
     defaultWorkerDebugPort: 5858,
     defaultStoreDebugPort: 6858,
+    httpServerModule: null,
     clusterEngine: 'iocluster'
   };
 
