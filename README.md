@@ -11,9 +11,9 @@ Complete documentation available at: http://socketcluster.io/
 
 **18 July 2015** (v2.3.0)
 
-Renamed all occurrences of 'store' to 'broker' throughout SC.
-Since the primary purpose of a 'store' was actually to route messages and share data between workers, the word 'broker' seemed more appropriate.
-You can still save in-memory data inside 'brokers' as before (their functionality hasn't changed).
+Renamed all occurrences of 'store' to 'broker' throughout SC (the default file store.js file was also renamed to broker.js).
+Since the primary purpose of a 'store' is actually to share messages and data between workers, the word 'broker' seems more appropriate.
+You can still save in-memory data inside 'brokers' as before (their functionality hasn't changed - Just the name).
 
 **9 July 2015** (v2.2.38)
 
