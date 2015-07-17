@@ -9,16 +9,22 @@ Complete documentation available at: http://socketcluster.io/
 
 ## Change log
 
+**18 July 2015** (v2.3.0)
+
+Renamed all occurrences of 'store' to 'broker' throughout SC.
+Since the primary purpose of a 'store' was actually to route messages and share data between workers, the word 'broker' seemed more appropriate.
+You can still save in-memory data inside 'brokers' as before (their functionality hasn't changed).
+
 **9 July 2015** (v2.2.38)
 
-The ```broker.options``` object from the brokerController (broker.js) now represents the global options object
-(containing all settings passed to the master SocketCluster constructor) instead of just the content of brokerOptions.
-To pass custom options to the broker object, you can just add the directly to the master SocketCluster() constructor's options object. E.g:
+The ```store.options``` object from the storeController (store.js) now represents the global options object
+(containing all settings passed to the master SocketCluster constructor) instead of just the content of storeOptions.
+To pass custom options to the store object, you can just add the directly to the master SocketCluster() constructor's options object. E.g:
 
 ```js
 var socketCluster = new SocketCluster({
   workers: 1,
-  brokers: 1,
+  stores: 1,
   // ...
   myCustomBrokerOption: 'bla',
   anotherCustomBrokerOption: 'foo',
@@ -26,61 +32,10 @@ var socketCluster = new SocketCluster({
 });
 ```
 
-This change was also implemented in **sc-redis** although we now use a brokerOptions property to hold all broker-related properties.
-So now, inside the brokerController, we access the custom brokerOptions property from ```broker.options.brokerOptions``` - This is for backwards compatibility.
+This change was also implemented in **sc-redis** although we now use a storeOptions property to hold all store-related properties.
+So now, inside the storeController, we access the custom storeOptions property from ```store.options.storeOptions``` - This is for backwards compatibility.
 If you ```npm update socketcluster``` just make sure that you also ```npm update sc-redis``` - You shouldn't need to change any of your code.
 
-**21 June 2015** (v2.2.30)
-
-Added a 'handshake' event on SCServer - This event gets triggered as soon as the SCSocket object is
-created (before the 'connection' event is triggered). It's a good place to add error-handling logic on the socket or
-to decorate your SCSocket object with custom properties/plugins. You generally shouldn't start interacting with the
-SCSocket at this stage - You should do that in the 'connection' event; after handshake has been completed.
-
-**14 June 2015** (v2.2.26)
-
-Note that there has been an important fix in iocluster (a submodule of SC).
-The iocluster module is the one which provides the scServer.global object. There was a major bug which prevented it from storing data properly.
-This has been fixed in iocluster v2.4.6.
-To update iocluster on an existing app, you should:
-
-1. Navigate to your app's node_modules/socketcluster/ directory
-2. Then from there, use the command: ```rm -R -f ./node_modules/iocluster```
-3. ```npm cache clean```
-4. ```npm install iocluster```
-5. Check ./node_modules/iocluster/package.json to confirm that the version number is '2.4.6'
-
-This is only relevant if you want to use the global object to store volatile data, otherwise it shouldn't affect 
-SC in any way.
-
-**6 June 2015** (v2.2.25)
-
-- SocketCluster client - Major refactoring was undertaken - This should make the code much more robust and maintainable.
-- SocketCluster client - The 'status' event was removed - Instead, you can now get the status object as the first argument to the 'connect' event handler.
-- Authentication is now localStorage/sessionStorage-based (it falls back to storing directly on the instance if localStorage is not supported) instead of cookie-based. This should allow the client authentication feature to work in more places including mobile.
-- Authentication is now fully customizable on both the client and server so it can integrate with any existing token-based solution - Details on how to do this will be posted on the website at some point.
-
-**4 May 2015** (v2.2.9)
-
-SC2 is now the default version of SocketCluster so to install SC2, it's now:
-
-```bash
-npm install -g socketcluster
-```
-
-```bash
-socketcluster create myProject
-```
-
-You can still install SC1, but the package name has changed:
-
-```bash
-npm install -g sc1
-```
-
-```bash
-sc1 create myProject
-```
 
 ## Introduction
 
