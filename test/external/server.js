@@ -2,12 +2,12 @@ var SocketCluster = require('../../index').SocketCluster;
 
 var socketCluster = new SocketCluster({
   workers: 1,
-  stores: 1,
+  brokers: 1,
   port: 8000,
   appName: 'myapp',
   workerController: __dirname + '/worker.js',
   balancerController: __dirname + '/balancer.js',
-  storeController: __dirname + '/store.js',
+  brokerController: __dirname + '/broker.js',
   socketChannelLimit: 100,
   rebootWorkerOnCrash: true,
   pingTimeout: 3000,

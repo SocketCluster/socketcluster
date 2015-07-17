@@ -285,7 +285,7 @@ scServer.on('message', function (m) {
         socket.once('connect', function (status) {
         
           var authTokenIsSet = false;
-          socket.on('setAuthToken', function () {
+          socket.on('authenticate', function () {
             authTokenIsSet = true;
           });
         
@@ -298,7 +298,7 @@ scServer.on('message', function (m) {
                 assert(!!status.isAuthenticated,
                   'Socket should be authenticated');
                 assert(authTokenIsSet,
-                  'setAuthToken event was never emitted');
+                  'authenticate event was never emitted');
               } catch (e) {
                 err = e;
               }

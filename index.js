@@ -41,7 +41,7 @@ var SocketCluster = function (options) {
   
   process.on('SIGTERM', function () {
     self.killWorkers();
-    self.killStores();
+    self.killBrokers();
     process.exit();
   });
 };
@@ -57,7 +57,7 @@ SocketCluster.prototype._init = function (options) {
   self.options = {
     port: 8000,
     workers: null,
-    stores: null,
+    brokers: null,
     appName: null,
     instanceId: null,
     secretKey: null,
@@ -79,7 +79,7 @@ SocketCluster.prototype._init = function (options) {
     host: null,
     tcpSynBacklog: null,
     workerController: null,
-    storeController: null,
+    brokerController: null,
     rebootOnSignal: true,
     downgradeToUser: false,
     path: null,
@@ -87,7 +87,7 @@ SocketCluster.prototype._init = function (options) {
     schedulingPolicy: null,
     allowClientPublish: true,
     defaultWorkerDebugPort: 5858,
-    defaultStoreDebugPort: 6858,
+    defaultBrokerDebugPort: 6858,
     httpServerModule: null,
     clusterEngine: 'iocluster'
   };
@@ -170,10 +170,10 @@ SocketCluster.prototype._init = function (options) {
     self._socketDirPath = socketDir;
   }
   
-  if (self.options.storeController) {
-    self._paths.appStoreControllerPath = path.resolve(self.options.storeController);
+  if (self.options.brokerController) {
+    self._paths.appBrokerControllerPath = path.resolve(self.options.brokerController);
   } else {
-    self._paths.appStoreControllerPath = null;
+    self._paths.appBrokerControllerPath = null;
   }
 
   if (self.options.protocolOptions) {
@@ -207,11 +207,11 @@ SocketCluster.prototype._init = function (options) {
     }
   }
 
-  if (!self.options.stores || self.options.stores < 1) {
-    self.options.stores = 1;
+  if (!self.options.brokers || self.options.brokers < 1) {
+    self.options.brokers = 1;
   }
-  if (typeof self.options.stores != 'number') {
-    throw new Error('The stores option must be a number');
+  if (typeof self.options.brokers != 'number') {
+    throw new Error('The brokers option must be a number');
   }
 
   if (!self.options.workers || self.options.workers < 1) {
@@ -264,14 +264,14 @@ SocketCluster.prototype._init = function (options) {
   }
 };
 
-SocketCluster.prototype._getStoreSocketName = function (storeId) {
-  return 's' + storeId;
+SocketCluster.prototype._getBrokerSocketName = function (brokerId) {
+  return 'b' + brokerId;
 };
 
-SocketCluster.prototype._getStoreSocketPaths = function () {
+SocketCluster.prototype._getBrokerSocketPaths = function () {
   var socketPaths = [];
-  for (var i = 0; i < this.options.stores; i++) {
-    socketPaths.push(this._socketDirPath + this._getStoreSocketName(i));
+  for (var i = 0; i < this.options.brokers; i++) {
+    socketPaths.push(this._socketDirPath + this._getBrokerSocketName(i));
   }
   return socketPaths;
 };
@@ -445,7 +445,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
   workerOpts.paths = this._paths;
   workerOpts.sourcePort = this.options.port;
   workerOpts.workerCount = this.options.workers;
-  workerOpts.stores = this._getStoreSocketPaths();
+  workerOpts.brokers = this._getBrokerSocketPaths();
   workerOpts.secretKey = this.options.secretKey;
   workerOpts.authKey = this.options.authKey;
   
@@ -478,7 +478,7 @@ SocketCluster.prototype._logDeploymentDetails = function () {
     console.log('            Port: ' + this.options.port);
     console.log('            Master PID: ' + process.pid);
     console.log('            Worker count: ' + this.options.workers);
-    console.log('            Store count: ' + this.options.stores);
+    console.log('            Broker count: ' + this.options.brokers);
     console.log();
   }
   this.emit(this.EVENT_READY);
@@ -505,25 +505,25 @@ SocketCluster.prototype._start = function () {
   };
   
   var launchIOCluster = function () {
-    var storeDebugPort = argv['debug-stores'];
-    if (storeDebugPort == true) {
-      storeDebugPort = self.options.defaultStoreDebugPort;
+    var brokerDebugPort = argv['debug-brokers'];
+    if (brokerDebugPort == true) {
+      brokerDebugPort = self.options.defaultBrokerDebugPort;
     }
   
     self._ioCluster = new self._clusterEngine.IOCluster({
-      stores: self._getStoreSocketPaths(),
-      debug: storeDebugPort,
+      brokers: self._getBrokerSocketPaths(),
+      debug: brokerDebugPort,
       instanceId: self.options.instanceId,
       secretKey: self.options.secretKey,
       expiryAccuracy: self._dataExpiryAccuracy,
       downgradeToUser: self.options.downgradeToUser,
       processTermTimeout: self.options.processTermTimeout,
-      storeOptions: self.options,
-      appStoreControllerPath: self._paths.appStoreControllerPath
+      brokerOptions: self.options,
+      appBrokerControllerPath: self._paths.appBrokerControllerPath
     });
 
     self._ioCluster.on('error', function (err) {
-      self.errorHandler(err, {type: 'store'});
+      self.errorHandler(err, {type: 'broker'});
     });
     
     self._ioCluster.on('ready', ioClusterReady);
@@ -538,7 +538,7 @@ SocketCluster.prototype.killWorkers = function () {
   }
 };
 
-SocketCluster.prototype.killStores = function () {
+SocketCluster.prototype.killBrokers = function () {
   if (this._ioCluster) {
     this._ioCluster.destroy();
   }

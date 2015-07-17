@@ -16,7 +16,7 @@ if (process.platform != 'win32') {
   }
 }
 
-var storeData = {};
+var brokerData = {};
 var testIsOver = false;
 
 var resultsServer = http.createServer(function (req, res) {
@@ -29,11 +29,11 @@ var resultsServer = http.createServer(function (req, res) {
     var result;
     for (var i in results) {
       result = results[i];
-      if (result.origin == 'store') {
-        if (storeData[result.pid] == null) {
-          storeData[result.pid] = {};
+      if (result.origin == 'broker') {
+        if (brokerData[result.pid] == null) {
+          brokerData[result.pid] = {};
         }
-        storeData[result.pid][result.type] = result.data;
+        brokerData[result.pid][result.type] = result.data;
       }
     }
     res.writeHead(200);
@@ -114,17 +114,17 @@ scServer.on('message', function (m) {
       
       var checkResults = function () {
         var channels = {};
-        for (var i in storeData) {
-          channels[i] = storeData[i].channels;
+        for (var i in brokerData) {
+          channels[i] = brokerData[i].channels;
         }
         
         var channelMapAsString = util.inspect(channels, {depth: 5});
-        console.log('Store channels after unsubscribe:', channelMapAsString);
+        console.log('Broker channels after unsubscribe:', channelMapAsString);
         
         var channelMapHasFoo = /foo/.test(channelMapAsString);
         assert(!channelMapHasFoo, 'Channel was not cleaned up after all clients unsubscribed from it');
 
-        console.log('[Success] Store channel was cleaned up after all clients unsubscribed from it');
+        console.log('[Success] Broker channel was cleaned up after all clients unsubscribed from it');
         
         cb();
       };
@@ -149,7 +149,7 @@ scServer.on('message', function (m) {
       clearTimeout(assertTimeout);
       assertTimeout = setTimeout(timeoutError, 10000);
       
-      console.log('Checking that store data is empty after disconnecting all sockets');
+      console.log('Checking that broker data is empty after disconnecting all sockets');
       
       for (var i in sockets) {
         sockets[i].disconnect();
@@ -157,16 +157,16 @@ scServer.on('message', function (m) {
       
       setTimeout(function () {
         var allData = {};
-        for (var i in storeData) {
-          allData[i] = storeData[i].all;
+        for (var i in brokerData) {
+          allData[i] = brokerData[i].all;
         }
-        console.log('Store data after disconnecting all sockets:', util.inspect(allData, {depth: 5}));
+        console.log('Broker data after disconnecting all sockets:', util.inspect(allData, {depth: 5}));
         
         for (var j in allData) {
-          var isStoreDataEmpty = JSON.stringify(allData[j]).length < 70;
-          assert(isStoreDataEmpty, 'Store data was not cleaned up after all sockets were disconnected');
+          var isBrokerDataEmpty = JSON.stringify(allData[j]).length < 70;
+          assert(isBrokerDataEmpty, 'Broker data was not cleaned up after all sockets were disconnected');
         }
-        console.log('[Success] Store data was cleaned up after all sockets were disconnected');
+        console.log('[Success] Broker data was cleaned up after all sockets were disconnected');
         
         cb();
       }, 2000);
@@ -177,16 +177,16 @@ scServer.on('message', function (m) {
       console.log('Checking that channels get cleaned up after all sockets were disconnected');
       
       var channels = {};
-      for (var i in storeData) {
-        channels[i] = storeData[i].channels;
+      for (var i in brokerData) {
+        channels[i] = brokerData[i].channels;
       }
-      console.log('Store channels after disconnecting all sockets:', util.inspect(channels, {depth: 5}));
+      console.log('Broker channels after disconnecting all sockets:', util.inspect(channels, {depth: 5}));
       
       for (var j in channels) {
         var isChannelMapEmpty = JSON.stringify(channels[j]).length < 50;
         assert(isChannelMapEmpty, 'Channels were not cleaned up after disconnecting all sockets');
       }
-      console.log('[Success] Store channels were cleaned up after disconnecting all sockets');
+      console.log('[Success] Broker channels were cleaned up after disconnecting all sockets');
       
       cb();
     });

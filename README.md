@@ -11,23 +11,23 @@ Complete documentation available at: http://socketcluster.io/
 
 **9 July 2015** (v2.2.38)
 
-The ```store.options``` object from the storeController (store.js) now represents the global options object
-(containing all settings passed to the master SocketCluster constructor) instead of just the content of storeOptions.
-To pass custom options to the store object, you can just add the directly to the master SocketCluster() constructor's options object. E.g:
+The ```broker.options``` object from the brokerController (broker.js) now represents the global options object
+(containing all settings passed to the master SocketCluster constructor) instead of just the content of brokerOptions.
+To pass custom options to the broker object, you can just add the directly to the master SocketCluster() constructor's options object. E.g:
 
 ```js
 var socketCluster = new SocketCluster({
   workers: 1,
-  stores: 1,
+  brokers: 1,
   // ...
-  myCustomStoreOption: 'bla',
-  anotherCustomStoreOption: 'foo',
+  myCustomBrokerOption: 'bla',
+  anotherCustomBrokerOption: 'foo',
   // ...
 });
 ```
 
-This change was also implemented in **sc-redis** although we still use a storeOptions property to hold all store-related properties.
-So now, inside the storeController, we access the custom storeOptions property from ```store.options.storeOptions``` - This is for backwards compatibility.
+This change was also implemented in **sc-redis** although we now use a brokerOptions property to hold all broker-related properties.
+So now, inside the brokerController, we access the custom brokerOptions property from ```broker.options.brokerOptions``` - This is for backwards compatibility.
 If you ```npm update socketcluster``` just make sure that you also ```npm update sc-redis``` - You shouldn't need to change any of your code.
 
 **21 June 2015** (v2.2.30)
@@ -95,7 +95,7 @@ Subscribe for updates: http://socketcluster.launchrock.com/
 ## Memory leak profile
 
 SocketCluster has been tested for memory leaks.
-The last full memory profiling was done on SocketCluster v0.9.17 (Node.js v0.10.28) and included checks on load balancer, worker and store processes.
+The last full memory profiling was done on SocketCluster v0.9.17 (Node.js v0.10.28) and included checks on load balancer, worker and broker processes.
 
 No memory leaks were detected when using the latest Node.js version.
 Note that leaks were found when using Node.js versions below v0.10.22 - This is probably the Node.js 'Walmart' memory leak - Not a SocketCluster issue.
@@ -167,7 +167,7 @@ provide your private key and certificate as a start option when you instantiate 
 var socketCluster = new SocketCluster({
   balancers: 1,
   workers: 3,
-  stores: 3,
+  brokers: 3,
   port: 8000,
   appName: 'myapp',
   workerController: 'worker.js',
