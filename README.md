@@ -50,7 +50,7 @@ Subscribe for updates: http://socketcluster.launchrock.com/
 ## Memory leak profile
 
 SocketCluster has been tested for memory leaks.
-The last full memory profiling was done on SocketCluster v0.9.17 (Node.js v0.10.28) and included checks on load balancer, worker and broker processes.
+The last full memory profiling was done on SocketCluster v0.9.17 (Node.js v0.10.28) and included checks on worker and broker processes.
 
 No memory leaks were detected when using the latest Node.js version.
 Note that leaks were found when using Node.js versions below v0.10.22 - This is probably the Node.js 'Walmart' memory leak - Not a SocketCluster issue.
@@ -120,7 +120,6 @@ provide your private key and certificate as a start option when you instantiate 
 
 ```js
 var socketCluster = new SocketCluster({
-  balancers: 1,
   workers: 3,
   brokers: 3,
   port: 8000,
@@ -138,10 +137,6 @@ var socketCluster = new SocketCluster({
 The protocolOptions option is exactly the same as the one you pass to a standard Node HTTPS server:
 http://nodejs.org/api/https.html#https_https_createserver_options_requestlistener
 
-Note that encryption/decryption in SocketCluster happens at the LoadBalancer level (SocketCluster launches one or more 
-lightweight load balancers to distribute traffic evenly between your SocketCluster workers).
-LoadBalancers are responsible for encrypting/decrypting all network traffic. What this means is that your code (which is in the worker layer)
-will only ever deal with raw HTTP traffic.
 
 ## Contribute to SocketCluster
 
