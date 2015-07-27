@@ -465,6 +465,8 @@ SocketCluster.prototype._launchWorkerCluster = function () {
       self._workerStartHandler(m.data);
     } else if (m.type == 'workerExit') {
       self._workerExitHandler(m.data);
+    } else if (m.type == 'workerMessage') {
+      self.emit('workerMessage', m.workerId, m.data);
     }
   });
   
@@ -530,6 +532,14 @@ SocketCluster.prototype._start = function () {
   };
 
   launchIOCluster();
+};
+
+SocketCluster.prototype.sendToWorker = function (workerId, data) {
+  this._workerCluster.send({
+    type: 'masterMessage',
+    workerId: workerId,
+    data: data
+  });
 };
 
 SocketCluster.prototype.killWorkers = function () {
