@@ -363,16 +363,37 @@ SocketCluster.prototype.triggerInfo = function (info, origin) {
   }
 };
 
+SocketCluster.prototype._workerClusterErrorHandler = function (pid, errorData) {
+  this.errorHandler(errorData, {
+    type: 'WorkerCluster',
+    pid: pid
+  });
+};
+
 SocketCluster.prototype._workerErrorHandler = function (workerPid, errorData) {
   this.errorHandler(errorData, {
-    type: 'worker',
+    type: 'Worker',
     pid: workerPid
+  });
+};
+
+SocketCluster.prototype._ioClusterErrorHandler = function (pid, errorData) {
+  this.errorHandler(errorData, {
+    type: 'IOCluster',
+    pid: pid
+  });
+};
+
+SocketCluster.prototype._brokerErrorHandler = function (brokerPid, errorData) {
+  this.errorHandler(errorData, {
+    type: 'Broker',
+    pid: brokerPid
   });
 };
 
 SocketCluster.prototype._workerNoticeHandler = function (workerPid, noticeData) {
   var origin = {
-    type: 'worker',
+    type: 'Worker',
     pid: workerPid
   };
   this.noticeHandler(noticeData, origin);
@@ -456,7 +477,11 @@ SocketCluster.prototype._launchWorkerCluster = function () {
 
   this._workerCluster.on('message', function workerHandler(m) {
     if (m.type == 'error') {
-      self._workerErrorHandler(m.data.workerPid, m.data.error);
+      if (m.data.workerPid) {
+        self._workerErrorHandler(m.data.workerPid, m.data.error);
+      } else {
+        self._workerClusterErrorHandler(m.data.pid, m.data.error);
+      }
     } else if (m.type == 'notice') {
       self._workerNoticeHandler(m.data.workerPid, m.data.error);
     } else if (m.type == 'ready') {
@@ -511,7 +536,7 @@ SocketCluster.prototype._start = function () {
     if (brokerDebugPort == true) {
       brokerDebugPort = self.options.defaultBrokerDebugPort;
     }
-  
+    
     self._ioCluster = new self._clusterEngine.IOCluster({
       brokers: self._getBrokerSocketPaths(),
       debug: brokerDebugPort,
@@ -523,12 +548,20 @@ SocketCluster.prototype._start = function () {
       brokerOptions: self.options,
       appBrokerControllerPath: self._paths.appBrokerControllerPath
     });
-
+    
     self._ioCluster.on('error', function (err) {
-      self.errorHandler(err, {type: 'broker'});
+      if (err.brokerPid) {
+        self._brokerErrorHandler(err.brokerPid, err);
+      } else {
+        self._ioClusterErrorHandler(err.pid, err);
+      }
     });
     
     self._ioCluster.on('ready', ioClusterReady);
+    
+    self._ioCluster.on('brokerMessage', function (brokerId, data) {
+      self.emit('brokerMessage', brokerId, data);
+    });
   };
 
   launchIOCluster();
@@ -540,6 +573,10 @@ SocketCluster.prototype.sendToWorker = function (workerId, data) {
     workerId: workerId,
     data: data
   });
+};
+
+SocketCluster.prototype.sendToBroker = function (brokerId, data) {
+  this._ioCluster.sendToBroker(brokerId, data);
 };
 
 SocketCluster.prototype.killWorkers = function () {
