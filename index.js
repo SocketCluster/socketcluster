@@ -63,6 +63,7 @@ SocketCluster.prototype._init = function (options) {
     secretKey: null,
     authKey: null,
     rebootWorkerOnCrash: null,
+    killWorkerMemoryThreshold: null,
     protocol: 'http',
     protocolOptions: null,
     logLevel: 2,
