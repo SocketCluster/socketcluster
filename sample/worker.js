@@ -21,6 +21,9 @@ module.exports.run = function (worker) {
     In here we handle our incoming realtime connections and listen for events.
   */
   scServer.on('connection', function (socket) {
+  
+    // Some default logic, replace this with your own logic
+    
     socket.on('ping', function (data) {
       count++;
       console.log('PING', data);
