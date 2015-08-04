@@ -104,7 +104,9 @@ SocketCluster.prototype._init = function (options) {
   };
 
   for (var i in options) {
-    self.options[i] = options[i];
+    if (options.hasOwnProperty(i)) {
+      self.options[i] = options[i];
+    }
   }
   
   var maxTimeout = Math.pow(2, 31) - 1;
@@ -603,7 +605,9 @@ SocketCluster.prototype.log = function (message, time) {
 SocketCluster.prototype._cloneObject = function (object) {
   var clone = {};
   for (var i in object) {
-    clone[i] = object[i];
+    if (object.hasOwnProperty(i)) {
+      clone[i] = object[i];
+    }
   }
   return clone;
 };
