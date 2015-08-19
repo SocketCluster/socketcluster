@@ -85,16 +85,16 @@
         console.log('RANDOM STREAM: ' + data.rand);
       });
 
-      var pongChannel = socket.subscribe('pong');
+      var sampleChannel = socket.subscribe('sample');
 
-      pongChannel.on('subscribeFail', function (err) {
-        console.log('Failed to subscribe to PONG channel due to error: ' + err);
+      sampleChannel.on('subscribeFail', function (err) {
+        console.log('Failed to subscribe to the sample channel due to error: ' + err);
       });
 
       var c = 0;
 
-      pongChannel.watch(function (num) {
-        console.log('PONG:', num);
+      sampleChannel.watch(function (num) {
+        console.log('Sample channel message:', num);
       });
     </script>
   </body>

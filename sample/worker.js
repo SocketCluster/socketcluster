@@ -22,12 +22,13 @@ module.exports.run = function (worker) {
   */
   scServer.on('connection', function (socket) {
   
-    // Some default logic, replace this with your own logic
+    // Some sample logic to show how to handle client events,
+    // replace this with your own logic
     
-    socket.on('ping', function (data) {
+    socket.on('sampleClientEvent', function (data) {
       count++;
-      console.log('PING', data);
-      scServer.global.publish('pong', count);
+      console.log('Handled sampleClientEvent', data);
+      scServer.global.publish('sample', count);
     });
     
     var interval = setInterval(function () {
