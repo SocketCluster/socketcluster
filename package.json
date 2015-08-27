@@ -24,7 +24,7 @@
     "sc-formatter": "1.0.x",
     "uid-number": "0.0.5",
     "wrench": "1.5.8",
-    "ws": "0.7.2"
+    "ws": "0.8.0"
   },
   "bin": {
     "socketcluster": "bin/cli.js"
