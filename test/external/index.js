@@ -95,7 +95,6 @@ scServer.on('message', function (m) {
         });
         
         var notUnsubscribedTimeout = setTimeout(function () {
-          socket.off('error');
           cb('Did not unsubscribe from channels on disconnect');
         }, 3000);
         
@@ -110,7 +109,6 @@ scServer.on('message', function (m) {
           } catch (e) {
             err = e;
           }
-          socket.off('error');
           cb(err);
         });
       },
