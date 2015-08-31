@@ -451,8 +451,13 @@ SocketCluster.prototype._launchWorkerCluster = function () {
   var self = this;
   
   var debugPort;
+  
+  // Workers should not inherit the master --debug argument
+  // because they have their own --debug-workers option.
   var execOptions = {
-    execArgv: []
+    execArgv: process.execArgv.filter(function (arg) {
+      return arg != '--debug'
+    })
   };
   
   if (argv['debug-workers']) {
