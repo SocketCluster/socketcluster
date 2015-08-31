@@ -456,7 +456,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
   // because they have their own --debug-workers option.
   var execOptions = {
     execArgv: process.execArgv.filter(function (arg) {
-      return arg != '--debug'
+      return arg != '--debug' && arg != '--debug-brk';
     })
   };
   
