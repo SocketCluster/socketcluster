@@ -65,7 +65,7 @@ scServer.on('message', function (m) {
   if (m.event == 'ready') {
     var sockets = [];
     var tasks = [];
-    
+
     for (var i = 0; i < numSockets; i++) {
       tasks.push(function (cb) {
         var socket = scClient.connect(options);
@@ -78,7 +78,7 @@ scServer.on('message', function (m) {
             socket.on('event4', function () {});
 
             console.log('#' + ++socketCount + ' - Socket ' + socket.id + ' connected');
- 
+
             var interval = setInterval(function () {
               if (socket.getState() == socket.OPEN) {
                 socket.emit('test', {id: socket.id});
@@ -87,7 +87,7 @@ scServer.on('message', function (m) {
               }
             }, messageInterval);
             messageInterval += 100;
-            
+
             cb();
           } else {
             cb(new Error('The client socket\'s getState() should return socket.OPEN after it emits a connect event'));
@@ -96,39 +96,39 @@ scServer.on('message', function (m) {
         sockets.push(socket);
       });
     }
-    
+
     tasks.push(function (cb) {
       console.log('Done connecting');
       console.log();
       console.log('Checking that a channel gets cleaned up after all clients unsubscribe from it');
-      
+
       var numTest = 5;
       var c = 0;
-      
+
       for (var i in sockets) {
         sockets[i].subscribe('foo');
         if (c++ >= numTest) {
           break;
         }
       }
-      
+
       var checkResults = function () {
         var channels = {};
         for (var i in brokerData) {
           channels[i] = brokerData[i].channels;
         }
-        
+
         var channelMapAsString = util.inspect(channels, {depth: 5});
         console.log('Broker channels after unsubscribe:', channelMapAsString);
-        
+
         var channelMapHasFoo = /foo/.test(channelMapAsString);
         assert(!channelMapHasFoo, 'Channel was not cleaned up after all clients unsubscribed from it');
 
         console.log('[Success] Broker channel was cleaned up after all clients unsubscribed from it');
-        
+
         cb();
       };
-      
+
       c = 0;
 
       setTimeout(function () {
@@ -141,78 +141,79 @@ scServer.on('message', function (m) {
         setTimeout(checkResults, 2000);
       }, 3000);
     });
-    
+
     var assertTimeout = null;
-    
+
     tasks.push(function (cb) {
       console.log();
       clearTimeout(assertTimeout);
       assertTimeout = setTimeout(timeoutError, 10000);
-      
+
       console.log('Checking that broker data is empty after disconnecting all sockets');
-      
+
       for (var i in sockets) {
         sockets[i].disconnect();
       }
-      
+
       setTimeout(function () {
         var allData = {};
         for (var i in brokerData) {
           allData[i] = brokerData[i].all;
         }
         console.log('Broker data after disconnecting all sockets:', util.inspect(allData, {depth: 5}));
-        
+
         for (var j in allData) {
           var isBrokerDataEmpty = JSON.stringify(allData[j]).length < 70;
           assert(isBrokerDataEmpty, 'Broker data was not cleaned up after all sockets were disconnected');
         }
         console.log('[Success] Broker data was cleaned up after all sockets were disconnected');
-        
+
         cb();
       }, 2000);
     });
-    
+
     tasks.push(function (cb) {
       console.log();
       console.log('Checking that channels get cleaned up after all sockets were disconnected');
-      
+
       var channels = {};
       for (var i in brokerData) {
         channels[i] = brokerData[i].channels;
       }
       console.log('Broker channels after disconnecting all sockets:', util.inspect(channels, {depth: 5}));
-      
+
       for (var j in channels) {
         var isChannelMapEmpty = JSON.stringify(channels[j]).length < 50;
         assert(isChannelMapEmpty, 'Channels were not cleaned up after disconnecting all sockets');
       }
       console.log('[Success] Broker channels were cleaned up after disconnecting all sockets');
-      
+
       cb();
     });
-    
+
     var timedTasks = [];
     var timeoutMs = 20000;
-    
+
     var timeoutError = function () {
       throw new Error('Test timed out');
     };
-    
+
     var timeoutTask = function (cb) {
       clearTimeout(assertTimeout);
       assertTimeout = setTimeout(timeoutError, timeoutMs);
       cb();
     };
-    
+
     for (var i in tasks) {
       timedTasks.push(timeoutTask);
       timedTasks.push(tasks[i]);
     }
     timedTasks.push(function (cb) {
       clearTimeout(assertTimeout);
+      scServer.kill();
       cb();
     });
-    
+
     async.waterfall(timedTasks, function (err) {
       if (err) {
         throw err;

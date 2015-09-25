@@ -16,9 +16,9 @@ var options = {
 scServer.on('message', function (m) {
   if (m.event == 'ready') {
     var socket = scClient.connect(options);
-    
+
     var pongChannel;
-    
+
     var tasks = [
       function (cb) {
         socket.on('first', function (data) {
@@ -68,7 +68,7 @@ scServer.on('message', function (m) {
           var err;
           try {
             var subscriptions = socket.subscriptions();
-            assert(JSON.stringify(subscriptions) == JSON.stringify(['foo']), 
+            assert(JSON.stringify(subscriptions) == JSON.stringify(['foo']),
               'Expected subscriptions() array to contain one "foo" channel');
           } catch (e) {
             err = e;
@@ -79,10 +79,10 @@ scServer.on('message', function (m) {
       },
       function (cb) {
         socket.subscribe('foo2');
-        
+
         setTimeout(function () {
           socket.unsubscribe('foo2');
-          
+
           setTimeout(function () {
             cb();
           }, 1000);
@@ -93,15 +93,15 @@ scServer.on('message', function (m) {
         socket.once('error', function (err) {
           console.log('Caught:', err);
         });
-        
+
         var notUnsubscribedTimeout = setTimeout(function () {
           cb('Did not unsubscribe from channels on disconnect');
         }, 3000);
-        
+
         socket.once('unsubscribe', function () {
           clearTimeout(notUnsubscribedTimeout);
           var err;
-          
+
           try {
             var subscriptions = socket.subscriptions();
             assert(JSON.stringify(subscriptions) == JSON.stringify([]),
@@ -116,7 +116,7 @@ scServer.on('message', function (m) {
         setTimeout(function () {
           socket.emit('new');
           var err;
-          
+
           setTimeout(function () {
             try {
               var subscriptions = socket.subscriptions();
@@ -134,16 +134,16 @@ scServer.on('message', function (m) {
         socket.subscribe('test');
         setTimeout(function () {
           var unsubscribeEmitted = false;
-          
+
           socket.on('unsubscribe', function (channel) {
             if (channel == 'test') {
               unsubscribeEmitted = true;
             }
           });
-        
+
           socket.unsubscribe('test');
           var err;
-          
+
           setTimeout(function () {
             try {
               var subscriptions = socket.subscriptions();
@@ -159,32 +159,32 @@ scServer.on('message', function (m) {
       },
       function (cb) {
         var actionSequence = [];
-      
+
         socket.on('subscribe', function (channel) {
           if (channel == 'channel1') {
             actionSequence.push('subscribe');
           }
         });
-        
+
         socket.on('unsubscribe', function (channel) {
           if (channel == 'channel1') {
             actionSequence.push('unsubscribe');
           }
         });
-      
+
         socket.subscribe('channel1');
         socket.unsubscribe('channel1');
         socket.subscribe('channel1');
         socket.unsubscribe('channel1');
-        
+
         var expectedActionSequence = [];
-        
+
         var err;
-        
+
         setTimeout(function () {
           socket.off('subscribe');
           socket.off('unsubscribe');
-          
+
           try {
             assert(JSON.stringify(actionSequence) == JSON.stringify(expectedActionSequence),
               'Subscribing and unsubscribing to channel1 multiple times in a sequence was not handled in an optimal way');
@@ -196,36 +196,36 @@ scServer.on('message', function (m) {
       },
       function (cb) {
         var actionSequence = [];
-      
+
         socket.subscribe('channel2');
-      
+
         setTimeout(function () {
           socket.on('subscribe', function (channel) {
             if (channel == 'channel2') {
               actionSequence.push('subscribe');
             }
           });
-          
+
           socket.on('unsubscribe', function (channel) {
             if (channel == 'channel2') {
               actionSequence.push('unsubscribe');
             }
           });
-        
+
           socket.unsubscribe('channel2');
           socket.subscribe('channel2');
           socket.unsubscribe('channel2');
           socket.subscribe('channel2');
           socket.unsubscribe('channel2');
           socket.subscribe('channel2');
-          
+
           var expectedActionSequence = [
             'unsubscribe',
             'subscribe'
           ];
-          
+
           var err;
-          
+
           setTimeout(function () {
             socket.off('subscribe');
             socket.off('unsubscribe');
@@ -247,9 +247,9 @@ scServer.on('message', function (m) {
         });
         socketDomain.add(socket);
         socket.emit('error', 'FAIL');
-        
+
         var err;
-        
+
         setTimeout(function () {
           try {
             assert(caughtError == 'FAIL',
@@ -262,7 +262,7 @@ scServer.on('message', function (m) {
       },
       function (cb) {
         var err;
-        
+
         socket.once('disconnect', function () {
           socket.once('connect', function (status) {
             try {
@@ -279,18 +279,18 @@ scServer.on('message', function (m) {
       },
       function (cb) {
         var err;
-        
+
         socket.once('connect', function (status) {
-        
+
           var authTokenIsSet = false;
           socket.on('authenticate', function () {
             authTokenIsSet = true;
           });
-        
+
           socket.emit('login', {username: 'john123'});
-          
+
           setTimeout(function () {
-          
+
             socket.once('connect', function (status) {
               try {
                 assert(!!status.isAuthenticated,
@@ -302,41 +302,45 @@ scServer.on('message', function (m) {
               }
               cb(err);
             });
-          
+
             socket.disconnect();
             socket.connect();
-            
+
           }, 1000);
         });
-          
+
         socket.disconnect();
         socket.connect();
       }
     ];
-    
+
     var timedTasks = [];
     var timeoutMs = 20000;
-    
+
     var timeoutError = function () {
       throw new Error('Test timed out');
     };
-    
+
     var assertTimeout = null;
     var timeoutTask = function (cb) {
       clearTimeout(assertTimeout);
       assertTimeout = setTimeout(timeoutError, timeoutMs);
       cb();
     };
-    
+
     for (var i in tasks) {
       timedTasks.push(timeoutTask);
       timedTasks.push(tasks[i]);
     }
     timedTasks.push(function (cb) {
       clearTimeout(assertTimeout);
-      cb();
+      socket.disconnect();
+      scServer.kill();
+      setTimeout(function () {
+        cb();
+      }, 1000);
     });
-    
+
     async.waterfall(timedTasks, function (err) {
       if (err) {
         throw err;
