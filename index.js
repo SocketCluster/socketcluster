@@ -409,6 +409,8 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
   if (!this._active) {
     if (this.options.rebootOnSignal) {
       process.on('SIGUSR2', function () {
+        var notice = 'Master received SIGUSR2 signal - Shutting down all workers';
+        self.noticeHandler(notice, {type: 'master'});
         self.killWorkers();
       });
     }
