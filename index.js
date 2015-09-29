@@ -13,16 +13,16 @@ var argv = require('minimist')(process.argv.slice(2));
 
 var SocketCluster = function (options) {
   var self = this;
-  
+
   self.EVENT_FAIL = 'fail';
   self.EVENT_NOTICE = 'notice';
   self.EVENT_READY = 'ready';
   self.EVENT_WORKER_START = 'workerStart';
   self.EVENT_WORKER_EXIT = 'workerExit';
-  
+
   // These events don't get triggered on SocketCluster (yet)
   self.EVENT_INFO = 'info';
-  
+
   self._errorAnnotations = {
     'listen EADDRINUSE': 'Failed to bind to a port because it was already used by another process.'
   };
@@ -38,7 +38,7 @@ var SocketCluster = function (options) {
   self._errorDomain.run(function () {
     self._init(options);
   });
-  
+
   process.on('SIGTERM', function () {
     self.killWorkers();
     self.killBrokers();
@@ -96,7 +96,7 @@ SocketCluster.prototype._init = function (options) {
 
   self._active = false;
   self._workerCluster = null;
-  
+
   self._colorCodes = {
     red: 31,
     green: 32,
@@ -108,16 +108,16 @@ SocketCluster.prototype._init = function (options) {
       self.options[i] = options[i];
     }
   }
-  
+
   var maxTimeout = Math.pow(2, 31) - 1;
-  
+
   var verifyDuration = function (propertyName) {
     if (self.options[propertyName] > maxTimeout) {
       throw new Error('The ' + propertyName +
         ' value provided exceeded the maximum amount allowed');
     }
   };
-  
+
   verifyDuration('ackTimeout');
   verifyDuration('pingInterval');
   verifyDuration('pingTimeout');
@@ -139,7 +139,7 @@ SocketCluster.prototype._init = function (options) {
     statusURL: '/~status',
     appWorkerControllerPath: path.resolve(self.options.workerController)
   };
-  
+
   var pathHasher = crypto.createHash('md5');
   pathHasher.update(self._paths.appDirPath, 'utf8');
   var pathHash = pathHasher.digest('hex').substr(0, 10);
@@ -173,7 +173,7 @@ SocketCluster.prototype._init = function (options) {
     }
     self._socketDirPath = socketDir;
   }
-  
+
   if (self.options.brokerController) {
     self._paths.appBrokerControllerPath = path.resolve(self.options.brokerController);
   } else {
@@ -298,7 +298,7 @@ SocketCluster.prototype._logObject = function (obj, objType, time) {
     obj.origin.type = 'Undefined';
   }
   var output = obj.stack || obj.message || obj;
-  
+
   var logMessage;
   if (obj.origin.pid == null) {
     logMessage = 'Origin: ' + this._capitaliseFirstLetter(obj.origin.type) + '\n' +
@@ -317,16 +317,16 @@ SocketCluster.prototype.errorHandler = function (err, origin) {
     }
     err.stack = err.message;
   }
-  
+
   var annotation = this._errorAnnotations[err.message];
   if (annotation) {
     err.stack += '\n    ' + this.colorText('!!', 'red') + ' ' + annotation;
   }
-  
+
   err.origin = origin;
   err.time = Date.now();
   this.emit(this.EVENT_FAIL, err);
-  
+
   this._logObject(err, 'Error');
 };
 
@@ -341,7 +341,7 @@ SocketCluster.prototype.noticeHandler = function (notice, origin) {
   notice.time = Date.now();
 
   this.emit(this.EVENT_NOTICE, notice);
-  
+
   if (this.options.logLevel > 1) {
     this._logObject(notice, 'Notice');
   }
@@ -405,14 +405,14 @@ SocketCluster.prototype._workerNoticeHandler = function (workerPid, noticeData) 
 
 SocketCluster.prototype._workerClusterReadyHandler = function () {
   var self = this;
-  
+
   if (!this._active) {
     if (this.options.rebootOnSignal) {
       process.on('SIGUSR2', function () {
         self.killWorkers();
       });
     }
-    
+
     this._active = true;
     this._logDeploymentDetails();
   }
@@ -443,15 +443,15 @@ SocketCluster.prototype._handleWorkerClusterExit = function (errorCode) {
   this.errorHandler(errorData, {
     type: 'workerCluster'
   });
-  
+
   this._launchWorkerCluster();
 };
 
 SocketCluster.prototype._launchWorkerCluster = function () {
   var self = this;
-  
+
   var debugPort;
-  
+
   // Workers should not inherit the master --debug argument
   // because they have their own --debug-workers option.
   var execOptions = {
@@ -459,7 +459,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
       return arg != '--debug' && arg != '--debug-brk';
     })
   };
-  
+
   if (argv['debug-workers']) {
     if (argv['debug-workers'] == true) {
       debugPort = this.options.defaultWorkerDebugPort;
@@ -468,9 +468,9 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     }
     execOptions.execArgv.push('--debug=' + (debugPort - 1));
   }
-  
+
   this._workerCluster = fork(__dirname + '/lib/workercluster.js', process.argv.slice(2), execOptions);
-  
+
   var workerOpts = this._cloneObject(this.options);
   workerOpts.paths = this._paths;
   workerOpts.sourcePort = this.options.port;
@@ -478,7 +478,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
   workerOpts.brokers = this._getBrokerSocketPaths();
   workerOpts.secretKey = this.options.secretKey;
   workerOpts.authKey = this.options.authKey;
-  
+
   this._workerCluster.send({
     type: 'init',
     data: workerOpts
@@ -503,7 +503,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
       self.emit('workerMessage', m.workerId, m.data);
     }
   });
-  
+
   this._workerCluster.on('exit', this._handleWorkerClusterExit.bind(this));
 };
 
@@ -522,7 +522,7 @@ SocketCluster.prototype._logDeploymentDetails = function () {
 
 SocketCluster.prototype._start = function () {
   var self = this;
-  
+
   if (self.options.secretKey == null) {
     self.options.secretKey = crypto.randomBytes(32).toString('hex');
   }
@@ -532,20 +532,20 @@ SocketCluster.prototype._start = function () {
   if (self.options.instanceId == null) {
     self.options.instanceId = uuid.v4();
   }
-  
+
   self._active = false;
 
   var ioClusterReady = function () {
     self._ioCluster.removeListener('ready', ioClusterReady);
     self._launchWorkerCluster();
   };
-  
+
   var launchIOCluster = function () {
     var brokerDebugPort = argv['debug-brokers'];
     if (brokerDebugPort == true) {
       brokerDebugPort = self.options.defaultBrokerDebugPort;
     }
-    
+
     self._ioCluster = new self._clusterEngine.IOCluster({
       brokers: self._getBrokerSocketPaths(),
       debug: brokerDebugPort,
@@ -557,7 +557,7 @@ SocketCluster.prototype._start = function () {
       brokerOptions: self.options,
       appBrokerControllerPath: self._paths.appBrokerControllerPath
     });
-    
+
     self._ioCluster.on('error', function (err) {
       if (err.brokerPid) {
         self._brokerErrorHandler(err.brokerPid, err);
@@ -565,9 +565,9 @@ SocketCluster.prototype._start = function () {
         self._ioClusterErrorHandler(err.pid, err);
       }
     });
-    
+
     self._ioCluster.on('ready', ioClusterReady);
-    
+
     self._ioCluster.on('brokerMessage', function (brokerId, data) {
       self.emit('brokerMessage', brokerId, data);
     });
