@@ -12,7 +12,7 @@
       body {
         margin: 0;
         padding: 0;
-        width: 100%; 
+        width: 100%;
         height: 100%;
         color: #666666;
         display: table;
@@ -45,7 +45,7 @@
       .small {
         font-size: 18px;
       }
-      
+
       .github-button {
         padding-top: 10px;
       }
@@ -62,7 +62,7 @@
         </div>
         <div class="small">
           <a href="http://socketcluster.io/#!/docs/getting-started">Getting Started</a> <strong>&middot;</strong>
-          <a href="http://socketcluster.io/#!/docs">Documentation</a> 
+          <a href="http://socketcluster.io/#!/docs">Documentation</a>
         </div>
         <p class="github-button">
           <iframe src="https://ghbtns.com/github-btn.html?user=socketcluster&repo=socketcluster&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
@@ -80,7 +80,7 @@
       socket.on('connect', function () {
         console.log('CONNECTED');
       });
-      
+
       socket.on('rand', function (data) {
         console.log('RANDOM STREAM: ' + data.rand);
       });
@@ -90,8 +90,6 @@
       sampleChannel.on('subscribeFail', function (err) {
         console.log('Failed to subscribe to the sample channel due to error: ' + err);
       });
-
-      var c = 0;
 
       sampleChannel.watch(function (num) {
         console.log('Sample channel message:', num);
