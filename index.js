@@ -590,7 +590,9 @@ SocketCluster.prototype.sendToBroker = function (brokerId, data) {
 
 SocketCluster.prototype.killWorkers = function () {
   if (this._workerCluster) {
-    this._workerCluster.kill('SIGTERM');
+    this._workerCluster.send({
+      type: 'terminate'
+    });
   }
 };
 
