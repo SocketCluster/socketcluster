@@ -82,6 +82,7 @@ SocketCluster.prototype._init = function (options) {
     tcpSynBacklog: null,
     workerController: null,
     brokerController: null,
+    initController: null,
     rebootOnSignal: true,
     downgradeToUser: false,
     path: null,
@@ -137,8 +138,14 @@ SocketCluster.prototype._init = function (options) {
   self._paths = {
     appDirPath: appDirPath,
     statusURL: '/~status',
-    appWorkerControllerPath: path.resolve(self.options.workerController)
+    appWorkerControllerPath: path.resolve(self.options.workerController),
   };
+
+  if(self.options.initController) {
+      self._paths.appInitControllerPath = path.resolve(self.options.initController);
+  } else {
+      self._paths.appInitControllerPath = null;
+  }
 
   var pathHasher = crypto.createHash('md5');
   pathHasher.update(self._paths.appDirPath, 'utf8');
@@ -557,7 +564,8 @@ SocketCluster.prototype._start = function () {
       downgradeToUser: self.options.downgradeToUser,
       processTermTimeout: self.options.processTermTimeout,
       brokerOptions: self.options,
-      appBrokerControllerPath: self._paths.appBrokerControllerPath
+      appBrokerControllerPath: self._paths.appBrokerControllerPath,
+      appInitControllerPath: self._paths.appInitControllerPath
     });
 
     self._ioCluster.on('error', function (err) {

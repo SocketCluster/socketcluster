@@ -1,5 +1,5 @@
 var argv = require('minimist')(process.argv.slice(2));
-var SocketCluster = require('socketcluster').SocketCluster;
+var SocketCluster = require('../').SocketCluster;
 
 var socketCluster = new SocketCluster({
   workers: Number(argv.w) || 1,
@@ -8,6 +8,7 @@ var socketCluster = new SocketCluster({
   appName: argv.n || null,
   workerController: __dirname + '/worker.js',
   brokerController: __dirname + '/broker.js',
+  initController: __dirname +'/init.js',
   socketChannelLimit: 1000,
   rebootWorkerOnCrash: argv['auto-reboot'] != false
 });
