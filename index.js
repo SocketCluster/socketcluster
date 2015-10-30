@@ -141,7 +141,7 @@ SocketCluster.prototype._init = function (options) {
     appWorkerControllerPath: path.resolve(self.options.workerController)
   };
 
-  if(self.options.initController) {
+  if (self.options.initController) {
       self._paths.appInitControllerPath = path.resolve(self.options.initController);
   } else {
       self._paths.appInitControllerPath = null;
