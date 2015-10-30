@@ -138,7 +138,7 @@ SocketCluster.prototype._init = function (options) {
   self._paths = {
     appDirPath: appDirPath,
     statusURL: '/~status',
-    appWorkerControllerPath: path.resolve(self.options.workerController),
+    appWorkerControllerPath: path.resolve(self.options.workerController)
   };
 
   if(self.options.initController) {
