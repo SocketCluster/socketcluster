@@ -309,10 +309,10 @@ SocketCluster.prototype._logObject = function (obj, objType, time) {
   var logMessage;
   if (obj.origin.pid == null) {
     logMessage = 'Origin: ' + this._capitaliseFirstLetter(obj.origin.type) + '\n' +
-      '    [' + objType + '] ' + output;
+      '   [' + objType + '] ' + output;
   } else {
     logMessage = 'Origin: ' + this._capitaliseFirstLetter(obj.origin.type) + ' (PID ' + obj.origin.pid + ')\n' +
-      '    [' + objType + '] ' + output;
+      '   [' + objType + '] ' + output;
   }
   this.log(logMessage, time);
 };
