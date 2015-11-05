@@ -18,7 +18,7 @@ module.exports.run = function (worker) {
     socket.emit('first', 'This is the first event');
 
     socket.on('ping', function () {
-      wsServer.global.publish('pong', pongData);
+      wsServer.exchange.publish('pong', pongData);
     });
 
     socket.on('login', function (username) {
