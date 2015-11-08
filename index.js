@@ -74,7 +74,7 @@ SocketCluster.prototype._init = function (options) {
     socketChannelLimit: 1000,
     workerStatusInterval: 10000,
     processTermTimeout: 10000,
-    defaultAuthTokenExpiryInMinutes: 1440,
+    defaultAuthTokenExpiry: 86400,
     propagateErrors: true,
     propagateNotices: true,
     middlewareEmitNotices: true,
