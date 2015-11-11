@@ -24,7 +24,7 @@ var parsePackageFile = function (moduleDir) {
       return JSON.parse(fs.readFileSync(packageFile, {encoding: 'utf8'}));
     }
   } catch (e) {}
-  
+
   return {};
 }
 
@@ -120,7 +120,7 @@ var createFail = function () {
 
 var createSuccess = function () {
   console.log('Installing app dependencies using npm. This could take a while...');
-  
+
   var npmCommand = (process.platform === "win32" ? "npm.cmd" : "npm");
   var options = {
     cwd: destDir,
@@ -128,15 +128,15 @@ var createSuccess = function () {
   };
 
   var npmProcess = spawn(npmCommand, ['install'], options);
-  
+
   npmProcess.stdout.on('data', function (data) {
     process.stdout.write(data);
   });
-  
+
   npmProcess.stderr.on('data', function (data) {
     process.stderr.write(data);
   });
-  
+
   npmProcess.on('close', function (code) {
     if (code) {
       errorMessage('Failed to install npm dependencies. Exited with code ' + code + '.');
@@ -145,13 +145,13 @@ var createSuccess = function () {
         fs.writeFileSync(clientFileDestPath, fs.readFileSync(clientFileSourcePath));
         successMessage("SocketCluster sample '" + destDir + "' was setup successfully.");
       } catch (err) {
-        warningMessage("Failed to copy file from '" + clientFileSourcePath + "' to '" + 
+        warningMessage("Failed to copy file from '" + clientFileSourcePath + "' to '" +
           clientFileDestPath + "' - Try copying it manually.");
       }
     }
     process.exit(code);
   });
-  
+
   npmProcess.stdin.end();
 };
 
