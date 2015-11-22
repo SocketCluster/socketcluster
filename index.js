@@ -61,7 +61,11 @@ SocketCluster.prototype._init = function (options) {
     appName: null,
     instanceId: null,
     secretKey: null,
-    authOptions: null,
+    authKey: null,
+    authPrivateKey: null,
+    authPublicKey: null,
+    authDefaultExpiry: 86400,
+    authAlgorithm: null,
     rebootWorkerOnCrash: null,
     killWorkerMemoryThreshold: null,
     protocol: 'http',
@@ -217,20 +221,11 @@ SocketCluster.prototype._init = function (options) {
     }
   }
 
-  if (self.options.authOptions == null) {
-    self.options.authOptions = {};
-  } else {
-    var authOpts = self.options.authOptions;
-    if (authOpts.privateKey instanceof Buffer) {
-      authOpts.privateKey = authOpts.privateKey.toString();
-    }
-    if (authOpts.publicKey instanceof Buffer) {
-      authOpts.publicKey = authOpts.publicKey.toString();
-    }
+  if (self.options.authPrivateKey instanceof Buffer) {
+    self.options.authPrivateKey = self.options.authPrivateKey.toString();
   }
-
-  if (self.options.authOptions.expiresIn == null) {
-    self.options.authOptions.expiresIn = 86400;
+  if (self.options.authPublicKey instanceof Buffer) {
+    self.options.authPublicKey = self.options.authPublicKey.toString();
   }
 
   if (!self.options.brokers || self.options.brokers < 1) {
@@ -501,7 +496,11 @@ SocketCluster.prototype._launchWorkerCluster = function () {
   workerOpts.workerCount = this.options.workers;
   workerOpts.brokers = this._getBrokerSocketPaths();
   workerOpts.secretKey = this.options.secretKey;
-  workerOpts.authOptions = this.options.authOptions;
+  workerOpts.authKey = this.options.authKey;
+  workerOpts.authPrivateKey = this.options.authPrivateKey;
+  workerOpts.authPublicKey = this.options.authPublicKey;
+  workerOpts.authDefaultExpiry = this.options.authDefaultExpiry;
+  workerOpts.authAlgorithm = this.options.authAlgorithm;
 
   this._workerCluster.send({
     type: 'init',
@@ -550,9 +549,8 @@ SocketCluster.prototype._start = function () {
   if (self.options.secretKey == null) {
     self.options.secretKey = crypto.randomBytes(32).toString('hex');
   }
-  var authOptions = self.options.authOptions;
-  if (authOptions.key == null && authOptions.privateKey == null && authOptions.publicKey == null) {
-    authOptions.key = crypto.randomBytes(32).toString('hex');
+  if (this.options.authKey == null && this.options.authPrivateKey == null && this.options.authPublicKey == null) {
+    this.options.authKey = crypto.randomBytes(32).toString('hex');
   }
   if (self.options.instanceId == null) {
     self.options.instanceId = uuid.v4();

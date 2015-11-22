@@ -20,10 +20,10 @@
     "jsonwebtoken": "5.4.1",
     "minimist": "1.1.0",
     "node-uuid": "1.4.3",
-    "sc-auth": "1.0.x",
+    "sc-auth": "2.0.x",
     "sc-emitter": "1.0.x",
     "sc-formatter": "1.0.x",
-    "socketcluster-server": "1.0.x",
+    "socketcluster-server": "2.0.x",
     "uid-number": "0.0.5",
     "wrench": "1.5.8",
     "ws": "0.8.0"
