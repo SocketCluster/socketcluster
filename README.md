@@ -9,6 +9,12 @@ Complete documentation available at: http://socketcluster.io/
 
 ## Change log
 
+**22 November 2015** (v3.0.0)
+
+- The defaultAuthTokenExpiryInMinutes and defaultAuthTokenExpiry config options have been removed - Use authDefaultExpiry instead (value is in seconds).
+- Ping and pong are now represented as raw messages '#1' and '#2' instead of '1' and '2' - This is to avoid potential conflicts with user logic when
+using the raw ```socket.send(...)``` method.
+
 **18 July 2015** (v2.3.0)
 
 Renamed all occurrences of 'store' to 'broker' throughout SC (the default file store.js file was also renamed to broker.js).
@@ -39,9 +45,9 @@ If you ```npm update socketcluster``` just make sure that you also ```npm update
 
 ## Introduction
 
-SocketCluster is a fast, highly scalable HTTP + realtime server engine which lets you build multi-process 
+SocketCluster is a fast, highly scalable HTTP + realtime server engine which lets you build multi-process
 realtime servers that make use of all CPU cores on a machine/instance.
-It removes the limitations of having to run your Node.js server as a single thread and makes your backend 
+It removes the limitations of having to run your Node.js server as a single thread and makes your backend
 resilient by automatically recovering from worker crashes and aggregating errors into a central log.
 
 Follow the project on Twitter: https://twitter.com/SocketCluster
@@ -75,7 +81,7 @@ Setup the socketcluster command:
 npm install -g socketcluster
 ```
 
-OR 
+OR
 
 ```bash
 sudo npm install -g socketcluster
@@ -107,7 +113,7 @@ You will also need to install the client separately which you can get using the 
 npm install socketcluster-client
 ```
 
-The socketcluster-client script is called socketcluster.js (located in the main socketcluster-client directory) 
+The socketcluster-client script is called socketcluster.js (located in the main socketcluster-client directory)
 - You should include it in your HTML page using a &lt;script&gt; tag in order to interact with SocketCluster.
 For more details on how to use socketcluster-client, go to https://github.com/SocketCluster/socketcluster-client
 
@@ -115,7 +121,7 @@ It is recommended that you use Node.js version >=0.10.22 due to memory leaks pre
 
 ### Using over HTTPS
 
-In order to run SocketCluster over HTTPS, all you need to do is set the protocol to 'https' and 
+In order to run SocketCluster over HTTPS, all you need to do is set the protocol to 'https' and
 provide your private key and certificate as a start option when you instantiate SocketCluster - Example:
 
 ```js
