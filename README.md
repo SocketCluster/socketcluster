@@ -9,6 +9,21 @@ Complete documentation available at: http://socketcluster.io/
 
 ## Change log
 
+**05 January 2016** (v4.0.0)
+
+- Middleware functions used to have different arguments (depending on the middleware type); now they are all in the format ```function (req, next) {...}```.
+The ```req``` object will have different properties depending on the middleware type. See (TODO: Link to website).
+- When invoking ```socket.emit``` or ```socket.publish``` - When a callback was provided, it would emit an 'error' event on the socket if the operation failed.
+This is no longer the case - The callback will still receive the error as the first argument like it used to (assuming that there was an error), but it
+just won't be emitted as an 'error' event on the socket - It is considered an application error (not an SC error).
+- You can now pass custom error objects to the ```next(err)``` callback inside middleware functions; this is now recommended instead of plain strings.
+The ```err``` object you provide can inherit from the ```Error``` object (but this isn't necessary). It is recommended that whatever object you provide has
+a ```name``` and a ```message``` property; you can also add custom properties to your error object and the client will receive those as rehydrated ```Error``` objects. Note that this is a non-breaking change - You can still pass a string as ```err``` and it won't break anything.
+
+This release introduces many other non-breaking changes.
+See RFC: https://github.com/SocketCluster/socketcluster/issues/137
+The docs have been updated on the website. See (TODO: Link to website).
+
 **22 November 2015** (v3.0.0)
 
 - The defaultAuthTokenExpiryInMinutes and defaultAuthTokenExpiry config options have been removed - Use authDefaultExpiry instead (value is in seconds).
@@ -21,11 +36,6 @@ Renamed all occurrences of 'store' to 'broker' throughout SC (the default file s
 Since the primary purpose of a 'store' is actually to share messages and data between workers, the word 'broker' seems more appropriate.
 You can still save in-memory data inside 'brokers' as before (their functionality hasn't changed - Just the name).
 
-**9 July 2015** (v2.2.38)
-
-The ```store.options``` object from the storeController (store.js) now represents the global options object
-(containing all settings passed to the master SocketCluster constructor) instead of just the content of storeOptions.
-To pass custom options to the store object, you can just add the directly to the master SocketCluster() constructor's options object. E.g:
 
 ```js
 var socketCluster = new SocketCluster({

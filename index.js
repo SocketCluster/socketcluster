@@ -11,17 +11,22 @@ var uuid = require('node-uuid');
 var pkg = require('./package.json');
 var argv = require('minimist')(process.argv.slice(2));
 
+var scErrors = require('sc-errors');
+var InvalidOptionsError = scErrors.InvalidOptionsError;
+var InvalidActionError = scErrors.InvalidActionError;
+var BrokerError = scErrors.BrokerError;
+var UnknownError = scErrors.UnknownError;
+
+
 var SocketCluster = function (options) {
   var self = this;
 
   self.EVENT_FAIL = 'fail';
-  self.EVENT_NOTICE = 'notice';
+  self.EVENT_WARNING = 'warning';
+  self.EVENT_INFO = 'info';
   self.EVENT_READY = 'ready';
   self.EVENT_WORKER_START = 'workerStart';
   self.EVENT_WORKER_EXIT = 'workerExit';
-
-  // These events don't get triggered on SocketCluster (yet)
-  self.EVENT_INFO = 'info';
 
   self._errorAnnotations = {
     'listen EADDRINUSE': 'Failed to bind to a port because it was already used by another process.'
@@ -79,8 +84,8 @@ SocketCluster.prototype._init = function (options) {
     workerStatusInterval: 10000,
     processTermTimeout: 10000,
     propagateErrors: true,
-    propagateNotices: true,
-    middlewareEmitNotices: true,
+    propagateWarnings: true,
+    middlewareEmitWarnings: true,
     host: null,
     tcpSynBacklog: null,
     workerController: null,
@@ -117,7 +122,7 @@ SocketCluster.prototype._init = function (options) {
 
   var verifyDuration = function (propertyName) {
     if (self.options[propertyName] > maxTimeout) {
-      throw new Error('The ' + propertyName +
+      throw new InvalidOptionsError('The ' + propertyName +
         ' value provided exceeded the maximum amount allowed');
     }
   };
@@ -133,7 +138,7 @@ SocketCluster.prototype._init = function (options) {
   }
 
   if (self.options.workerController == null) {
-    throw new Error("Compulsory option 'workerController' was not specified " +
+    throw new InvalidOptionsError("Compulsory option 'workerController' was not specified " +
       "- It needs to be a path to a JavaScript file which will act as the " +
       "boot controller for each worker in the cluster");
   }
@@ -172,7 +177,7 @@ SocketCluster.prototype._init = function (options) {
       try {
         wrench.rmdirSyncRecursive(socketDir);
       } catch (err) {
-        throw new Error('Failed to remove old socket directory ' + socketDir + '. Try removing it manually.');
+        throw new InvalidActionError('Failed to remove old socket directory ' + socketDir + ' - Try removing it manually');
       }
     }
     wrench.mkdirSyncRecursive(socketDir);
@@ -207,16 +212,16 @@ SocketCluster.prototype._init = function (options) {
         if (privKeyEncLine.toUpperCase().indexOf('ENCRYPTED') > -1) {
           var message = 'The supplied private key is encrypted and cannot be used without a passphrase - ' +
             'Please provide a valid passphrase as a property to protocolOptions';
-          throw new Error(message);
+          throw new InvalidOptionsError(message);
         }
       } else if (protoOpts.pfx) {
         var message = 'The supplied pfx certificate cannot be used without a passphrase - ' +
-            'Please provide a valid passphrase as a property to protocolOptions';
-        throw new Error(message);
+          'Please provide a valid passphrase as a property to protocolOptions';
+        throw new InvalidOptionsError(message);
       } else {
         var message = 'The supplied protocolOptions were invalid - ' +
           'Please provide either a key and cert pair or a pfx certificate';
-        throw new Error(message);
+        throw new InvalidOptionsError(message);
       }
     }
   }
@@ -232,14 +237,14 @@ SocketCluster.prototype._init = function (options) {
     self.options.brokers = 1;
   }
   if (typeof self.options.brokers != 'number') {
-    throw new Error('The brokers option must be a number');
+    throw new InvalidOptionsError('The brokers option must be a number');
   }
 
   if (!self.options.workers || self.options.workers < 1) {
     self.options.workers = 1;
   }
   if (typeof self.options.workers != 'number') {
-    throw new Error('The workers option must be a number');
+    throw new InvalidOptionsError('The workers option must be a number');
   }
 
   self._extRegex = /[.][^\/\\]*$/;
@@ -255,7 +260,7 @@ SocketCluster.prototype._init = function (options) {
   }
 
   process.stdin.on('error', function (err) {
-    self.noticeHandler(err, {type: 'master'});
+    self.warningHandler(err, {type: 'master'});
   });
 
   /*
@@ -273,7 +278,7 @@ SocketCluster.prototype._init = function (options) {
     } else {
       uidNumber(self.options.downgradeToUser, function (err, uid, gid) {
         if (err) {
-          throw new Error('Failed to downgrade to user "' + self.options.downgradeToUser + '" - ' + err);
+          throw new InvalidActionError('Failed to downgrade to user "' + self.options.downgradeToUser + '" - ' + err);
         } else {
           fs.chownSync(self._socketDirPath, uid, gid);
           self._start();
@@ -330,7 +335,7 @@ SocketCluster.prototype._logObject = function (obj, objType, time) {
 SocketCluster.prototype.errorHandler = function (err, origin) {
   if (err.stack == null) {
     if (!(err instanceof Object)) {
-      err = new Error(err);
+      err = new UnknownError(err);
     }
     err.stack = err.message;
   }
@@ -347,20 +352,20 @@ SocketCluster.prototype.errorHandler = function (err, origin) {
   this._logObject(err, 'Error');
 };
 
-SocketCluster.prototype.noticeHandler = function (notice, origin) {
-  if (notice.stack == null) {
-    if (!(notice instanceof Object)) {
-      notice = new Error(notice);
+SocketCluster.prototype.warningHandler = function (warning, origin) {
+  if (warning.stack == null) {
+    if (!(warning instanceof Object)) {
+      warning = new UnknownError(warning);
     }
-    notice.stack = notice.message;
+    warning.stack = warning.message;
   }
-  notice.origin = origin;
-  notice.time = Date.now();
+  warning.origin = origin;
+  warning.time = Date.now();
 
-  this.emit(this.EVENT_NOTICE, notice);
+  this.emit(this.EVENT_WARNING, warning);
 
   if (this.options.logLevel > 1) {
-    this._logObject(notice, 'Notice');
+    this._logObject(warning, 'Warning');
   }
 };
 
@@ -376,7 +381,7 @@ SocketCluster.prototype.triggerInfo = function (info, origin) {
       message: info,
       time: Date.now()
     };
-    this.emit(this.EVENT_INFO, infoData);
+    this.emit(this.EVENT_WARNING, infoData);
 
     if (this.options.logLevel > 0) {
       this._logObject(infoData, 'Info', infoData.time)
@@ -384,40 +389,46 @@ SocketCluster.prototype.triggerInfo = function (info, origin) {
   }
 };
 
-SocketCluster.prototype._workerClusterErrorHandler = function (pid, errorData) {
-  this.errorHandler(errorData, {
+SocketCluster.prototype._workerClusterErrorHandler = function (pid, error) {
+  this.errorHandler(error, {
     type: 'WorkerCluster',
     pid: pid
   });
 };
 
-SocketCluster.prototype._workerErrorHandler = function (workerPid, errorData) {
-  this.errorHandler(errorData, {
+SocketCluster.prototype._workerErrorHandler = function (workerPid, error) {
+  this.errorHandler(error, {
     type: 'Worker',
     pid: workerPid
   });
 };
 
-SocketCluster.prototype._ioClusterErrorHandler = function (pid, errorData) {
-  this.errorHandler(errorData, {
+SocketCluster.prototype._ioClusterErrorHandler = function (pid, error) {
+  if (typeof error == 'string') {
+    error = new BrokerError(error);
+  }
+  this.errorHandler(error, {
     type: 'IOCluster',
     pid: pid
   });
 };
 
-SocketCluster.prototype._brokerErrorHandler = function (brokerPid, errorData) {
-  this.errorHandler(errorData, {
+SocketCluster.prototype._brokerErrorHandler = function (brokerPid, error) {
+  if (typeof error == 'string') {
+    error = new BrokerError(error);
+  }
+  this.errorHandler(error, {
     type: 'Broker',
     pid: brokerPid
   });
 };
 
-SocketCluster.prototype._workerNoticeHandler = function (workerPid, noticeData) {
+SocketCluster.prototype._workerWarningHandler = function (workerPid, warning) {
   var origin = {
     type: 'Worker',
     pid: workerPid
   };
-  this.noticeHandler(noticeData, origin);
+  this.warningHandler(warning, origin);
 };
 
 SocketCluster.prototype._workerClusterReadyHandler = function () {
@@ -426,8 +437,8 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
   if (!this._active) {
     if (this.options.rebootOnSignal) {
       process.on('SIGUSR2', function () {
-        var notice = 'Master received SIGUSR2 signal - Shutting down all workers';
-        self.noticeHandler(notice, {type: 'master'});
+        var warning = 'Master received SIGUSR2 signal - Shutting down all workers';
+        self.warningHandler(warning, {type: 'master'});
         self.killWorkers();
       });
     }
@@ -456,10 +467,8 @@ SocketCluster.prototype._workerStartHandler = function (workerInfo) {
 };
 
 SocketCluster.prototype._handleWorkerClusterExit = function (errorCode) {
-  var errorData = {
-    message: 'workerCluster exited with code: ' + errorCode
-  };
-  this.errorHandler(errorData, {
+  var error = new ProcessExitError('workerCluster exited with code: ' + errorCode, errorCode);
+  this.errorHandler(error, {
     type: 'workerCluster'
   });
 
@@ -509,13 +518,15 @@ SocketCluster.prototype._launchWorkerCluster = function () {
 
   this._workerCluster.on('message', function workerHandler(m) {
     if (m.type == 'error') {
+      var error = scErrors.hydrateError(m.data.error);
       if (m.data.workerPid) {
-        self._workerErrorHandler(m.data.workerPid, m.data.error);
+        self._workerErrorHandler(m.data.workerPid, error);
       } else {
-        self._workerClusterErrorHandler(m.data.pid, m.data.error);
+        self._workerClusterErrorHandler(m.data.pid, error);
       }
-    } else if (m.type == 'notice') {
-      self._workerNoticeHandler(m.data.workerPid, m.data.error);
+    } else if (m.type == 'warning') {
+      var warning = scErrors.hydrateError(m.data.error);
+      self._workerWarningHandler(m.data.workerPid, warning);
     } else if (m.type == 'ready') {
       self._workerClusterReadyHandler();
     } else if (m.type == 'workerStart') {
