@@ -15,13 +15,11 @@ var SocketCluster = function (options) {
   var self = this;
 
   self.EVENT_FAIL = 'fail';
-  self.EVENT_NOTICE = 'notice';
+  self.EVENT_WARNING = 'warning';
+  self.EVENT_INFO = 'info';
   self.EVENT_READY = 'ready';
   self.EVENT_WORKER_START = 'workerStart';
   self.EVENT_WORKER_EXIT = 'workerExit';
-
-  // These events don't get triggered on SocketCluster (yet)
-  self.EVENT_INFO = 'info';
 
   self._errorAnnotations = {
     'listen EADDRINUSE': 'Failed to bind to a port because it was already used by another process.'
@@ -79,8 +77,9 @@ SocketCluster.prototype._init = function (options) {
     workerStatusInterval: 10000,
     processTermTimeout: 10000,
     propagateErrors: true,
-    propagateNotices: true,
-    middlewareEmitNotices: true,
+    propagateWarnings: true,
+    propagateInfo: true,
+    middlewareEmitWarnings: true,
     host: null,
     tcpSynBacklog: null,
     workerController: null,
@@ -117,6 +116,7 @@ SocketCluster.prototype._init = function (options) {
 
   var verifyDuration = function (propertyName) {
     if (self.options[propertyName] > maxTimeout) {
+      // TODO: This needs to be a custom Error object with a name property
       throw new Error('The ' + propertyName +
         ' value provided exceeded the maximum amount allowed');
     }
@@ -133,6 +133,7 @@ SocketCluster.prototype._init = function (options) {
   }
 
   if (self.options.workerController == null) {
+    // TODO: This needs to be a custom Error object with a name property
     throw new Error("Compulsory option 'workerController' was not specified " +
       "- It needs to be a path to a JavaScript file which will act as the " +
       "boot controller for each worker in the cluster");
@@ -172,6 +173,7 @@ SocketCluster.prototype._init = function (options) {
       try {
         wrench.rmdirSyncRecursive(socketDir);
       } catch (err) {
+        // TODO: This needs to be a custom Error object with a name property
         throw new Error('Failed to remove old socket directory ' + socketDir + '. Try removing it manually.');
       }
     }
@@ -207,15 +209,18 @@ SocketCluster.prototype._init = function (options) {
         if (privKeyEncLine.toUpperCase().indexOf('ENCRYPTED') > -1) {
           var message = 'The supplied private key is encrypted and cannot be used without a passphrase - ' +
             'Please provide a valid passphrase as a property to protocolOptions';
+          // TODO: This needs to be a custom Error object with a name property
           throw new Error(message);
         }
       } else if (protoOpts.pfx) {
         var message = 'The supplied pfx certificate cannot be used without a passphrase - ' +
-            'Please provide a valid passphrase as a property to protocolOptions';
+          'Please provide a valid passphrase as a property to protocolOptions';
+        // TODO: This needs to be a custom Error object with a name property
         throw new Error(message);
       } else {
         var message = 'The supplied protocolOptions were invalid - ' +
           'Please provide either a key and cert pair or a pfx certificate';
+        // TODO: This needs to be a custom Error object with a name property
         throw new Error(message);
       }
     }
@@ -232,6 +237,7 @@ SocketCluster.prototype._init = function (options) {
     self.options.brokers = 1;
   }
   if (typeof self.options.brokers != 'number') {
+    // TODO: This needs to be a custom Error object with a name property
     throw new Error('The brokers option must be a number');
   }
 
@@ -239,6 +245,7 @@ SocketCluster.prototype._init = function (options) {
     self.options.workers = 1;
   }
   if (typeof self.options.workers != 'number') {
+    // TODO: This needs to be a custom Error object with a name property
     throw new Error('The workers option must be a number');
   }
 
@@ -255,7 +262,7 @@ SocketCluster.prototype._init = function (options) {
   }
 
   process.stdin.on('error', function (err) {
-    self.noticeHandler(err, {type: 'master'});
+    self.warningHandler(err, {type: 'master'});
   });
 
   /*
@@ -273,6 +280,7 @@ SocketCluster.prototype._init = function (options) {
     } else {
       uidNumber(self.options.downgradeToUser, function (err, uid, gid) {
         if (err) {
+          // TODO: This needs to be a custom Error object with a name property
           throw new Error('Failed to downgrade to user "' + self.options.downgradeToUser + '" - ' + err);
         } else {
           fs.chownSync(self._socketDirPath, uid, gid);
@@ -324,12 +332,14 @@ SocketCluster.prototype._logObject = function (obj, objType, time) {
     logMessage = 'Origin: ' + this._capitaliseFirstLetter(obj.origin.type) + ' (PID ' + obj.origin.pid + ')\n' +
       '   [' + objType + '] ' + output;
   }
+  // TODO: Need to log the Error name property
   this.log(logMessage, time);
 };
 
 SocketCluster.prototype.errorHandler = function (err, origin) {
   if (err.stack == null) {
     if (!(err instanceof Object)) {
+      // TODO: This needs to be a custom Error object with a name property
       err = new Error(err);
     }
     err.stack = err.message;
@@ -347,20 +357,21 @@ SocketCluster.prototype.errorHandler = function (err, origin) {
   this._logObject(err, 'Error');
 };
 
-SocketCluster.prototype.noticeHandler = function (notice, origin) {
-  if (notice.stack == null) {
-    if (!(notice instanceof Object)) {
-      notice = new Error(notice);
+SocketCluster.prototype.warningHandler = function (warning, origin) {
+  if (warning.stack == null) {
+    if (!(warning instanceof Object)) {
+      // TODO: This needs to be a custom Error object with a name property
+      warning = new Error(warning);
     }
-    notice.stack = notice.message;
+    warning.stack = warning.message;
   }
-  notice.origin = origin;
-  notice.time = Date.now();
+  warning.origin = origin;
+  warning.time = Date.now();
 
-  this.emit(this.EVENT_NOTICE, notice);
+  this.emit(this.EVENT_WARNING, warning);
 
   if (this.options.logLevel > 1) {
-    this._logObject(notice, 'Notice');
+    this._logObject(warning, 'Warning');
   }
 };
 
@@ -376,7 +387,7 @@ SocketCluster.prototype.triggerInfo = function (info, origin) {
       message: info,
       time: Date.now()
     };
-    this.emit(this.EVENT_INFO, infoData);
+    this.emit(this.EVENT_WARNING, infoData);
 
     if (this.options.logLevel > 0) {
       this._logObject(infoData, 'Info', infoData.time)
@@ -385,6 +396,7 @@ SocketCluster.prototype.triggerInfo = function (info, origin) {
 };
 
 SocketCluster.prototype._workerClusterErrorHandler = function (pid, errorData) {
+  // TODO: This needs to be a custom Error object with a name property
   this.errorHandler(errorData, {
     type: 'WorkerCluster',
     pid: pid
@@ -392,6 +404,7 @@ SocketCluster.prototype._workerClusterErrorHandler = function (pid, errorData) {
 };
 
 SocketCluster.prototype._workerErrorHandler = function (workerPid, errorData) {
+  // TODO: This needs to be a custom Error object with a name property
   this.errorHandler(errorData, {
     type: 'Worker',
     pid: workerPid
@@ -399,6 +412,7 @@ SocketCluster.prototype._workerErrorHandler = function (workerPid, errorData) {
 };
 
 SocketCluster.prototype._ioClusterErrorHandler = function (pid, errorData) {
+  // TODO: This needs to be a custom Error object with a name property
   this.errorHandler(errorData, {
     type: 'IOCluster',
     pid: pid
@@ -406,18 +420,20 @@ SocketCluster.prototype._ioClusterErrorHandler = function (pid, errorData) {
 };
 
 SocketCluster.prototype._brokerErrorHandler = function (brokerPid, errorData) {
+  // TODO: This needs to be a custom Error object with a name property
   this.errorHandler(errorData, {
     type: 'Broker',
     pid: brokerPid
   });
 };
 
-SocketCluster.prototype._workerNoticeHandler = function (workerPid, noticeData) {
+SocketCluster.prototype._workerWarningHandler = function (workerPid, warningData) {
+  // TODO: This needs to be a custom Error object with a name property
   var origin = {
     type: 'Worker',
     pid: workerPid
   };
-  this.noticeHandler(noticeData, origin);
+  this.warningHandler(warningData, origin);
 };
 
 SocketCluster.prototype._workerClusterReadyHandler = function () {
@@ -426,8 +442,8 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
   if (!this._active) {
     if (this.options.rebootOnSignal) {
       process.on('SIGUSR2', function () {
-        var notice = 'Master received SIGUSR2 signal - Shutting down all workers';
-        self.noticeHandler(notice, {type: 'master'});
+        var warning = 'Master received SIGUSR2 signal - Shutting down all workers';
+        self.warningHandler(warning, {type: 'master'});
         self.killWorkers();
       });
     }
@@ -456,6 +472,7 @@ SocketCluster.prototype._workerStartHandler = function (workerInfo) {
 };
 
 SocketCluster.prototype._handleWorkerClusterExit = function (errorCode) {
+  // TODO: This needs to be a custom Error object with a name property
   var errorData = {
     message: 'workerCluster exited with code: ' + errorCode
   };
@@ -507,6 +524,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     data: workerOpts
   });
 
+  // TODO: Maybe need a better (consistent) way to handle errors from different processes
   this._workerCluster.on('message', function workerHandler(m) {
     if (m.type == 'error') {
       if (m.data.workerPid) {
@@ -514,8 +532,8 @@ SocketCluster.prototype._launchWorkerCluster = function () {
       } else {
         self._workerClusterErrorHandler(m.data.pid, m.data.error);
       }
-    } else if (m.type == 'notice') {
-      self._workerNoticeHandler(m.data.workerPid, m.data.error);
+    } else if (m.type == 'warning') {
+      self._workerWarningHandler(m.data.workerPid, m.data.error);
     } else if (m.type == 'ready') {
       self._workerClusterReadyHandler();
     } else if (m.type == 'workerStart') {
