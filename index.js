@@ -78,7 +78,6 @@ SocketCluster.prototype._init = function (options) {
     processTermTimeout: 10000,
     propagateErrors: true,
     propagateWarnings: true,
-    propagateInfo: true,
     middlewareEmitWarnings: true,
     host: null,
     tcpSynBacklog: null,
