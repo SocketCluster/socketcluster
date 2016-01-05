@@ -12,17 +12,18 @@ Complete documentation available at: http://socketcluster.io/
 **05 January 2016** (v4.0.0)
 
 - Middleware functions used to have different arguments (depending on the middleware type); now they are all in the format ```function (req, next) {...}```.
-The ```req``` object will have different properties depending on the middleware type. See (TODO: Link to website).
+The ```req``` object will have different properties depending on the middleware type. See addMiddleware() method here: http://socketcluster.io/#!/docs/api-scserver
 - When invoking ```socket.emit``` or ```socket.publish``` - When a callback was provided, it would emit an 'error' event on the socket if the operation failed.
 This is no longer the case - The callback will still receive the error as the first argument like it used to (assuming that there was an error), but it
 just won't be emitted as an 'error' event on the socket - It is considered an application error (not an SC error).
 - You can now pass custom error objects to the ```next(err)``` callback inside middleware functions; this is now recommended instead of plain strings.
 The ```err``` object you provide can inherit from the ```Error``` object (but this isn't necessary). It is recommended that whatever object you provide has
 a ```name``` and a ```message``` property; you can also add custom properties to your error object and the client will receive those as rehydrated ```Error``` objects. Note that this is a non-breaking change - You can still pass a string as ```err``` and it won't break anything.
+- On the server-side, the ```socket.removeAuthToken()``` method was replaced by ```socket.deauthenticate()```.
 
 This release introduces many other non-breaking changes.
 See RFC: https://github.com/SocketCluster/socketcluster/issues/137
-The docs have been updated on the website. See (TODO: Link to website).
+The docs have been updated on the website. See http://socketcluster.io/
 
 **22 November 2015** (v3.0.0)
 
