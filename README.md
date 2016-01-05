@@ -22,8 +22,9 @@ a ```name``` and a ```message``` property; you can also add custom properties to
 - On the server-side, the ```socket.removeAuthToken()``` method was replaced by ```socket.deauthenticate()```.
 
 This release introduces many other non-breaking changes.
-See RFC: https://github.com/SocketCluster/socketcluster/issues/137
-The docs have been updated on the website. See http://socketcluster.io/
+
+- See RFC: https://github.com/SocketCluster/socketcluster/issues/137
+- The docs have been updated on the website. See http://socketcluster.io/
 
 **22 November 2015** (v3.0.0)
 
