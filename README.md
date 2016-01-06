@@ -16,6 +16,7 @@ The ```req``` object will have different properties depending on the middleware 
 - When invoking ```socket.emit``` or ```socket.publish``` - When a callback was provided, it would emit an 'error' event on the socket if the operation failed.
 This is no longer the case - The callback will still receive the error as the first argument like it used to (assuming that there was an error), but it
 just won't be emitted as an 'error' event on the socket - It is considered an application error (not an SC error).
+- The 'notice' event was replaced with a 'warning' event - This is more consistent with the convention used in most other frameworks.
 - You can now pass custom error objects to the ```next(err)``` callback inside middleware functions; this is now recommended instead of plain strings.
 The ```err``` object you provide can inherit from the ```Error``` object (but this isn't necessary). It is recommended that whatever object you provide has
 a ```name``` and a ```message``` property; you can also add custom properties to your error object and the client will receive those as rehydrated ```Error``` objects. Note that this is a non-breaking change - You can still pass a string as ```err``` and it won't break anything.
