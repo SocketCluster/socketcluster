@@ -9,5 +9,5 @@ var socketCluster = new SocketCluster({
   workerController: __dirname + '/worker.js',
   brokerController: __dirname + '/broker.js',
   socketChannelLimit: 1000,
-  rebootWorkerOnCrash: argv['auto-reboot'] != false
+  crashWorkerOnError: argv['auto-reboot'] != false
 });
