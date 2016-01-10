@@ -1,7 +1,7 @@
 {
   "name": "socketcluster",
   "description": "SocketCluster - A Highly parallelized WebSocket server cluster to make the most of multi-core machines/instances.",
-  "version": "4.0.1",
+  "version": "4.1.0",
   "homepage": "http://socketcluster.io",
   "contributors": [
     {
@@ -24,7 +24,7 @@
     "sc-emitter": "1.0.x",
     "sc-errors": "1.0.x",
     "sc-formatter": "1.0.x",
-    "socketcluster-server": "4.0.x",
+    "socketcluster-server": "4.1.x",
     "uid-number": "0.0.5",
     "wrench": "1.5.8",
     "ws": "0.8.0"
