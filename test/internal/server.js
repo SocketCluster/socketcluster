@@ -6,7 +6,6 @@ var socketCluster = new SocketCluster({
   port: 8000,
   appName: 'myapp',
   workerController: __dirname + '/worker.js',
-  balancerController: __dirname + '/balancer.js',
   brokerController: __dirname + '/broker.js',
   socketChannelLimit: 100,
   crashWorkerOnError: true,
