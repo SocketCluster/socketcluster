@@ -33,29 +33,6 @@ This release introduces many other non-breaking changes.
 - Ping and pong are now represented as raw messages '#1' and '#2' instead of '1' and '2' - This is to avoid potential conflicts with user logic when
 using the raw ```socket.send(...)``` method.
 
-**18 July 2015** (v2.3.0)
-
-Renamed all occurrences of 'store' to 'broker' throughout SC (the default file store.js file was also renamed to broker.js).
-Since the primary purpose of a 'store' is actually to share messages and data between workers, the word 'broker' seems more appropriate.
-You can still save in-memory data inside 'brokers' as before (their functionality hasn't changed - Just the name).
-
-
-```js
-var socketCluster = new SocketCluster({
-  workers: 1,
-  brokers: 1,
-  // ...
-  myCustomBrokerOption: 'bla',
-  anotherCustomBrokerOption: 'foo',
-  // ...
-});
-```
-
-This change was also implemented in **sc-redis** although we now use a storeOptions property to hold all store-related properties.
-So now, inside the storeController, we access the custom storeOptions property from ```store.options.storeOptions``` - This is for backwards compatibility.
-If you ```npm update socketcluster``` just make sure that you also ```npm update sc-redis``` - You shouldn't need to change any of your code.
-
-
 ## Introduction
 
 SocketCluster is a fast, highly scalable HTTP + realtime server engine which lets you build multi-process
