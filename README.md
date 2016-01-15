@@ -43,7 +43,7 @@ You can still save in-memory data inside 'brokers' as before (their functionalit
 ```js
 var socketCluster = new SocketCluster({
   workers: 1,
-  stores: 1,
+  brokers: 1,
   // ...
   myCustomBrokerOption: 'bla',
   anotherCustomBrokerOption: 'foo',
