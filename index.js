@@ -15,6 +15,7 @@ var scErrors = require('sc-errors');
 var InvalidOptionsError = scErrors.InvalidOptionsError;
 var InvalidActionError = scErrors.InvalidActionError;
 var BrokerError = scErrors.BrokerError;
+var ProcessExitError = scErrors.ProcessExitError;
 var UnknownError = scErrors.UnknownError;
 
 
