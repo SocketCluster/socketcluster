@@ -9,6 +9,11 @@ Complete documentation available at: http://socketcluster.io/
 
 ## Change log
 
+**16 January 2016** (v4.2.0)
+
+- The schedulingPolicy option (http://socketcluster.io/#!/docs/api-socketcluster) is now 'rr' by default (except on Windows) - After doing some stress testing on large 8-core Linux EC2 instances, the 'rr' policy turned out to be much better at distributing load across multiple CPU cores. The downside of the 'rr' policy is that all connections pass through
+a central master process but that process turned out to be extremely efficient. It's not a perfect solution but it's much better than letting the Linux OS handle it.
+
 **05 January 2016** (v4.0.0)
 
 - Middleware functions used to have different arguments (depending on the middleware type); now they are all in the format ```function (req, next) {...}```.
