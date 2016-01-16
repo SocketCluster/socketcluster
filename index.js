@@ -10,6 +10,7 @@ var wrench = require('wrench');
 var uuid = require('node-uuid');
 var pkg = require('./package.json');
 var argv = require('minimist')(process.argv.slice(2));
+var cluster = require('cluster');
 
 var scErrors = require('sc-errors');
 var InvalidOptionsError = scErrors.InvalidOptionsError;
@@ -512,6 +513,13 @@ SocketCluster.prototype._launchWorkerCluster = function () {
   workerOpts.authPublicKey = this.options.authPublicKey;
   workerOpts.authDefaultExpiry = this.options.authDefaultExpiry;
   workerOpts.authAlgorithm = this.options.authAlgorithm;
+  if (typeof workerOpts.schedulingPolicy == 'string') {
+    if (workerOpts.schedulingPolicy == 'rr') {
+      workerOpts.schedulingPolicy = cluster.SCHED_RR;
+    } else if (workerOpts.schedulingPolicy == 'none') {
+      workerOpts.schedulingPolicy = cluster.SCHED_NONE;
+    }
+  }
 
   this._workerCluster.send({
     type: 'init',
