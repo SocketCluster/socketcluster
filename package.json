@@ -27,7 +27,7 @@
     "socketcluster-server": "4.1.x",
     "uid-number": "0.0.5",
     "wrench": "1.5.8",
-    "ws": "0.8.0"
+    "ws": "1.0.1"
   },
   "bin": {
     "socketcluster": "bin/cli.js"
