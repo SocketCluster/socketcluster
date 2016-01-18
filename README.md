@@ -11,7 +11,7 @@ Complete documentation available at: http://socketcluster.io/
 
 **16 January 2016** (v4.2.0)
 
-- The schedulingPolicy option (http://socketcluster.io/#!/docs/api-socketcluster) is now 'rr' by default (except on Windows) - After doing some stress testing on large 8-core Linux EC2 instances, the 'rr' policy turned out to be much better at distributing load across multiple CPU cores. The downside of the 'rr' policy is that all connections pass through
+- The schedulingPolicy option (http://socketcluster.io/#!/docs/api-socketcluster) is now 'rr' by default (except on Windows) - After doing some stress testing on large 8-core Linux EC2 instances, the 'rr' policy turned out to be much better at distributing load across multiple CPU cores. The downside of the 'rr' policy is that all new connection fds pass through
 a central master process but that process turned out to be extremely efficient. It's not a perfect solution but it's much better than letting the Linux OS handle it.
 
 **05 January 2016** (v4.0.0)
