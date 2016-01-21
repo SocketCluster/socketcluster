@@ -16,7 +16,7 @@
   "dependencies": {
     "async": "1.5.0",
     "base64id": "0.1.0",
-    "sc-broker-cluster": "1.0.x",
+    "sc-broker-cluster": "2.0.x",
     "jsonwebtoken": "5.4.1",
     "minimist": "1.1.0",
     "node-uuid": "1.4.3",

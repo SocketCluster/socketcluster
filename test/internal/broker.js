@@ -5,17 +5,17 @@ var util = require('util');
 
 module.exports.run = function (broker) {
   console.log('   >> Broker PID:', process.pid);
-  
+
   var resultSocketPath = getTestSocketPath();
-  
+
   // Send test data to index.js every second
   var testDataInterval = setInterval(function () {
-    var socketChannelData = broker.channelMap.get(['sockets']);
+    var socketChannelData = broker.subscriptions;
     var channels = [];
     for (var i in socketChannelData) {
       channels = channels.concat(Object.keys(socketChannelData[i]));
     }
-    
+
     var req = http.request({
       socketPath: resultSocketPath,
       method: 'POST'

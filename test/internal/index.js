@@ -119,11 +119,11 @@ scServer.on('message', function (m) {
           channels[i] = brokerData[i].channels;
         }
 
-        var channelMapAsString = util.inspect(channels, {depth: 5});
-        console.log('Broker channels after unsubscribe:', channelMapAsString);
+        var subscriptionsAsString = util.inspect(channels, {depth: 5});
+        console.log('Broker channels after unsubscribe:', subscriptionsAsString);
 
-        var channelMapHasFoo = /foo/.test(channelMapAsString);
-        assert(!channelMapHasFoo, 'Channel was not cleaned up after all clients unsubscribed from it');
+        var subscriptionsHasFoo = /foo/.test(subscriptionsAsString);
+        assert(!subscriptionsHasFoo, 'Channel was not cleaned up after all clients unsubscribed from it');
 
         console.log('[Success] Broker channel was cleaned up after all clients unsubscribed from it');
 
@@ -184,8 +184,8 @@ scServer.on('message', function (m) {
       console.log('Broker channels after disconnecting all sockets:', util.inspect(channels, {depth: 5}));
 
       for (var j in channels) {
-        var isChannelMapEmpty = JSON.stringify(channels[j]).length < 50;
-        assert(isChannelMapEmpty, 'Channels were not cleaned up after disconnecting all sockets');
+        var areSubscriptionsEmpty = JSON.stringify(channels[j]).length < 50;
+        assert(areSubscriptionsEmpty, 'Channels were not cleaned up after disconnecting all sockets');
       }
       console.log('[Success] Broker channels were cleaned up after disconnecting all sockets');
 
