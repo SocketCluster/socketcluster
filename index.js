@@ -31,7 +31,7 @@ var SocketCluster = function (options) {
   self.EVENT_WORKER_EXIT = 'workerExit';
 
   self._errorAnnotations = {
-    'listen EADDRINUSE': 'Failed to bind to a port because it was already used by another process.'
+    'EADDRINUSE': 'Failed to bind to a port because it was already used by another process.'
   };
 
   self._errorDomain = domain.create();
@@ -79,6 +79,7 @@ SocketCluster.prototype._init = function (options) {
     protocol: 'http',
     protocolOptions: null,
     logLevel: 2,
+    handshakeTimeout: 10000,
     ackTimeout: 10000,
     pingInterval: 8000,
     pingTimeout: 20000,
@@ -342,8 +343,7 @@ SocketCluster.prototype.errorHandler = function (err, origin) {
     }
     err.stack = err.message;
   }
-
-  var annotation = this._errorAnnotations[err.message];
+  var annotation = this._errorAnnotations[err.code];
   if (annotation) {
     err.stack += '\n    ' + this.colorText('!!', 'red') + ' ' + annotation;
   }
