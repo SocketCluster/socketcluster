@@ -207,6 +207,19 @@ SocketCluster.prototype._init = function (options) {
     if (protoOpts.cert instanceof Buffer) {
       protoOpts.cert = protoOpts.cert.toString();
     }
+    if (protoOpts.ca) {
+      if (protoOpts.ca instanceof Array) {
+        protoOpts.ca = protoOpts.ca.map(function (item) {
+          if (item instanceof Buffer) {
+            return item.toString();
+          } else {
+            return item;
+          }
+        });
+      } else if (protoOpts.ca instanceof Buffer) {
+        protoOpts.ca = protoOpts.ca.toString();
+      }
+    }
     if (protoOpts.pfx instanceof Buffer) {
       protoOpts.pfx = protoOpts.pfx.toString('base64');
     }
