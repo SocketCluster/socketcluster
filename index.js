@@ -97,7 +97,7 @@ SocketCluster.prototype._init = function (options) {
     initController: null,
     rebootOnSignal: true,
     downgradeToUser: false,
-    path: null,
+    path: '/socketcluster/',
     socketRoot: null,
     schedulingPolicy: null,
     allowClientPublish: true,
@@ -121,6 +121,9 @@ SocketCluster.prototype._init = function (options) {
       self.options[i] = options[i];
     }
   }
+
+  // Make sure there is always a trailing slash in WS path
+  self.options.path = self.options.path.replace(/\/?$/, '/');
 
   var maxTimeout = Math.pow(2, 31) - 1;
 
