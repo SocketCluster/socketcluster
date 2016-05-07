@@ -104,6 +104,7 @@ SocketCluster.prototype._init = function (options) {
     defaultWorkerDebugPort: 5858,
     defaultBrokerDebugPort: 6858,
     httpServerModule: null,
+    wsEngine: 'ws',
     brokerEngine: 'sc-broker-cluster'
   };
 
@@ -160,6 +161,12 @@ SocketCluster.prototype._init = function (options) {
       self._paths.appInitControllerPath = path.resolve(self.options.initController);
   } else {
       self._paths.appInitControllerPath = null;
+  }
+
+  if (/\.js$/.test(self.options.wsEngine)) {
+    self._paths.wsEnginePath = path.resolve(self.options.wsEngine);
+  } else {
+    self._paths.wsEnginePath = self.options.wsEngine;
   }
 
   var pathHasher = crypto.createHash('md5');
@@ -571,6 +578,7 @@ SocketCluster.prototype._logDeploymentDetails = function () {
   if (this.options.logLevel > 0) {
     console.log('   ' + this.colorText('[Active]', 'green') + ' SocketCluster started');
     console.log('            Version: ' + pkg.version);
+    console.log('            WebSocket engine: ' + this.options.wsEngine);
     console.log('            Port: ' + this.options.port);
     console.log('            Master PID: ' + process.pid);
     console.log('            Worker count: ' + this.options.workers);
