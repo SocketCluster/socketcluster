@@ -5,6 +5,8 @@ var socketCluster = new SocketCluster({
   workers: Number(argv.w) || 1,
   brokers: Number(argv.b) || 1,
   port: Number(argv.p) || 8000,
+  // Switch wsEngine to 'uws' for a MAJOR performance boost (beta)
+  wsEngine: 'ws',
   appName: argv.n || null,
   workerController: __dirname + '/worker.js',
   brokerController: __dirname + '/broker.js',
