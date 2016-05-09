@@ -141,6 +141,43 @@ The protocolOptions option is exactly the same as the one you pass to a standard
 http://nodejs.org/api/https.html#https_https_createserver_options_requestlistener
 
 
+## Docker and SocketCluster
+
+You can create an app on top of SocketCluster's docker image. The SC container can be run standalone, but it
+is designed primarily to be used as a base image for your own container.
+
+The official SocketCluster container on DockerHub is here: https://hub.docker.com/r/socketcluster/socketcluster/
+The Dockerfile for the base image is here: https://github.com/SocketCluster/socketcluster/blob/master/sample/Dockerfile
+
+To use the SocketCluster container as your base image, your app's Dockerfile might look like this:
+
+```
+FROM ec1523aea994
+MAINTAINER Jonathan Gros-Dubois
+
+LABEL version="1.0.0"
+LABEL description="Custom app based on SocketCluster"
+
+WORKDIR /usr/src/
+COPY . /usr/src/
+
+RUN npm install
+
+EXPOSE 8000
+
+CMD ["npm", "start"]
+
+```
+
+Then you can just build your container using:
+
+```docker build -t my-socketcluster-app:v1.0.0 .```
+
+Note that there are more ways to run SocketCluster with Docker.
+You can also mount your own volumes and point to custom worker.js and broker.js files which are
+inside those volumes using environment variables. You can see the environment variables which are used
+by SocketCluster here: https://github.com/SocketCluster/socketcluster/blob/master/sample/server.js
+
 ## Contribute to SocketCluster
 
 - More integration test cases needed
