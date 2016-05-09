@@ -185,7 +185,7 @@ Read this section on volumes to get an idea of how they work with Docker: https:
 Note that if you want to attach any volumes to your SocketCluster container, you should mount them under the ```/usr/src/``` path (inside the container) - That's
 the root directory for SC's source code.
 
-For example, if you wanted to quickly run SocketCluster with your own workerController file (```worker.js```), you could just put your ```worker.js``` file inside a ```/home/my-host-directory/controllers/``` directory (on your host system) and then bundle it into the container as a volume by running run a command like this (example):
+For example, if you wanted to quickly run SocketCluster with your own workerController file (```worker.js```), you could just put your ```worker.js``` file inside a ```/home/my-username/controllers/``` directory (on your host system) and then bundle it into the container as a volume by running run a command like this (example):
 
 ```
 docker run -d -v /home/my-username/controllers/:/usr/src/controllers/ -e "SOCKETCLUSTER_WORKER_CONTROLLER=/usr/src/controllers/worker.js" socketcluster/socketcluster
