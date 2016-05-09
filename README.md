@@ -179,7 +179,7 @@ You can also mount your own volumes and point to custom worker.js and broker.js 
 inside those volumes using environment variables. You can see the environment variables which are used
 by SocketCluster here: https://github.com/SocketCluster/socketcluster/blob/master/sample/server.js
 
-Docker volumes allow you to sneak your own directories/volumes (containing your own worker.js and broker.js source files) into the SocketCluster container.
+Docker volumes allow you to sneak your own directories (containing your own worker.js and broker.js source files) into the SocketCluster container without having to rebuild the image (good for debugging).
 Read this section on volumes to get an idea of how they work with Docker: https://docs.docker.com/engine/userguide/containers/dockervolumes/
 Note that if you want to attach any volumes to your SocketCluster container, you should mount them under the ```/usr/src/``` path (inside the container) - That's
 the root directory for SC's source code.
