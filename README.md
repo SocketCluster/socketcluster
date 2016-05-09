@@ -147,6 +147,7 @@ You can create an app on top of SocketCluster's docker image. The SC container c
 is designed primarily to be used as a base image for your own container.
 
 The official SocketCluster container on DockerHub is here: https://hub.docker.com/r/socketcluster/socketcluster/
+
 The Dockerfile for the base image is here: https://github.com/SocketCluster/socketcluster/blob/master/sample/Dockerfile
 
 To use the SocketCluster container as your base image, your app's Dockerfile might look like this:
