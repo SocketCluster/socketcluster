@@ -179,6 +179,25 @@ You can also mount your own volumes and point to custom worker.js and broker.js 
 inside those volumes using environment variables. You can see the environment variables which are used
 by SocketCluster here: https://github.com/SocketCluster/socketcluster/blob/master/sample/server.js
 
+Docker volumes allow you to sneak your own directories/volumes (containing your own worker.js and broker.js source files) into the SocketCluster container.
+Read this section on volumes to get an idea of how they work with Docker: https://docs.docker.com/engine/userguide/containers/dockervolumes/
+Note that if you want to attach any volumes to your SocketCluster container, you should mount them under the ```/usr/src/``` path (inside the container) - That's
+the root directory for SC's source code.
+
+For example, if you wanted to quickly run SocketCluster with your own workerController file (```worker.js```), you could just put your ```worker.js``` file inside a ```/home/my-host-directory/controllers/``` directory (on your host system) and then bundle it into the container as a volume by running run a command like this (example):
+
+```
+docker run -d -v /home/my-host-directory/controllers/:/usr/src/controllers/ -e "SOCKETCLUSTER_WORKER_CONTROLLER=/usr/src/controllers/worker.js" socketcluster/socketcluster
+```
+
+To summarize:
+
+- The ```-d``` flag just tells Docker to run the container in the background.
+- The ```-v``` flag tells docker to mount the ```/home/my-host-directory/controllers/``` directory (which is on your host machine) and map it to the ```/usr/src/controllers/``` (inside the SocketCluster container).
+- The ```-e``` flag allows you to define custom environment variables. Here we are just using the SOCKETCLUSTER_WORKER_CONTROLLER env var to tell SocketCluster
+to use the worker.js file which is inside the volume which we just mounted to the container at path ```/usr/src/controllers/```.
+
+
 ## Contribute to SocketCluster
 
 - More integration test cases needed
