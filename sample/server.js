@@ -2,27 +2,27 @@ var argv = require('minimist')(process.argv.slice(2));
 var SocketCluster = require('socketcluster').SocketCluster;
 
 var options = {
-  workers: Number(argv.w) || Number(process.env.SOCKET_CLUSTER_WORKERS) || 1,
-  brokers: Number(argv.b) || Number(process.env.SOCKET_CLUSTER_BROKERS) || 1,
+  workers: Number(argv.w) || Number(process.env.SOCKETCLUSTER_WORKERS) || 1,
+  brokers: Number(argv.b) || Number(process.env.SOCKETCLUSTER_BROKERS) || 1,
   port: Number(argv.p) || 8000,
   // Switch wsEngine to 'uws' for a MAJOR performance boost (beta)
-  wsEngine: process.env.SOCKET_CLUSTER_WS_ENGINE || 'ws',
-  appName: argv.n || process.env.SOCKET_CLUSTER_APP_NAME || null,
-  workerController: __dirname + '/worker.js',
-  brokerController: __dirname + '/broker.js',
-  socketChannelLimit: Number(process.env.SOCKET_CLUSTER_SOCKET_CHANNEL_LIMIT) || 1000,
+  wsEngine: process.env.SOCKETCLUSTER_WS_ENGINE || 'ws',
+  appName: argv.n || process.env.SOCKETCLUSTER_APP_NAME || null,
+  workerController: process.env.SOCKETCLUSTER_WORKER_CONTROLLER || __dirname + '/worker.js',
+  brokerController: process.env.SOCKETCLUSTER_BROKER_CONTROLLER || __dirname + '/broker.js',
+  socketChannelLimit: Number(process.env.SOCKETCLUSTER_SOCKET_CHANNEL_LIMIT) || 1000,
   crashWorkerOnError: argv['auto-reboot'] != false
 };
 
-var SOCKET_CLUSTER_OPTIONS;
+var SOCKETCLUSTER_OPTIONS;
 
-if (process.env.SOCKET_CLUSTER_OPTIONS) {
-  SOCKET_CLUSTER_OPTIONS = JSON.parse(process.env.SOCKET_CLUSTER_OPTIONS);
+if (process.env.SOCKETCLUSTER_OPTIONS) {
+  SOCKETCLUSTER_OPTIONS = JSON.parse(process.env.SOCKETCLUSTER_OPTIONS);
 }
 
-for (var i in SOCKET_CLUSTER_OPTIONS) {
-  if (SOCKET_CLUSTER_OPTIONS.hasOwnProperty(i)) {
-    options[i] = SOCKET_CLUSTER_OPTIONS[i];
+for (var i in SOCKETCLUSTER_OPTIONS) {
+  if (SOCKETCLUSTER_OPTIONS.hasOwnProperty(i)) {
+    options[i] = SOCKETCLUSTER_OPTIONS[i];
   }
 }
 
