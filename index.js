@@ -4,9 +4,8 @@ var EventEmitter = require('events').EventEmitter;
 var domain = require('domain');
 var fork = require('child_process').fork;
 var os = require('os');
-var fs = require('fs');
+var fs = require('fs-extra');
 var uidNumber = require('uid-number');
-var wrench = require('wrench');
 var uuid = require('node-uuid');
 var pkg = require('./package.json');
 var argv = require('minimist')(process.argv.slice(2));
@@ -189,12 +188,12 @@ SocketCluster.prototype._init = function (options) {
     }
     if (fs.existsSync(socketDir)) {
       try {
-        wrench.rmdirSyncRecursive(socketDir);
+        fs.removeSync(socketDir);
       } catch (err) {
         throw new InvalidActionError('Failed to remove old socket directory ' + socketDir + ' - Try removing it manually');
       }
     }
-    wrench.mkdirSyncRecursive(socketDir);
+    fs.mkdirsSync(socketDir);
     if (socketParentDir) {
       try {
         fs.chmodSync(socketParentDir, '1777');

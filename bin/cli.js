@@ -3,8 +3,7 @@
 process.stdin.resume();
 process.stdin.setEncoding('utf8');
 
-var wrench = require('wrench');
-var fs = require('fs');
+var fs = require('fs-extra');
 var path = require('path');
 var argv = require('minimist')(process.argv.slice(2));
 var childProcess = require('child_process');
@@ -76,7 +75,7 @@ var promptConfirm = function (message, callback) {
 
 var copyDirRecursive = function (src, dest) {
   try {
-    wrench.copyDirSyncRecursive(src, dest);
+    fs.copySync(src, dest);
     return true;
   } catch (e) {
     failedToCreateMessage();
@@ -86,7 +85,7 @@ var copyDirRecursive = function (src, dest) {
 
 var rmdirRecursive = function (dirname) {
   try {
-    wrench.rmdirSyncRecursive(dirname);
+    fs.removeSync(dirname);
     return true;
   } catch (e) {
     failedToRemoveDirMessage(dirname);
