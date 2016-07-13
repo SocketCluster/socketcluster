@@ -689,9 +689,9 @@ SocketCluster.prototype._cloneObject = function (object) {
 
 SocketCluster.prototype.colorText = function (message, color) {
   if (this._colorCodes[color]) {
-    return '\033[0;' + this._colorCodes[color] + 'm' + message + '\033[0m';
+    return '\x1b[0;' + this._colorCodes[color] + 'm' + message + '\x1b[0m';
   } else if (color) {
-    return '\033[' + color + 'm' + message + '\033[0m';
+    return '\x1b[' + color + 'm' + message + '\x1b[0m';
   }
   return message;
 };
