@@ -2,7 +2,7 @@ var async = require('async');
 var childProcess = require('child_process');
 var scClient = require('socketcluster-client');
 var assert = require('assert');
-var domain = require('domain');
+var domain = require('sc-domain');
 
 var scServer = childProcess.fork(__dirname + '/server.js');
 
@@ -242,7 +242,7 @@ scServer.on('message', function (m) {
       },
       function (cb) {
         var caughtError;
-        var socketDomain = domain.createDomain();
+        var socketDomain = domain.create();
         socketDomain.on('error', function (error) {
           caughtError = error;
         });
