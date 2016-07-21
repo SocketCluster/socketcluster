@@ -11,6 +11,11 @@ Complete documentation available at: http://socketcluster.io/
 
 ## Change log
 
+**22 July 2016** (v4.7.0)
+
+- Since the Node.js domain module is now deprecated, we have switched to using our own sc-domain module which uses Promises to capture async errors.
+The sc-domain module doesn't behave exactly like the Node.js domain module though; the main difference is that it does not capture unhandled + nested 'error' events (it only captures thrown errors including those thrown asynchronously). This means that you now have to be more careful about handling all your 'error' events - SC's default behavior for handling uncaught error events is to crash and respawn the affected process - This is the approach recommended by the Node.js core team.
+
 **16 January 2016** (v4.2.0)
 
 - The schedulingPolicy option (http://socketcluster.io/#!/docs/api-socketcluster) is now 'rr' by default (except on Windows) - After doing some stress testing on large 8-core Linux EC2 instances, the 'rr' policy turned out to be much better at distributing load across multiple CPU cores. The downside of the 'rr' policy is that all new connection fds pass through
@@ -33,12 +38,6 @@ This release introduces many other non-breaking changes.
 
 - See RFC: https://github.com/SocketCluster/socketcluster/issues/137
 - The docs have been updated on the website. See http://socketcluster.io/
-
-**22 November 2015** (v3.0.0)
-
-- The defaultAuthTokenExpiryInMinutes and defaultAuthTokenExpiry config options have been removed - Use authDefaultExpiry instead (value is in seconds).
-- Ping and pong are now represented as raw messages '#1' and '#2' instead of '1' and '2' - This is to avoid potential conflicts with user logic when
-using the raw ```socket.send(...)``` method.
 
 ## Introduction
 
