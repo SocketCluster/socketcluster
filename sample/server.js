@@ -11,6 +11,7 @@ var options = {
   workerController: argv.wc || process.env.SOCKETCLUSTER_WORKER_CONTROLLER || __dirname + '/worker.js',
   brokerController: argv.bc || process.env.SOCKETCLUSTER_BROKER_CONTROLLER || __dirname + '/broker.js',
   socketChannelLimit: Number(process.env.SOCKETCLUSTER_SOCKET_CHANNEL_LIMIT) || 1000,
+  clusterStateServerHost: argv.cssh || process.env.SC_CLUSTER_STATE_SERVER_HOST || null,
   crashWorkerOnError: argv['auto-reboot'] != false
 };
 

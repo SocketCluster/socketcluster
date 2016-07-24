@@ -1,8 +1,8 @@
 FROM node:5.11.0
 MAINTAINER Jonathan Gros-Dubois
 
-LABEL version="4.5.0"
-LABEL description="Docker file for SocketCluster"
+LABEL version="4.6.0"
+LABEL description="Docker file for SocketCluster with support for clustering."
 
 RUN mkdir -p /usr/src/
 WORKDIR /usr/src/
