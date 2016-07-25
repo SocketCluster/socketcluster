@@ -11,7 +11,12 @@ var options = {
   workerController: argv.wc || process.env.SOCKETCLUSTER_WORKER_CONTROLLER || __dirname + '/worker.js',
   brokerController: argv.bc || process.env.SOCKETCLUSTER_BROKER_CONTROLLER || __dirname + '/broker.js',
   socketChannelLimit: Number(process.env.SOCKETCLUSTER_SOCKET_CHANNEL_LIMIT) || 1000,
-  clusterStateServerHost: argv.cssh || process.env.SC_CLUSTER_STATE_SERVER_HOST || null,
+  clusterStateServerHost: argv.cssh || process.env.SCC_STATE_SERVER_HOST || null,
+  clusterStateServerPort: process.env.SCC_STATE_SERVER_PORT || null,
+  clusterAuthKey: process.env.SCC_AUTH_KEY || null,
+  clusterStateServerConnectTimeout: Number(process.env.SCC_STATE_SERVER_CONNECT_TIMEOUT) || null,
+  clusterStateServerAckTimeout: Number(process.env.SCC_STATE_SERVER_ACK_TIMEOUT) || null,
+  clusterStateServerReconnectRandomness: Number(process.env.SCC_STATE_SERVER_RECONNECT_RANDOMNESS) || null,
   crashWorkerOnError: argv['auto-reboot'] != false
 };
 

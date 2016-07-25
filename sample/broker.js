@@ -10,6 +10,13 @@ module.exports.run = function (broker) {
   // The clustering/sharding all happens automatically.
 
   if (broker.options.clusterStateServerHost) {
-    scClusterBrokerClient.attach(broker, {stateServerHost: broker.options.clusterStateServerHost});
+    scClusterBrokerClient.attach(broker, {
+      stateServerHost: broker.options.clusterStateServerHost,
+      stateServerPort: broker.options.clusterStateServerPort,
+      authKey: broker.options.clusterAuthKey,
+      stateServerConnectTimeout: broker.options.clusterStateServerConnectTimeout,
+      stateServerAckTimeout: broker.options.clusterStateServerAckTimeout,
+      stateServerReconnectRandomness: broker.options.clusterStateServerReconnectRandomness
+    });
   }
 };
