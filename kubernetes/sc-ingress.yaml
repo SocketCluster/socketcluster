@@ -1,0 +1,10 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: loadbalancer
+spec:
+  tls:
+  - secretName: test-self-signed
+  backend:
+    serviceName: socketcluster
+    servicePort: 8000

@@ -1,0 +1,42 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: sc-cluster-broker-server
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sc-cluster-broker-server
+    spec:
+      containers:
+      - name: sc-cluster-broker-server
+        image: socketcluster/sc-cluster-broker-server:v1.0.2
+        ports:
+        - containerPort: 8888
+        env:
+        - name: SCC_STATE_SERVER_HOST
+          value: sc-cluster-state-server
+        - name: SCC_INSTANCE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        # 3 is the highest log level and will log every subscription and message
+        # which is shared across multiple socketcluster pods.
+        - name: SCC_BROKER_SERVER_LOG_LEVEL
+          value: "3"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: sc-cluster-broker-server
+  labels:
+    app: sc-cluster-broker-server
+spec:
+  ports:
+  - port: 8888
+    targetPort: 8888
+  selector:
+    app: sc-cluster-broker-server
