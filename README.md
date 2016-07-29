@@ -11,7 +11,7 @@ Complete documentation available at: http://socketcluster.io/
 
 ## Change log
 
-**29 July 2016** (v4.7.0)
+**29 July 2016** (v5.0.0)
 
 ### Introducing SCC (on Kubernetes)
 
@@ -33,6 +33,11 @@ RabbitMQ, NSQ, Kafka and Redis which are mostly intended purely for server-side 
 3. SCC is a framework; from the beginning, it was designed so that you could add your own middleware and business logic... Ultimately, we want SCC to replace the need for Backend as a Service.
 
 Note that we have plans to offer a hosted Kubernetes platform (built on top of Rancher) - Where you will be able to easily deploy your SCC apps to Kubernetes running on your own infrastructure of choice (including Amazon EC2 and custom infrastructure). If this sounds interesting to you, please sign up to https://baasil.io/ - We will email you when it's ready.
+
+### µWebSockets
+
+µWS has been bundled with SC as an optional WebSocket server for a few months now. Based on our testing, we found µWS to be several times faster than the more established WS module.
+As of v5.0.0 - We have made µWS our default WebSocket server engine. We still bundle the old WS module for backwards compatibility with older systems - You can roll back to the WS module by setting the `wsEngine` option of SocketCluster to `'ws'`. This switch to µWS shouldn't affect any existing code that you have (it has already been tested in production for several months by various users of SC) but it's important to be aware of this change.
 
 **22 July 2016** (v4.7.0)
 
