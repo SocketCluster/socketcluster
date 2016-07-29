@@ -14,7 +14,7 @@
     "minimist": "1.1.0",
     "serve-static": "1.8.0",
     "sc-cluster-broker-client": "1.x.x",
-    "socketcluster": "4.x.x",
+    "socketcluster": "5.x.x",
     "socketcluster-client": "4.x.x"
   },
   "keywords": [
