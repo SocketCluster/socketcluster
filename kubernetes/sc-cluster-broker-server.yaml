@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
       - name: sc-cluster-broker-server
-        image: socketcluster/sc-cluster-broker-server:v1.0.2
+        image: socketcluster/sc-cluster-broker-server:v1.1.0
         ports:
         - containerPort: 8888
         env:
