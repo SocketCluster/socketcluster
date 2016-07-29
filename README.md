@@ -36,7 +36,7 @@ Note that we have plans to offer a hosted Kubernetes platform (built on top of R
 
 ### µWebSockets
 
-µWS has been bundled with SC as an optional WebSocket server for a few months now. Based on our testing, we found µWS to be several times faster than the more established WS module.
+µWS has been bundled with SC as an optional WebSocket server for a few months now. Based on our testing, we found µWS to be several times faster than the WS module.
 As of v5.0.0 - We have made µWS our default WebSocket server engine. We still bundle the old WS module for backwards compatibility with older systems - You can roll back to the WS module by setting the `wsEngine` option of SocketCluster to `'ws'`. This switch to µWS shouldn't affect any existing code that you have (it has already been tested in production for several months by various users of SC) but it's important to be aware of this change.
 
 **22 July 2016** (v4.7.0)
