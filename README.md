@@ -11,6 +11,30 @@ Complete documentation available at: http://socketcluster.io/
 
 ## Change log
 
+**29 July 2016** (v4.7.0)
+
+### Introducing SCC (on Kubernetes)
+
+SCC stands for SocketCluster Cluster.
+You can now finally run SocketCluster as an actual Cluster - We have just released a set of images to DockerHub along with some .yaml config files for Kubernetes  (see kubernetes/ directory at the root of this repo). This means that you can now (relatively easily) deploy and SocketCluster on up to 1000 machines/nodes running Kubernetes. It's been tested on a Rancher (http://rancher.com/) Kubernetes cluster (We haven't yet tested on Google Container Engine). The cluster can be automatically scaled up and down (using the `kubectl scale` command) and the channels will be re-sharded automatically across available nodes.
+
+SCC is made up of 4 different services which can be scaled independently. We will add more documentation in the near future on how to get started.
+Also we will add information on how to extend SCC with your own code to you can build entire, highly scalable apps on top of it (without having to learn about distributed systems).
+
+What use cases are SCC built for?
+
+SCC differs from existing pub/sub systems and message queues in the following ways:
+
+1. SCC is primarily intended as a frontend/web facing realtime service/framework - This already makes it quite different from most realtime pub/sub systems like
+RabbitMQ, NSQ, Kafka and Redis which are mostly intended purely for server-side use (the use cases are quite different). That said, you CAN use SC as a backend-only system if you like.
+
+2. RabbitMQ, NSQ, Kafka are optimized for dealing with predefined realtime queues/channels with very high throughput - They're not very good at handling high-churn. SCC is designed to handle channel churn - It can create and destroy channels dynamically at a rate of about 10K channels per second per process (and scaled linearly accross multiples nodes). Each SC channel can handle about 20K messages per second (this is much lower than what you could handle per channel/queue with Kafka for example). So basically, it's good if you want to have a system where you have millions of users who just create and destroy millions of unique channels on the fly as they navigate through an app (for example).
+
+3. SCC is a framework; from the beginning; it was designed so that you could add your own middleware, add business logic, etc...
+We will be doing some work in the near future to make the development and deployment experience easier. We want SCC to replace the need for Backend as a Service.
+
+Note that we have plans to offer a hosted Kubernetes platform (built on top of Rancher) - Where you will be able to easily deploy your SCC apps to Kubernetes running on your own infrastructure of choice (including Amazon EC2 and custom infrastructure). If this sounds interesting to you, please sign up to https://baasil.io/ - We will email you when it's ready.
+
 **22 July 2016** (v4.7.0)
 
 - Since the Node.js domain module is now deprecated, we have switched to using our own sc-domain module which uses Promises to capture async errors.
@@ -20,24 +44,6 @@ The sc-domain module doesn't behave exactly like the Node.js domain module thoug
 
 - The schedulingPolicy option (http://socketcluster.io/#!/docs/api-socketcluster) is now 'rr' by default (except on Windows) - After doing some stress testing on large 8-core Linux EC2 instances, the 'rr' policy turned out to be much better at distributing load across multiple CPU cores. The downside of the 'rr' policy is that all new connection fds pass through
 a central master process but that process turned out to be extremely efficient. It's not a perfect solution but it's much better than letting the Linux OS handle it.
-
-**05 January 2016** (v4.0.0)
-
-- Middleware functions used to have different arguments (depending on the middleware type); now they are all in the format ```function (req, next) {...}```.
-The ```req``` object will have different properties depending on the middleware type. See addMiddleware() method here: http://socketcluster.io/#!/docs/api-scserver
-- When invoking ```socket.emit``` or ```socket.publish``` - When a callback was provided, it would emit an 'error' event on the socket if the operation failed.
-This is no longer the case - The callback will still receive the error as the first argument like it used to (assuming that there was an error), but it
-just won't be emitted as an 'error' event on the socket - It is considered an application error (not an SC error).
-- The 'notice' event was replaced with a 'warning' event - This is more consistent with the convention used in most other frameworks.
-- You can now pass custom error objects to the ```next(err)``` callback inside middleware functions; this is now recommended instead of plain strings.
-The ```err``` object you provide can inherit from the ```Error``` object (but this isn't necessary). It is recommended that whatever object you provide has
-a ```name``` and a ```message``` property; you can also add custom properties to your error object and the client will receive those as rehydrated ```Error``` objects. Note that this is a non-breaking change - You can still pass a string as ```err``` and it won't break anything.
-- On the server-side, the ```socket.removeAuthToken()``` method was replaced by ```socket.deauthenticate()```.
-
-This release introduces many other non-breaking changes.
-
-- See RFC: https://github.com/SocketCluster/socketcluster/issues/137
-- The docs have been updated on the website. See http://socketcluster.io/
 
 ## Introduction
 

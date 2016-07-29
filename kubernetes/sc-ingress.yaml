@@ -3,8 +3,12 @@ kind: Ingress
 metadata:
   name: loadbalancer
 spec:
+  # You should upload a certificate to your Kubernetes platform and refer to it here by secretName.
+  # If you do not want to serve SCC over TLS, you can comment out the following 2 lines.
+  # Note that raw (unencrypted) WebSockets may not work if you are behind a corporate proxy so
+  # it is advised that you provide a cert for production and access the SCC service via https:// and wss://
   tls:
-  - secretName: test-self-signed
+  - secretName: my-ssl-key-and-cert-pair
   backend:
     serviceName: socketcluster
     servicePort: 8000
