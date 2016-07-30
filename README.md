@@ -24,12 +24,12 @@ What use cases are SCC built for?
 
 SCC differs from existing pub/sub systems and message queues in the following ways:
 
-1. SCC is primarily intended as a frontend/web facing realtime service/framework - This already makes it quite different from most realtime pub/sub systems like
-RabbitMQ, NSQ, Kafka and Redis which are mostly intended purely for server-side use (the use cases are quite different). That said, you CAN use SC as a backend-only system if you like.
+1. SCC is primarily intended as a frontend/web facing realtime service/framework - This in itself makes it quite different from most realtime pub/sub and MQ systems like
+RabbitMQ, NSQ, Kafka and Redis which are mostly intended purely for backend use. That said, you CAN use SC as a backend-only system if you like.
 
-2. RabbitMQ, NSQ, Kafka are optimized for dealing with predefined realtime queues/channels with very high throughput - They're not very good at handling high-churn. SCC is designed to handle channel churn - It can create and destroy channels dynamically at a rate of about 10K channels per second per process (and scaled linearly accross multiples nodes). Each SC channel can handle about 20K messages per second (this is much lower than what you could handle per channel/queue with Kafka for example). So basically, it's good if you want to have a system where you have millions of users who just create and destroy millions of unique channels on the fly as they navigate through an app (for example).
+2. RabbitMQ, NSQ, Kafka are optimized for dealing with predefined realtime queues/channels with very high throughput - They're not very good at handling high-churn. SCC is designed to handle channel churn - It can create and destroy channels dynamically at a rate of about 10K channels per second per process (and scaled linearly accross multiple nodes). Each SC channel can handle about 20K messages per second (this is much lower than what you could handle per channel/queue with Kafka for example). So basically, it's good if you want to have a system where you have millions of users who just create and destroy millions of unique channels on the fly as they navigate through an app (for example).
 
-3. SCC is a framework; from the beginning, it was designed so that you could add your own middleware and business logic... Ultimately, we want SCC to replace the need for Backend as a Service.
+3. SCC is a framework; from the beginning, it was designed so that you could add your own middleware and business logic... Ultimately, we want SCC to replace the need for Backend as a Service... Though there is still a long way to go.
 
 Note that we have plans to offer a hosted Kubernetes platform (built on top of Rancher) - Where you will be able to easily deploy your SCC apps to Kubernetes running on your own infrastructure of choice (including Amazon EC2 and custom infrastructure). If this sounds interesting to you, please sign up to https://baasil.io/ - We will email you when it's ready.
 
