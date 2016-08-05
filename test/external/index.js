@@ -2,12 +2,10 @@ var async = require('async');
 var childProcess = require('child_process');
 var scClient = require('socketcluster-client');
 var assert = require('assert');
-var domain = require('sc-domain');
 
 var scServer = childProcess.fork(__dirname + '/server.js');
 
 var options = {
-  protocol: 'http',
   hostname: '127.0.0.1',
   port: 8000,
   autoReconnect: true,
@@ -238,27 +236,6 @@ scServer.on('message', function (m) {
             }
             cb(err);
           }, 1000);
-        }, 1000);
-      },
-      function (cb) {
-        var caughtError;
-        var socketDomain = domain.create();
-        socketDomain.on('error', function (error) {
-          caughtError = error;
-        });
-        socketDomain.add(socket);
-        socket.emit('error', 'FAIL');
-
-        var err;
-
-        setTimeout(function () {
-          try {
-            assert(caughtError == 'FAIL',
-              'Socket does not work with error domains');
-          } catch (e) {
-            err = e;
-          }
-          cb(err);
         }, 1000);
       },
       function (cb) {
