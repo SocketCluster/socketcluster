@@ -15,6 +15,8 @@ Complete documentation available at: http://socketcluster.io/
 
 ### Introducing SCC (on Kubernetes)
 
+- You need Node.js version >= 6.x.x to run SC version 5.x.x as a multi-host cluster.
+
 You can now finally run SocketCluster as a Cluster (SCC) - We have just released a set of images to DockerHub along with some .yaml config files for Kubernetes  (see kubernetes/ directory at the root of this repo). This means that you can now (relatively easily) deploy and scale SocketCluster on up to 1000 machines/nodes running Kubernetes - You literally just have to upload each .yaml file one by one using `kubectl create -f <service-definition.yaml>` and then add your SSL/TLS key and cert to your provider (see `kubernetes/sc-ingress.yaml`). It's been tested on a Rancher v1.1.0 (http://rancher.com/) Kubernetes cluster (We haven't yet tested on Google Container Engine). The cluster can be automatically scaled up and down (using the `kubectl scale` command) and the channels will be re-sharded automatically across available nodes.
 
 SCC is made up of 4 different services which can be scaled independently. We will add more documentation in the near future on how to get started.
