@@ -1,5 +1,10 @@
+var fs = require('fs');
 var argv = require('minimist')(process.argv.slice(2));
 var SocketCluster = require('socketcluster').SocketCluster;
+
+var workerControllerPath = argv.wc || process.env.SOCKETCLUSTER_WORKER_CONTROLLER;
+var brokerControllerPath = argv.bc || process.env.SOCKETCLUSTER_BROKER_CONTROLLER;
+var initControllerPath = argv.ic || process.env.SOCKETCLUSTER_INIT_CONTROLLER;
 
 var options = {
   workers: Number(argv.w) || Number(process.env.SOCKETCLUSTER_WORKERS) || 1,
@@ -8,8 +13,9 @@ var options = {
   // If your system doesn't support 'uws', you can switch to 'ws' (which is slower but works on older systems).
   wsEngine: process.env.SOCKETCLUSTER_WS_ENGINE || 'uws',
   appName: argv.n || process.env.SOCKETCLUSTER_APP_NAME || null,
-  workerController: argv.wc || process.env.SOCKETCLUSTER_WORKER_CONTROLLER || __dirname + '/worker.js',
-  brokerController: argv.bc || process.env.SOCKETCLUSTER_BROKER_CONTROLLER || __dirname + '/broker.js',
+  workerController: workerControllerPath || __dirname + '/worker.js',
+  brokerController: brokerControllerPath || __dirname + '/broker.js',
+  initController: initControllerPath || null,
   socketChannelLimit: Number(process.env.SOCKETCLUSTER_SOCKET_CHANNEL_LIMIT) || 1000,
   clusterStateServerHost: argv.cssh || process.env.SCC_STATE_SERVER_HOST || null,
   clusterStateServerPort: process.env.SCC_STATE_SERVER_PORT || null,
@@ -32,4 +38,48 @@ for (var i in SOCKETCLUSTER_OPTIONS) {
   }
 }
 
-var socketCluster = new SocketCluster(options);
+var masterControllerPath = argv.mc || process.env.SOCKETCLUSTER_MASTER_CONTROLLER;
+
+var start = function () {
+  var socketCluster = new SocketCluster(options);
+
+  if (masterControllerPath) {
+    var masterController = require(masterControllerPath);
+    masterController.run(socketCluster);
+  }
+};
+
+var bootCheckInterval = Number(process.env.SOCKETCLUSTER_BOOT_CHECK_INTERVAL) || 200;
+
+if (workerControllerPath) {
+  // Detect when the Docker volume containing the workerController is ready.
+  var startWhenFileIsReady = (filePath) => {
+    return new Promise((resolve) => {
+      if (!filePath) {
+        resolve();
+        return;
+      }
+      var checkIsReady = () => {
+        fs.exists(filePath, (exists) => {
+          if (exists) {
+            resolve();
+          } else {
+            setTimeout(checkIsReady, bootCheckInterval);
+          }
+        });
+      };
+      checkIsReady();
+    });
+  };
+  var filesReadyPromises = [
+    startWhenFileIsReady(masterControllerPath),
+    startWhenFileIsReady(workerControllerPath),
+    startWhenFileIsReady(brokerControllerPath),
+    startWhenFileIsReady(initControllerPath)
+  ];
+  Promise.all(filesReadyPromises).then(() => {
+    start();
+  });
+} else {
+  start();
+}
