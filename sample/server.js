@@ -52,7 +52,7 @@ var start = function () {
 var bootCheckInterval = Number(process.env.SOCKETCLUSTER_BOOT_CHECK_INTERVAL) || 200;
 
 if (workerControllerPath) {
-  // Detect when the Docker volume containing the workerController is ready.
+  // Detect when Docker volumes are ready.
   var startWhenFileIsReady = (filePath) => {
     return new Promise((resolve) => {
       if (!filePath) {
