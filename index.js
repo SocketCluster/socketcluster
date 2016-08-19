@@ -18,9 +18,16 @@ var BrokerError = scErrors.BrokerError;
 var ProcessExitError = scErrors.ProcessExitError;
 var UnknownError = scErrors.UnknownError;
 
+var socketClusterSingleton = null;
 
 var SocketCluster = function (options) {
   var self = this;
+  if (socketClusterSingleton) {
+    var doubleInstantiationError = new Error('The SocketCluster master object is a singleton - It can only be instantiated once per process.');
+    doubleInstantiationError.name = 'DoubleInstantiationError';
+    throw doubleInstantiationError;
+  }
+  socketClusterSingleton = self;
 
   self.EVENT_FAIL = 'fail';
   self.EVENT_WARNING = 'warning';
@@ -43,12 +50,6 @@ var SocketCluster = function (options) {
 
   self._errorDomain.run(function () {
     self._init(options);
-  });
-
-  process.on('SIGTERM', function () {
-    self.killWorkers();
-    self.killBrokers();
-    process.exit();
   });
 };
 
