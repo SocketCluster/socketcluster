@@ -522,7 +522,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     } else {
       debugPort = argv['debug-workers'];
     }
-    execOptions.execArgv.push('--debug=' + (debugPort - 1));
+    execOptions.execArgv.push('--debug=' + debugPort);
   }
 
   if (argv['inspect-workers']) {
@@ -531,7 +531,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     } else {
       inspectPort = argv['inspect-workers'];
     }
-    execOptions.execArgv.push('--inspect=' + (inspectPort - 1));
+    execOptions.execArgv.push('--inspect=' + (inspectPort));
   }
 
   this._workerCluster = fork(__dirname + '/lib/workercluster.js', process.argv.slice(2), execOptions);
