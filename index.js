@@ -506,13 +506,13 @@ SocketCluster.prototype._handleWorkerClusterExit = function (errorCode) {
 SocketCluster.prototype._launchWorkerCluster = function () {
   var self = this;
 
-  var debugPort;
+  var debugPort, inspectPort;
 
   // Workers should not inherit the master --debug argument
   // because they have their own --debug-workers option.
   var execOptions = {
     execArgv: process.execArgv.filter(function (arg) {
-      return arg != '--debug' && arg != '--debug-brk';
+      return arg != '--debug' && arg != '--debug-brk' && arg != '--inspect';
     })
   };
 
@@ -523,6 +523,15 @@ SocketCluster.prototype._launchWorkerCluster = function () {
       debugPort = argv['debug-workers'];
     }
     execOptions.execArgv.push('--debug=' + (debugPort - 1));
+  }
+
+  if (argv['inspect-workers']) {
+    if (argv['inspect-workers'] == true) {
+      inspectPort = this.options.defaultWorkerDebugPort;
+    } else {
+      inspectPort = argv['inspect-workers'];
+    }
+    execOptions.execArgv.push('--inspect=' + (inspectPort - 1));
   }
 
   this._workerCluster = fork(__dirname + '/lib/workercluster.js', process.argv.slice(2), execOptions);
@@ -616,9 +625,15 @@ SocketCluster.prototype._start = function () {
       brokerDebugPort = self.options.defaultBrokerDebugPort;
     }
 
+    var brokerInspectPort = argv['inspect-brokers'];
+    if (brokerInspectPort == true) {
+      brokerInspectPort = self.options.defaultBrokerDebugPort;
+    }
+
     self._brokerEngine = new self._brokerEngine.Server({
       brokers: self._getBrokerSocketPaths(),
       debug: brokerDebugPort,
+      inspect: brokerInspectPort,
       instanceId: self.options.instanceId,
       secretKey: self.options.secretKey,
       expiryAccuracy: self._dataExpiryAccuracy,
