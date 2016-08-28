@@ -16,19 +16,4 @@ spec:
         - containerPort: 8000
         env:
         - name: SCC_STATE_SERVER_HOST
-          value: sc-cluster-state-server
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: socketcluster
-  labels:
-    app: socketcluster
-spec:
-  ports:
-  - port: 8000
-    targetPort: 8000
-  selector:
-    app: socketcluster
+          value: scc-state

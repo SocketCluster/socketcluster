@@ -1,31 +1,16 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: sc-cluster-state-server
+  name: scc-state
 spec:
   replicas: 1 # Leave this as 1 - This service is a singleton.
   template:
     metadata:
       labels:
-        app: sc-cluster-state-server
+        app: scc-state
     spec:
       containers:
       - name: sc-cluster-state-server
         image: socketcluster/sc-cluster-state-server:v1.0.3
         ports:
         - containerPort: 7777
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: sc-cluster-state-server
-  labels:
-    app: sc-cluster-state-server
-spec:
-  ports:
-  - port: 7777
-    targetPort: 7777
-  selector:
-    app: sc-cluster-state-server
