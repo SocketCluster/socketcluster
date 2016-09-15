@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 
-process.stdin.resume();
-process.stdin.setEncoding('utf8');
-
 var fs = require('fs-extra');
 var path = require('path');
 var argv = require('minimist')(process.argv.slice(2));
 var childProcess = require('child_process');
+var inquirer = require('inquirer');
+var prompt = inquirer.createPromptModule();
 var exec = childProcess.exec;
 var spawn = childProcess.spawn;
 var fork = childProcess.fork;
@@ -58,18 +57,18 @@ var failedToCreateMessage = function () {
   errorMessage('Failed to create necessary files. Please check your permissions and try again.');
 }
 
-var prompt = function (message, callback) {
-  process.stdout.write(message + ' ');
-  process.stdin.on('data', function inputHandler(text) {
-    process.stdin.removeListener('data', inputHandler);
-    callback(text)
-  });
-}
-
 var promptConfirm = function (message, callback) {
-  prompt(message, function (data) {
-    data = data.toLowerCase().replace(/[\r\n]/g, '');
-    callback(data == 'y' || data == 'yes');
+  prompt([
+    {
+      type: 'confirm',
+      message: message,
+      name: 'result'
+    }
+  ]).then((answers) => {
+    callback(answers.result);
+  }).catch((err) => {
+    errorMessage(err.message);
+    process.exit();
   });
 }
 
@@ -178,7 +177,7 @@ if (command == 'create') {
       if (force) {
         confirmReplaceSetup(true);
       } else {
-        var message = "There is already a directory at " + destDir + '. Do you want to overwrite it? (y/n)';
+        var message = "There is already a directory at " + destDir + '. Do you want to overwrite it?';
         promptConfirm(message, confirmReplaceSetup);
       }
     } else {
