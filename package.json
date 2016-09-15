@@ -17,7 +17,6 @@
     "async": "1.5.0",
     "base64id": "0.1.0",
     "fs-extra": "0.30.0",
-    "jsonwebtoken": "5.4.1",
     "minimist": "1.1.0",
     "node-uuid": "1.4.7",
     "sc-auth": "3.x.x",
