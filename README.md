@@ -9,7 +9,7 @@ SocketCluster
 
 Complete documentation available at: http://socketcluster.io/
 
-### Documentation for SCC is available at https://github.com/SocketCluster/socketcluster/blob/master/scc-guide.md
+Documentation for SCC is available at https://github.com/SocketCluster/socketcluster/blob/master/scc-guide.md
 
 ## Change log
 
