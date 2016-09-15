@@ -1,6 +1,6 @@
 # SCC Guide
 
-SCC is a collection of services which allow you to easily deploy and scale SocketCluster to any number of machines (well; almost any number, see Notes at the bottom of this page).
+SCC is a collection of services which allow you to easily deploy and scale SocketCluster to any number of machines (almost any number, see Notes at the bottom of this page).
 SCC is designed to scale linearly and is optimized for running on Kubernetes but it can be setup without using an orchestrator.
 
 SCC is made up of the following services:
