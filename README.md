@@ -9,6 +9,8 @@ SocketCluster
 
 Complete documentation available at: http://socketcluster.io/
 
+### Documentation for SCC is available at https://github.com/SocketCluster/socketcluster/blob/master/scc-guide.md
+
 ## Change log
 
 **29 July 2016** (v5.0.0)
@@ -17,7 +19,7 @@ Complete documentation available at: http://socketcluster.io/
 
 - You need Node.js version >= 6.x.x to run SC version 5.x.x as a multi-host cluster.
 
-You can now finally run SocketCluster as a Cluster (SCC) - We have just released a set of images to DockerHub along with some .yaml config files for Kubernetes  (see kubernetes/ directory at the root of this repo). This means that you can now (relatively easily) deploy and scale SocketCluster on up to 1000 machines/nodes running Kubernetes - You literally just have to upload each .yaml file one by one using `kubectl create -f <service-definition.yaml>` and then add your SSL/TLS key and cert to your provider (see `kubernetes/sc-ingress.yaml`). It's been tested on a Rancher v1.1.0 (http://rancher.com/) Kubernetes cluster (We haven't yet tested on Google Container Engine). The cluster can be automatically scaled up and down (using the `kubectl scale` command) and the channels will be re-sharded automatically across available nodes.
+You can now finally run SocketCluster as a Cluster (SCC) - We have just released a set of images to DockerHub along with some .yaml config files for Kubernetes  (see kubernetes/ directory at the root of this repo). This means that you can now (relatively easily) deploy and scale SocketCluster on up to 1000 machines/nodes running Kubernetes - You just have to upload each .yaml file one by one using `kubectl create -f <service-definition.yaml>` and then add your SSL/TLS key and cert to your provider (see `kubernetes/sc-ingress.yaml`). It's been tested on a Rancher v1.1.0 (http://rancher.com/) Kubernetes cluster (We haven't yet tested on Google Container Engine). The cluster can be automatically scaled up and down (using the `kubectl scale` command) and the channels will be re-sharded automatically across available nodes.
 
 SCC is made up of 4 different services which can be scaled independently. We will add more documentation in the near future on how to get started.
 Also we will add information on how to extend SCC with your own code to you can build entire, highly scalable apps on top of it (without having to learn about distributed systems).
@@ -31,7 +33,7 @@ RabbitMQ, NSQ, Kafka and Redis which are mostly intended for backend use. That s
 
 2. RabbitMQ, NSQ, Kafka are optimized for dealing with **predefined** realtime queues/channels with very high throughput but they're not very good at handling high-churn. SCC is designed to handle channel churn - It can create and destroy channels dynamically at a rate of about 10K channels per second per process (and scaled linearly accross multiple nodes). Each SC channel can handle about 20K messages per second (this is much lower than what you could handle per channel/queue with Kafka for example). So basically, it's good if you want to have a system where you have millions of users who just create and destroy millions of unique channels on the fly as they navigate through an app (for example).
 
-3. SCC is a framework; from the beginning, it was designed so that you could add your own middleware and business logic... Ultimately, we want SCC to replace the need for Backend as a Service... Though there is still a long way to go.
+3. SCC is a framework; from the beginning, it was designed so that you could add your own middleware and business logic... Ultimately, we want SCC to replace the need for 'Backend as a Service'.
 
 Note that we have plans to offer a hosted Kubernetes platform (built on top of Rancher) - Where you will be able to easily deploy your SCC apps to Kubernetes running on your own infrastructure of choice (including Amazon EC2 and custom infrastructure). If this sounds interesting to you, please sign up to https://baasil.io/ - We will email you when it's ready.
 

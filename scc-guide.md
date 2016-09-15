@@ -8,6 +8,7 @@ SCC is made up of the following services:
 - socketcluster https://github.com/SocketCluster/socketcluster
 - sc-cluster-broker-server https://github.com/SocketCluster/sc-cluster-state-server
 - sc-cluster-state-server https://github.com/SocketCluster/sc-cluster-broker-server
+- sc-ingress (Kubernetes only)
 
 ## How it works
 
@@ -42,7 +43,7 @@ If you want to try SCC on K8s, the simplest way to get started is to sign up to 
 
 ## Running using Node.js directly
 
-You can also run SCC using only Node.js.
+You can also run SCC using only Node.js version >= 6.x.x.
 For simplicity, we will show you how to run everything on your localhost (`127.0.0.1`), but in practice, you will need to change `127.0.0.1` to an appropriate IP, host name or domain name.
 
 First, you need to download each repository to your machine(s) (E.g. `git clone`).
