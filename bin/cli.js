@@ -24,19 +24,19 @@ var parsePackageFile = function (moduleDir) {
   } catch (e) {}
 
   return {};
-}
+};
 
 var errorMessage = function (message) {
   console.log('\033[0;31m[Error]\033[0m ' + message);
-}
+};
 
 var successMessage = function (message) {
   console.log('\033[0;32m[Success]\033[0m ' + message);
-}
+};
 
 var warningMessage = function (message) {
   console.log('\033[0;33m[Warning]\033[0m ' + message);
-}
+};
 
 var showCorrectUsage = function () {
   console.log('Usage: socketcluster [options] [command]\n');
@@ -47,15 +47,15 @@ var showCorrectUsage = function () {
   console.log();
   console.log('Commands:');
   console.log('  create <appname>            Create a new boilerplate app in working directory');
-}
+};
 
 var failedToRemoveDirMessage = function (dirPath) {
   errorMessage('Failed to remove existing directory at ' + dirPath + '. This directory may be used by another program or you may not have the permission to remove it.');
-}
+};
 
 var failedToCreateMessage = function () {
   errorMessage('Failed to create necessary files. Please check your permissions and try again.');
-}
+};
 
 var promptConfirm = function (message, callback) {
   prompt([
@@ -70,7 +70,7 @@ var promptConfirm = function (message, callback) {
     errorMessage(err.message);
     process.exit();
   });
-}
+};
 
 var copyDirRecursive = function (src, dest) {
   try {
@@ -80,7 +80,7 @@ var copyDirRecursive = function (src, dest) {
     failedToCreateMessage();
   }
   return false;
-}
+};
 
 var rmdirRecursive = function (dirname) {
   try {
@@ -90,19 +90,19 @@ var rmdirRecursive = function (dirname) {
     failedToRemoveDirMessage(dirname);
   }
   return false;
-}
+};
 
 if (argv.help) {
   showCorrectUsage();
   process.exit();
-}
+};
 
 if (argv.v) {
   var scDir = __dirname + '/../';
   var scPkg = parsePackageFile(scDir);
   console.log('v' + scPkg.version);
   process.exit();
-}
+};
 
 var wd = process.cwd();
 
