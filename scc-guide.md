@@ -6,8 +6,8 @@ SCC is designed to scale linearly and is optimized for running on Kubernetes but
 SCC is made up of the following services:
 
 - socketcluster https://github.com/SocketCluster/socketcluster
-- sc-cluster-broker-server https://github.com/SocketCluster/sc-cluster-state-server
-- sc-cluster-state-server https://github.com/SocketCluster/sc-cluster-broker-server
+- sc-cluster-broker-server https://github.com/SocketCluster/sc-cluster-broker-server 
+- sc-cluster-state-server https://github.com/SocketCluster/sc-cluster-state-server
 - sc-ingress (Kubernetes only)
 
 ## How it works
