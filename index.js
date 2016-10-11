@@ -362,10 +362,10 @@ SocketCluster.prototype._logObject = function (obj, objType, time) {
 };
 
 SocketCluster.prototype.errorHandler = function (err, origin) {
-  if (err.stack == null) {
-    if (!(err instanceof Object)) {
-      err = new UnknownError(err);
-    }
+  if (!(err instanceof Object)) {
+    // If a string (or null...)
+    err = new UnknownError(err);
+  } else if (err.stack == null) {
     err.stack = err.message;
   }
   var annotation = this._errorAnnotations[err.code];
@@ -381,10 +381,10 @@ SocketCluster.prototype.errorHandler = function (err, origin) {
 };
 
 SocketCluster.prototype.warningHandler = function (warning, origin) {
-  if (warning.stack == null) {
-    if (!(warning instanceof Object)) {
-      warning = new UnknownError(warning);
-    }
+  if (!(warning instanceof Object)) {
+    // If a string (or null...)
+    warning = new UnknownError(warning);
+  } else if (warning.stack == null) {
     warning.stack = warning.message;
   }
   warning.origin = origin;
