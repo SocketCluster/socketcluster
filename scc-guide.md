@@ -6,7 +6,7 @@ SCC is designed to scale linearly and is optimized for running on Kubernetes but
 SCC is made up of the following services:
 
 - socketcluster https://github.com/SocketCluster/socketcluster
-- sc-cluster-broker-server https://github.com/SocketCluster/sc-cluster-broker-server 
+- sc-cluster-broker-server https://github.com/SocketCluster/sc-cluster-broker-server
 - sc-cluster-state-server https://github.com/SocketCluster/sc-cluster-state-server
 - sc-ingress (Kubernetes only)
 
@@ -24,7 +24,7 @@ The **sc-cluster-state-server** (scc-state) service is made up of a single insta
 
 ## Running on Kubernetes
 
-Running on Kubernetes (K8s) is easy; you just need to run all the `.yaml` files from the `kubernetes/` directory from the https://github.com/SocketCluster/socketcluster repo using the `kubectl` command (one at a time):
+Running on Kubernetes (K8s) is easy; you just need to run all the `.yaml` files from the `kubernetes/` directory from the SocketCluster repo (https://github.com/SocketCluster/socketcluster/tree/master/kubernetes) using the `kubectl` command (one at a time):
 
 ```
 kubectl create -f <service-deployment-or-ingress-definition.yaml>
