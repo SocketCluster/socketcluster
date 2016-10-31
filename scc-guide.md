@@ -39,6 +39,7 @@ Or if you don't want to use a certificate (not recommended), you can just delete
 ```
 
 Note that the step above is crucial if you don't want to use TLS/SSL - Otherwise the ingress load balancer service will not show up on your Rancher control panel until you add some credentials with the name `scc-tls-credentials` to your Rancher control panel (See Infrastructure &gt; Certificates page).
+
 If you want to try SCC on K8s, the simplest way to get started is to sign up to a free trial account on http://baasil.io
 
 
