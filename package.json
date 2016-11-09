@@ -14,7 +14,7 @@
     "url": "git://github.com/SocketCluster/socketcluster.git"
   },
   "dependencies": {
-    "async": "1.5.0",
+    "async": "2.0.0",
     "base64id": "0.1.0",
     "fs-extra": "0.30.0",
     "inquirer": "1.1.3",
