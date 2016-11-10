@@ -465,7 +465,7 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
   if (!this._active) {
     if (this.options.rebootOnSignal) {
       process.on('SIGUSR2', function () {
-        var warning = 'Master received SIGUSR2 signal - Shutting down all workers';
+        var warning = 'Master received SIGUSR2 signal - Shutting down all workers in accordance with processTermTimeout';
         self.warningHandler(warning, {type: 'master'});
         self.killWorkers();
       });
@@ -495,11 +495,15 @@ SocketCluster.prototype._workerStartHandler = function (workerInfo) {
 };
 
 SocketCluster.prototype._handleWorkerClusterExit = function (errorCode) {
-  var error = new ProcessExitError('workerCluster exited with code: ' + errorCode, errorCode);
-  this.errorHandler(error, {
-    type: 'workerCluster'
-  });
-
+  var message = 'workerCluster exited with code: ' + errorCode;
+  if (errorCode == 0) {
+    this.log(message);
+  } else {
+    var error = new ProcessExitError(message, errorCode);
+    this.errorHandler(error, {
+      type: 'workerCluster'
+    });
+  }
   this._launchWorkerCluster();
 };
 
@@ -675,10 +679,14 @@ SocketCluster.prototype.sendToBroker = function (brokerId, data) {
   this._brokerEngine.sendToBroker(brokerId, data);
 };
 
-SocketCluster.prototype.killWorkers = function () {
+// The options object is optional and can have two boolean fields:
+// immediate: Shut down the workers immediately without waiting for termination timeout.
+// killClusterMaster: Shut down the cluster master (load balancer) as well as all the workers.
+SocketCluster.prototype.killWorkers = function (options) {
   if (this._workerCluster) {
     this._workerCluster.send({
-      type: 'terminate'
+      type: 'terminate',
+      data: options || {}
     });
   }
 };
