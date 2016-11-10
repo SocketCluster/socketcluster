@@ -1,10 +1,12 @@
 var fs = require('fs');
 var argv = require('minimist')(process.argv.slice(2));
 var SocketCluster = require('socketcluster').SocketCluster;
+var scHotReboot = require('sc-hot-reboot');
 
 var workerControllerPath = argv.wc || process.env.SOCKETCLUSTER_WORKER_CONTROLLER;
 var brokerControllerPath = argv.bc || process.env.SOCKETCLUSTER_BROKER_CONTROLLER;
 var initControllerPath = argv.ic || process.env.SOCKETCLUSTER_INIT_CONTROLLER;
+var env = process.env.ENV || 'dev';
 
 var options = {
   workers: Number(argv.w) || Number(process.env.SOCKETCLUSTER_WORKERS) || 1,
@@ -46,6 +48,17 @@ var start = function () {
   if (masterControllerPath) {
     var masterController = require(masterControllerPath);
     masterController.run(socketCluster);
+  }
+
+  if (env == 'dev') {
+    // This will cause SC workers to reboot when code changes anywhere in the app directory.
+    // The second options argument here is passed directly to chokidar.
+    // See https://github.com/paulmillr/chokidar#api for details.
+    console.log(`   !! The sc-hot-reboot plugin is watching for code changes in the ${__dirname} directory`);
+    scHotReboot.attach(socketCluster, {
+      cwd: __dirname,
+      ignored: ['public', 'node_modules', 'README.md', 'Dockerfile', 'server.js', 'broker.js', /[\/\\]\./]
+    });
   }
 };
 
