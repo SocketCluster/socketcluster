@@ -2,15 +2,23 @@ var fs = require('fs');
 var express = require('express');
 var serveStatic = require('serve-static');
 var path = require('path');
+var express = require('express');
+var morgan = require('morgan');
 
 module.exports.run = function (worker) {
   console.log('   >> Worker PID:', process.pid);
+  var environment = worker.options.environment;
 
-  var app = require('express')();
+  var app = express();
 
   var httpServer = worker.httpServer;
   var scServer = worker.scServer;
 
+  if (environment == 'dev') {
+    // Log every HTTP request. See https://github.com/expressjs/morgan for other
+    // available formats.
+    app.use(morgan('dev'));
+  }
   app.use(serveStatic(path.resolve(__dirname, 'public')));
 
   httpServer.on('request', app);

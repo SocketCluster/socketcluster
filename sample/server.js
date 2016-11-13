@@ -6,7 +6,7 @@ var scHotReboot = require('sc-hot-reboot');
 var workerControllerPath = argv.wc || process.env.SOCKETCLUSTER_WORKER_CONTROLLER;
 var brokerControllerPath = argv.bc || process.env.SOCKETCLUSTER_BROKER_CONTROLLER;
 var initControllerPath = argv.ic || process.env.SOCKETCLUSTER_INIT_CONTROLLER;
-var env = process.env.ENV || 'dev';
+var environment = process.env.ENV || 'dev';
 
 var options = {
   workers: Number(argv.w) || Number(process.env.SOCKETCLUSTER_WORKERS) || 1,
@@ -25,7 +25,8 @@ var options = {
   clusterStateServerConnectTimeout: Number(process.env.SCC_STATE_SERVER_CONNECT_TIMEOUT) || null,
   clusterStateServerAckTimeout: Number(process.env.SCC_STATE_SERVER_ACK_TIMEOUT) || null,
   clusterStateServerReconnectRandomness: Number(process.env.SCC_STATE_SERVER_RECONNECT_RANDOMNESS) || null,
-  crashWorkerOnError: argv['auto-reboot'] != false
+  crashWorkerOnError: argv['auto-reboot'] != false,
+  environment: environment
 };
 
 var SOCKETCLUSTER_OPTIONS;
@@ -50,7 +51,7 @@ var start = function () {
     masterController.run(socketCluster);
   }
 
-  if (env == 'dev') {
+  if (environment == 'dev') {
     // This will cause SC workers to reboot when code changes anywhere in the app directory.
     // The second options argument here is passed directly to chokidar.
     // See https://github.com/paulmillr/chokidar#api for details.
