@@ -17,3 +17,5 @@ spec:
         env:
         - name: SCC_STATE_SERVER_HOST
           value: scc-state
+        - name: ENV
+          value: prod
