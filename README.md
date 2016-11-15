@@ -25,62 +25,16 @@ For this reason, we have introduced the concept of 'Custom Codecs' - Since v5.0.
 
 Search for 'setCodecEngine' in http://socketcluster.io/#!/docs/api-scserver and 'codecEngine' in http://socketcluster.io/#!/docs/api-socketcluster-client for more details.
 
-**29 July 2016** (v5.0.0)
-
-### Introducing SCC (on Kubernetes)
-
-- You need Node.js version >= 6.x.x to run SC version 5.x.x as a multi-host cluster.
-
-You can now finally run SocketCluster as a Cluster (SCC) - We have just released a set of images to DockerHub along with some .yaml config files for Kubernetes  (see kubernetes/ directory at the root of this repo). This means that you can now (relatively easily) deploy and scale SocketCluster on up to 1000 machines/nodes running Kubernetes - You just have to upload each .yaml file one by one using `kubectl create -f <service-definition.yaml>` and then add your SSL/TLS key and cert to your provider (see `kubernetes/sc-ingress.yaml`). It's been tested on a Rancher v1.1.0 (http://rancher.com/) Kubernetes cluster (We haven't yet tested on Google Container Engine). The cluster can be automatically scaled up and down (using the `kubectl scale` command) and the channels will be re-sharded automatically across available nodes.
-
-SCC is made up of 4 different services which can be scaled independently. We will add more documentation in the near future on how to get started.
-Also we will add information on how to extend SCC with your own code to you can build entire, highly scalable apps on top of it (without having to learn about distributed systems).
-
-What use cases are SCC built for?
-
-SCC differs from existing pub/sub systems and message queues in the following ways:
-
-1. SCC is primarily intended as a frontend/web facing realtime service/framework - This in itself makes it quite different from most realtime pub/sub and MQ systems like
-RabbitMQ, NSQ, Kafka and Redis which are mostly intended for backend use. That said, you CAN use SC as a backend-only system if you like.
-
-2. RabbitMQ, NSQ, Kafka are optimized for dealing with **predefined** realtime queues/channels with very high throughput but they're not very good at handling high-churn. SCC is designed to handle channel churn - It can create and destroy channels dynamically at a rate of about 10K channels per second per process (and scaled linearly accross multiple nodes). Each SC channel can handle about 20K messages per second (this is much lower than what you could handle per channel/queue with Kafka for example). So basically, it's good if you want to have a system where you have millions of users who just create and destroy millions of unique channels on the fly as they navigate through an app (for example).
-
-3. SCC is a framework; from the beginning, it was designed so that you could add your own middleware and business logic... Ultimately, we want SCC to replace the need for 'Backend as a Service'.
-
-Note that we have plans to offer a hosted Kubernetes platform (built on top of Rancher) - Where you will be able to easily deploy your SCC apps to Kubernetes running on your own infrastructure of choice (including Amazon EC2 and custom infrastructure). If this sounds interesting to you, please sign up to https://baasil.io/ - We will email you when it's ready.
-
-### µWebSockets
-
-µWS has been bundled with SC as an optional WebSocket server for a few months now. Based on our testing, we found µWS to be several times faster than the WS module.
-As of v5.0.0 - We have made µWS our default WebSocket server engine. We still bundle the old WS module for backwards compatibility with older systems - You can roll back to the WS module by setting the `wsEngine` option of SocketCluster to `'ws'`. This switch to µWS shouldn't affect any existing code that you have (it has already been tested in production for several months by many users of SC) but it's important to be aware of this change.
-
-**22 July 2016** (v4.7.0)
-
-- Since the Node.js domain module is now deprecated, we have switched to using our own sc-domain module which uses Promises to capture async errors.
-The sc-domain module doesn't behave exactly like the Node.js domain module though; the main difference is that it does not capture unhandled + nested 'error' events (it only captures thrown errors including those thrown asynchronously). This means that you now have to be more careful about handling all your 'error' events - SC's default behavior for handling uncaught error events is to crash and respawn the affected process - This is the approach recommended by the Node.js core team.
-
-**16 January 2016** (v4.2.0)
-
-- The schedulingPolicy option (http://socketcluster.io/#!/docs/api-socketcluster) is now 'rr' by default (except on Windows) - After doing some stress testing on large 8-core Linux EC2 instances, the 'rr' policy turned out to be much better at distributing load across multiple CPU cores. The downside of the 'rr' policy is that all new connection fds pass through
-a central master process but that process turned out to be extremely efficient. It's not a perfect solution but it's much better than letting the Linux OS handle it.
-
 ## Introduction
 
 SocketCluster is a fast, highly scalable HTTP + realtime server engine which lets you build multi-process
 realtime servers that make use of all CPU cores on a machine/instance.
 It removes the limitations of having to run your Node.js server as a single thread and makes your backend
-resilient by automatically recovering from worker crashes and aggregating errors into a central log.
+resilient by automatically recovering from worker crashes and aggregating errors into a central log on each host.
+SC can also auto-scale across multiple hosts on top of Kubernetes; see SCC guide: https://github.com/SocketCluster/socketcluster/blob/master/scc-guide.md.
 
 Follow the project on Twitter: https://twitter.com/SocketCluster
 Subscribe for updates: http://socketcluster.launchrock.com/
-
-## Memory leak profile
-
-SocketCluster has been tested for memory leaks.
-The last full memory profiling was done on SocketCluster v0.9.17 (Node.js v0.10.28) and included checks on worker and broker processes.
-
-No memory leaks were detected when using the latest Node.js version.
-Note that leaks were found when using Node.js versions below v0.10.22 - This is probably the Node.js 'Walmart' memory leak - Not a SocketCluster issue.
 
 ## Main Contributors
 
