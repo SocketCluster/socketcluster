@@ -104,6 +104,8 @@ SocketCluster.prototype._init = function (options) {
     defaultWorkerDebugPort: 5858,
     defaultBrokerDebugPort: 6858,
     httpServerModule: null,
+    environment: 'dev',
+    killMasterOnSignal: false,
     wsEngine: 'uws',
     brokerEngine: 'sc-broker-cluster'
   };
@@ -465,9 +467,19 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
   if (!this._active) {
     if (this.options.rebootOnSignal) {
       process.on('SIGUSR2', function () {
-        var warning = 'Master received SIGUSR2 signal - Shutting down all workers in accordance with processTermTimeout';
+        var warning;
+        var killOptions = {};
+        if (self.options.environment == 'dev') {
+          warning = 'Master received SIGUSR2 signal - Shutting down all workers immediately';
+          killOptions.immediate = true;
+        } else {
+          warning = 'Master received SIGUSR2 signal - Shutting down all workers in accordance with processTermTimeout';
+        }
         self.warningHandler(warning, {type: 'master'});
-        self.killWorkers();
+        self.killWorkers(killOptions);
+        if (self.options.killMasterOnSignal) {
+          process.exit();
+        }
       });
     }
 
@@ -594,6 +606,7 @@ SocketCluster.prototype._logDeploymentDetails = function () {
   if (this.options.logLevel > 0) {
     console.log('   ' + this.colorText('[Active]', 'green') + ' SocketCluster started');
     console.log('            Version: ' + pkg.version);
+    console.log('            Environment: ' + this.options.environment);
     console.log('            WebSocket engine: ' + this.options.wsEngine);
     console.log('            Port: ' + this.options.port);
     console.log('            Master PID: ' + process.pid);
