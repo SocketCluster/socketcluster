@@ -4,6 +4,7 @@ var serveStatic = require('serve-static');
 var path = require('path');
 var express = require('express');
 var morgan = require('morgan');
+var healthChecker = require('sc-framework-health-check');
 
 module.exports.run = function (worker) {
   console.log('   >> Worker PID:', process.pid);
@@ -20,6 +21,9 @@ module.exports.run = function (worker) {
     app.use(morgan('dev'));
   }
   app.use(serveStatic(path.resolve(__dirname, 'public')));
+
+  // Add GET /health-check express route
+  healthChecker.attach(worker, app);
 
   httpServer.on('request', app);
 
