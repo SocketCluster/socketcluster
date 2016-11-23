@@ -11,6 +11,12 @@ spec:
     spec:
       containers:
       - name: sc-cluster-state-server
-        image: socketcluster/sc-cluster-state-server:v1.0.3
+        image: socketcluster/sc-cluster-state-server:v1.1.1
         ports:
         - containerPort: 7777
+        livenessProbe:
+          httpGet:
+            path: /health-check
+            port: 7777
+          initialDelaySeconds: 15
+          timeoutSeconds: 5

@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
       - name: socketcluster
-        image: socketcluster/socketcluster:v5.0.22
+        image: socketcluster/socketcluster:v5.0.25
         ports:
         - containerPort: 8000
         env:
@@ -19,3 +19,9 @@ spec:
           value: scc-state
         - name: ENV
           value: prod
+        livenessProbe:
+          httpGet:
+            path: /health-check
+            port: 8000
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
