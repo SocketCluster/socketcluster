@@ -27,8 +27,8 @@ An emitted event is a simple JSON string with this format:
 
   // Each emitted event can have call ID (if specified, it needs to be unique for the life of the
   // client session) - You can use UUID strings, but for efficiency, we recommend using
-  // a number starting a 1 and incrementing that it with each event sent.
-  // For efficiency, you only need to specify the cid if you expect a response (rid) from
+  // a number starting a 1 and incrementing it with each event sent.
+  // For additional efficiency, you only need to specify the cid if you expect a response (rid) from
   // the other side of the connection.
   cid: 11
 }
