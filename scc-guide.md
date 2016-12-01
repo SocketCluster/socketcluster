@@ -72,7 +72,7 @@ SCC_STATE_SERVER_HOST='127.0.0.1' SOCKETCLUSTER_PORT='8000' node server
 You can add a second frontend-facing server by running (this time running on port 8001):
 
 ```
-SCC_STATE_SERVER_HOST='127.0.0.1' SOCKETCLUSTER_PORT='8000' node server
+SCC_STATE_SERVER_HOST='127.0.0.1' SOCKETCLUSTER_PORT='8001' node server
 ```
 Now if you navigate to either `localhost:8000` or `localhost:8001` in your browser, you should see that your pub/sub channels are shared between the two **socketcluster** instances.
 
