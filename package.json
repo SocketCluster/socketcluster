@@ -39,5 +39,8 @@
     "scalable"
   ],
   "license": "MIT",
-  "readmeFilename": "README.md"
+  "readmeFilename": "README.md",
+  "devDependencies": {
+    "socketcluster-client": "5.x.x"
+  }
 }
