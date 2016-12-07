@@ -19,14 +19,14 @@
     "fs-extra": "0.30.0",
     "inquirer": "1.1.3",
     "minimist": "1.1.0",
-    "node-uuid": "1.4.7",
     "sc-auth": "3.x.x",
     "sc-broker-cluster": "4.x.x",
     "sc-domain": "1.x.x",
     "sc-emitter": "1.x.x",
     "sc-errors": "1.x.x",
     "socketcluster-server": "5.x.x",
-    "uid-number": "0.0.5"
+    "uid-number": "0.0.5",
+    "uuid": "3.0.1"
   },
   "bin": {
     "socketcluster": "bin/cli.js"
