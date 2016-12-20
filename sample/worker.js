@@ -2,7 +2,6 @@ var fs = require('fs');
 var express = require('express');
 var serveStatic = require('serve-static');
 var path = require('path');
-var express = require('express');
 var morgan = require('morgan');
 var healthChecker = require('sc-framework-health-check');
 
