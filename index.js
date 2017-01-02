@@ -104,7 +104,7 @@ SocketCluster.prototype._init = function (options) {
     defaultWorkerDebugPort: 5858,
     defaultBrokerDebugPort: 6858,
     httpServerModule: null,
-    pubSubBatchDuration: 5,
+    pubSubBatchDuration: null,
     environment: 'dev',
     killMasterOnSignal: false,
     wsEngine: 'uws',
