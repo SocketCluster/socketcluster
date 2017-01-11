@@ -633,8 +633,8 @@ SocketCluster.prototype._start = function () {
 
   self._active = false;
 
-  var brokerEngineReady = function () {
-    self._brokerEngine.removeListener('ready', brokerEngineReady);
+  var brokerEngineServerReady = function () {
+    self._brokerEngineServer.removeListener('ready', brokerEngineServerReady);
     self._launchWorkerCluster();
   };
 
@@ -649,7 +649,7 @@ SocketCluster.prototype._start = function () {
       brokerInspectPort = self.options.defaultBrokerDebugPort;
     }
 
-    self._brokerEngine = new self._brokerEngine.Server({
+    self._brokerEngineServer = new self._brokerEngine.Server({
       brokers: self._getBrokerSocketPaths(),
       debug: brokerDebugPort,
       inspect: brokerInspectPort,
@@ -663,7 +663,7 @@ SocketCluster.prototype._start = function () {
       appInitControllerPath: self._paths.appInitControllerPath
     });
 
-    self._brokerEngine.on('error', function (err) {
+    self._brokerEngineServer.on('error', function (err) {
       if (err.brokerPid) {
         self._brokerErrorHandler(err.brokerPid, err);
       } else {
@@ -671,9 +671,9 @@ SocketCluster.prototype._start = function () {
       }
     });
 
-    self._brokerEngine.on('ready', brokerEngineReady);
+    self._brokerEngineServer.on('ready', brokerEngineServerReady);
 
-    self._brokerEngine.on('brokerMessage', function (brokerId, data) {
+    self._brokerEngineServer.on('brokerMessage', function (brokerId, data) {
       self.emit('brokerMessage', brokerId, data);
     });
   };
@@ -690,7 +690,7 @@ SocketCluster.prototype.sendToWorker = function (workerId, data) {
 };
 
 SocketCluster.prototype.sendToBroker = function (brokerId, data) {
-  this._brokerEngine.sendToBroker(brokerId, data);
+  this._brokerEngineServer.sendToBroker(brokerId, data);
 };
 
 // The options object is optional and can have two boolean fields:
@@ -706,8 +706,8 @@ SocketCluster.prototype.killWorkers = function (options) {
 };
 
 SocketCluster.prototype.killBrokers = function () {
-  if (this._brokerEngine) {
-    this._brokerEngine.destroy();
+  if (this._brokerEngineServer) {
+    this._brokerEngineServer.destroy();
   }
 };
 
