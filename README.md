@@ -166,6 +166,10 @@ to use the worker.js file which is inside the volume which we just mounted to th
 
 To contribute; clone this repo, then cd inside it and then run npm install to install all dependencies.
 
+### Donations
+
+If you would like to contribute to the SocketCluster project financially, you can make a Bitcoin donation to the following wallet address: `1FwhDzAAWQHtfhZkNaB7oSwmbSoreHPC6o`
+
 
 ## Change log
 
