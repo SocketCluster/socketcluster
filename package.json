@@ -24,7 +24,7 @@
     "sc-domain": "~1.0.1",
     "sc-emitter": "~1.1.0",
     "sc-errors": "~1.1.0",
-    "socketcluster-server": "~5.7.0",
+    "socketcluster-server": "~5.8.0",
     "uid-number": "0.0.5",
     "uuid": "3.0.1"
   },
