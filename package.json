@@ -24,7 +24,7 @@
     "sc-domain": "~1.0.1",
     "sc-emitter": "~1.1.0",
     "sc-errors": "~1.1.0",
-    "socketcluster-server": "~5.10.0",
+    "socketcluster-server": "~5.10.1",
     "uid-number": "0.0.5",
     "uuid": "3.0.1"
   },
@@ -41,6 +41,6 @@
   "license": "MIT",
   "readmeFilename": "README.md",
   "devDependencies": {
-    "socketcluster-client": "~5.2.5"
+    "socketcluster-client": "~5.3.0"
   }
 }
