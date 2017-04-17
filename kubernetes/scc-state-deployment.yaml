@@ -10,8 +10,8 @@ spec:
         app: scc-state
     spec:
       containers:
-      - name: sc-cluster-state-server
-        image: socketcluster/sc-cluster-state-server:v1.1.2
+      - name: scc-state
+        image: socketcluster/scc-state:v1.2.0
         ports:
         - containerPort: 7777
         livenessProbe:

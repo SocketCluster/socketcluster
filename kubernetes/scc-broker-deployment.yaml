@@ -10,8 +10,8 @@ spec:
         app: scc-broker
     spec:
       containers:
-      - name: sc-cluster-broker-server
-        image: socketcluster/sc-cluster-broker-server:v1.2.1
+      - name: scc-broker
+        image: socketcluster/scc-broker:v1.3.0
         ports:
         - containerPort: 8888
         env:

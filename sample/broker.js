@@ -1,4 +1,4 @@
-var scClusterBrokerClient = require('sc-cluster-broker-client');
+var scClusterBrokerClient = require('scc-broker-client');
 
 module.exports.run = function (broker) {
   console.log('   >> Broker PID:', process.pid);

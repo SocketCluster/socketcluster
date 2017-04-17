@@ -6,20 +6,20 @@ SCC is designed to scale linearly and is optimized for running on Kubernetes but
 SCC is made up of the following services:
 
 - socketcluster https://github.com/SocketCluster/socketcluster
-- sc-cluster-broker-server https://github.com/SocketCluster/sc-cluster-broker-server
-- sc-cluster-state-server https://github.com/SocketCluster/sc-cluster-state-server
+- scc-broker https://github.com/SocketCluster/scc-broker
+- scc-state https://github.com/SocketCluster/scc-state
 - sc-ingress (Kubernetes only)
 
 ## How it works
 
 The **socketcluster** service can be made up of any number of regular SocketCluster instances - The main difference between running **socketcluster** as a single instance vs running it as a cluster is
-that in cluster mode, you need to point each **socketcluster** instance to a working `sc-cluster-state-server` (state server) instance. Note that when you run **socketcluster** in this mode and the state server goes down, the **socketcluster** instance will keep trying to reconnect to the state server (and you might get some `Socket hung Up` errors until the state server becomes available again).
+that in cluster mode, you need to point each **socketcluster** instance to a working `scc-state` (state server) instance. Note that when you run **socketcluster** in this mode and the state server goes down, the **socketcluster** instance will keep trying to reconnect to the state server (and you might get some `Socket hung Up` errors until the state server becomes available again).
 
-The **sc-cluster-broker-server** (scc-broker) service can be made up of any number of **sc-cluster-broker-server** instances - This is a special backend-only service which is designed to broker
-messages between multiple frontend-facing **socketcluster** instances. All the pub/sub channels in your entire system will be sharded evenly across available **sc-cluster-broker-server** instances.
-Just like with the **socketcluster** instances above, each **sc-cluster-broker-server** instance needs to point to a state server in order to work.
+The **scc-broker** (scc-broker) service can be made up of any number of **scc-broker** instances - This is a special backend-only service which is designed to broker
+messages between multiple frontend-facing **socketcluster** instances. All the pub/sub channels in your entire system will be sharded evenly across available **scc-broker** instances.
+Just like with the **socketcluster** instances above, each **scc-broker** instance needs to point to a state server in order to work.
 
-The **sc-cluster-state-server** (scc-state) service is made up of a single instance - Its job is to dispatch the state of the cluster to all interested services to allow them to reshard themselves. The **sc-cluster-state-server** instance will notify all frontend **socketcluster** instances whenever new backend **sc-cluster-broker-server** joins the cluster. This allows **socketcluster** instances to rebalance their pub/sub channels evenly across available brokers whenever a new **sc-cluster-broker-server** instance joins the cluster.
+The **scc-state** (scc-state) service is made up of a single instance - Its job is to dispatch the state of the cluster to all interested services to allow them to reshard themselves. The **scc-state** instance will notify all frontend **socketcluster** instances whenever new backend **scc-broker** joins the cluster. This allows **socketcluster** instances to rebalance their pub/sub channels evenly across available brokers whenever a new **scc-broker** instance joins the cluster.
 
 
 ## Running on Kubernetes
@@ -51,13 +51,13 @@ For simplicity, we will show you how to run everything on your localhost (`127.0
 First, you need to download each repository to your machine(s) (E.g. `git clone`).
 Then inside each repo, you should run `npm install` without any arguments to install dependencies.
 
-Then you should launch the state server first by going inside your local **sc-cluster-state-server** repo and then running the command:
+Then you should launch the state server first by going inside your local **scc-state** repo and then running the command:
 
 ```
 node server
 ```
 
-Next, to launch a broker, you should navigate to your **sc-cluster-broker-server** repo and run the command:
+Next, to launch a broker, you should navigate to your **scc-broker** repo and run the command:
 
 ```
 SCC_STATE_SERVER_HOST='127.0.0.1' SOCKETCLUSTER_SERVER_PORT='8888' node server
@@ -83,11 +83,11 @@ When running multiples instances of any service on the same machine, make sure t
 
 ## Notes
 
-You should only ever run a single **sc-cluster-state-server** per cluster - This is currently a single point of failure (we plan to improve it at some point).
+You should only ever run a single **scc-state** per cluster - This is currently a single point of failure (we plan to improve it at some point).
 For this reason, it is recommended that you run this instance inside your datacenter/AWS availability zone and do not expose it to the public internet.
 
-The **sc-cluster-state-server** instance does not handle any pub/sub messages and so it should not affect scalability of your cluster (it will scale linearly).
+The **scc-state** instance does not handle any pub/sub messages and so it should not affect scalability of your cluster (it will scale linearly).
 While you cannot currently scale your state server instances horizontally, it can easily be scaled vertically across multiple CPU cores.
-You can have approximately 3000 machines in your cluster for every CPU core of **sc-cluster-state-server** - So if you run your state server on a 16-core machine, then your cluster should be able to support up to 48K hosts - Which is far above the Kubernetes limit of 1K hosts.
+You can have approximately 3000 machines in your cluster for every CPU core of **scc-state** - So if you run your state server on a 16-core machine, then your cluster should be able to support up to 48K hosts - Which is far above the Kubernetes limit of 1K hosts.
 
 Note that you can launch the services in any order you like but if your state server crashes, you may get `Socket hung up` errors on other instances (while they keep trying to reconnect).
