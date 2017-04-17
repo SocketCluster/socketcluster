@@ -15,11 +15,11 @@ SCC is made up of the following services:
 The **socketcluster** service can be made up of any number of regular SocketCluster instances - The main difference between running **socketcluster** as a single instance vs running it as a cluster is
 that in cluster mode, you need to point each **socketcluster** instance to a working `scc-state` (state server) instance. Note that when you run **socketcluster** in this mode and the state server goes down, the **socketcluster** instance will keep trying to reconnect to the state server (and you might get some `Socket hung Up` errors until the state server becomes available again).
 
-The **scc-broker** (scc-broker) service can be made up of any number of **scc-broker** instances - This is a special backend-only service which is designed to broker
+The **scc-broker** service can be made up of any number of **scc-broker** instances - This is a special backend-only service which is designed to broker
 messages between multiple frontend-facing **socketcluster** instances. All the pub/sub channels in your entire system will be sharded evenly across available **scc-broker** instances.
 Just like with the **socketcluster** instances above, each **scc-broker** instance needs to point to a state server in order to work.
 
-The **scc-state** (scc-state) service is made up of a single instance - Its job is to dispatch the state of the cluster to all interested services to allow them to reshard themselves. The **scc-state** instance will notify all frontend **socketcluster** instances whenever new backend **scc-broker** joins the cluster. This allows **socketcluster** instances to rebalance their pub/sub channels evenly across available brokers whenever a new **scc-broker** instance joins the cluster.
+The **scc-state** service is made up of a single instance - Its job is to dispatch the state of the cluster to all interested services to allow them to reshard themselves. The **scc-state** instance will notify all frontend **socketcluster** instances whenever new backend **scc-broker** joins the cluster. This allows **socketcluster** instances to rebalance their pub/sub channels evenly across available brokers whenever a new **scc-broker** instance joins the cluster.
 
 
 ## Running on Kubernetes
