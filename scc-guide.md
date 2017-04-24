@@ -8,7 +8,7 @@ SCC is made up of the following services:
 - socketcluster https://github.com/SocketCluster/socketcluster
 - scc-broker https://github.com/SocketCluster/scc-broker
 - scc-state https://github.com/SocketCluster/scc-state
-- sc-ingress (Kubernetes only)
+- scc-ingress (Kubernetes only)
 
 ## How it works
 
