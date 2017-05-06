@@ -21,6 +21,7 @@ Just like with the **socketcluster** instances above, each **scc-broker** instan
 
 The **scc-state** service is made up of a single instance - Its job is to dispatch the state of the cluster to all interested services to allow them to reshard themselves. The **scc-state** instance will notify all frontend **socketcluster** instances whenever new backend **scc-broker** joins the cluster. This allows **socketcluster** instances to rebalance their pub/sub channels evenly across available brokers whenever a new **scc-broker** instance joins the cluster.
 
+<img alt="SCC diagram" src="assets/scc-diagram.jpg" title="SCC diagram" />
 
 ## Running on Kubernetes
 
