@@ -19,7 +19,9 @@ The **scc-broker** service can be made up of any number of **scc-broker** instan
 messages between multiple frontend-facing **socketcluster** instances. All the pub/sub channels in your entire system will be sharded evenly across available **scc-broker** instances.
 Just like with the **socketcluster** instances above, each **scc-broker** instance needs to point to a state server in order to work.
 
-The **scc-state** service is made up of a single instance - Its job is to dispatch the state of the cluster to all interested services to allow them to reshard themselves. The **scc-state** instance will notify all frontend **socketcluster** instances whenever new backend **scc-broker** joins the cluster. This allows **socketcluster** instances to rebalance their pub/sub channels evenly across available brokers whenever a new **scc-broker** instance joins the cluster.
+The **scc-state** service is made up of a single instance - Its job is to dispatch the state of the cluster to all interested services to allow them to reshard themselves. The **scc-state** instance will notify all frontend **socketcluster** instances whenever a new backend **scc-broker** joins the cluster. This allows **socketcluster** instances to rebalance their pub/sub channels evenly across available brokers whenever a new **scc-broker** instance joins the cluster.
+
+An SCC setup across multiple hosts may look like this (though the quantity of each instance type is likely to vary):
 
 <img alt="SCC diagram" src="assets/scc-diagram.jpg" title="SCC diagram" />
 
