@@ -13,11 +13,11 @@
     "express": "4.14.0",
     "minimist": "1.1.0",
     "morgan": "1.7.0",
-    "scc-broker-client": "~1.1.1",
+    "scc-broker-client": "~1.2.1",
     "sc-framework-health-check": "~1.0.0",
     "sc-hot-reboot": "~1.0.0",
     "serve-static": "1.11.2",
-    "socketcluster": "~5.10.2",
+    "socketcluster": "~5.11.0",
     "socketcluster-client": "~5.3.1"
   },
   "keywords": [

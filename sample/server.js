@@ -22,6 +22,8 @@ var options = {
   clusterStateServerHost: argv.cssh || process.env.SCC_STATE_SERVER_HOST || null,
   clusterStateServerPort: process.env.SCC_STATE_SERVER_PORT || null,
   clusterAuthKey: process.env.SCC_AUTH_KEY || null,
+  clusterInstanceIp: process.env.SCC_INSTANCE_IP || null,
+  clusterInstanceIpFamily: process.env.SCC_INSTANCE_IP_FAMILY || null,
   clusterStateServerConnectTimeout: Number(process.env.SCC_STATE_SERVER_CONNECT_TIMEOUT) || null,
   clusterStateServerAckTimeout: Number(process.env.SCC_STATE_SERVER_ACK_TIMEOUT) || null,
   clusterStateServerReconnectRandomness: Number(process.env.SCC_STATE_SERVER_RECONNECT_RANDOMNESS) || null,

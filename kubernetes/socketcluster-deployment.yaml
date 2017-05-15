@@ -11,12 +11,16 @@ spec:
     spec:
       containers:
       - name: socketcluster
-        image: socketcluster/socketcluster:v5.10.2
+        image: socketcluster/socketcluster:v5.11.0
         ports:
         - containerPort: 8000
         env:
         - name: SCC_STATE_SERVER_HOST
           value: scc-state
+        - name: SCC_INSTANCE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
         - name: ENV
           value: prod
         livenessProbe:
