@@ -90,7 +90,5 @@ You should only ever run a single **scc-state** per cluster - This is currently 
 For this reason, it is recommended that you run this instance inside your datacenter/AWS availability zone and do not expose it to the public internet.
 
 The **scc-state** instance does not handle any pub/sub messages and so it should not affect scalability of your cluster (it will scale linearly).
-While you cannot currently scale your state server instances horizontally, it can easily be scaled vertically across multiple CPU cores.
-You can have approximately 3000 machines in your cluster for every CPU core of **scc-state** - So if you run your state server on a 16-core machine, then your cluster should be able to support up to 48K hosts - Which is far above the Kubernetes limit of 1K hosts.
 
 Note that you can launch the services in any order you like but if your state server crashes, you may get `Socket hung up` errors on other instances (while they keep trying to reconnect).
