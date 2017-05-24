@@ -51,7 +51,7 @@ If you want to try SCC on K8s and you do not already have a K8s environment/clus
 Note that you can use the baasil CLI tool (https://www.npmjs.com/package/baasil) to deploy your SocketCluster service/app to any Rancher/Kubernetes environment, you just have to modify the `~/.kube/config` file on your local machine to hold the configs for your own Rancher control panel (instead of the one hosted on Baasil.io).
 It is strongly recommended that you use Kubernetes with Rancher for consistency. See http://rancher.com/ for more details.
 
-To deploy to your own Rancher/K8s cluster and to run your service/app locally inside containers, follow the guide linked from this page (under `Installation`): https://github.com/SocketCluster/baasil-cli
+To deploy to your own Rancher/K8s cluster and to run your service/app locally inside containers, follow the guides linked from this page (under `Installation`): https://github.com/SocketCluster/baasil-cli
 
 ## Running using Node.js directly
 
