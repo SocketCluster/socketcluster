@@ -51,10 +51,17 @@ If you want to try SCC on K8s, the simplest way to get started is to sign up to 
 You can also run SCC using only Node.js version >= 6.x.x.
 For simplicity, we will show you how to run everything on your localhost (`127.0.0.1`), but in practice, you will need to change `127.0.0.1` to an appropriate IP, host name or domain name.
 
-First, you need to download each repository to your machine(s) (E.g. `git clone`).
+First, you need to download each of these repositories to your machine(s):
+
+- `git clone https://github.com/SocketCluster/scc-broker`
+- `git clone https://github.com/SocketCluster/scc-state`
+
 Then inside each repo, you should run `npm install` without any arguments to install dependencies.
 
-Then you should launch the state server first by going inside your local **scc-state** repo and then running the command:
+Then you need to setup a new SocketCluster project to use as your user-facing instance. For info about how to setup a SocketCluster project, see this page: http://socketcluster.io/#!/docs/getting-started
+
+Once you have the two repos mentioned above and your SocketCluster project setup, you should launch the state server first by
+going inside your local **scc-state** repo and then running the command:
 
 ```
 node server
@@ -66,7 +73,7 @@ Next, to launch a broker, you should navigate to your **scc-broker** repo and ru
 SCC_STATE_SERVER_HOST='127.0.0.1' SOCKETCLUSTER_SERVER_PORT='8888' node server
 ```
 
-Finally, to run a frontend-facing SocketCluster instance, you can navigate to your **socketcluster** repo and run:
+Finally, to run a frontend-facing SocketCluster instance, you can navigate to your socketcluster project directory and run:
 
 ```
 SCC_STATE_SERVER_HOST='127.0.0.1' SOCKETCLUSTER_PORT='8000' node server
