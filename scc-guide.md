@@ -60,7 +60,7 @@ Then inside each repo, you should run `npm install` without any arguments to ins
 
 Then you need to setup a new SocketCluster project to use as your user-facing instance. For info about how to setup a SocketCluster project, see this page: http://socketcluster.io/#!/docs/getting-started
 
-Once you have the two repos mentioned above and your SocketCluster project setup, you should launch the state server first by
+Once you have the two repos mentioned earlier and your SocketCluster project setup, you should launch the state server first by
 going inside your local **scc-state** repo and then running the command:
 
 ```
