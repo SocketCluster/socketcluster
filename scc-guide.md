@@ -13,7 +13,7 @@ SCC is made up of the following services:
 ## How it works
 
 The **socketcluster** service can be made up of any number of regular SocketCluster instances - The main difference between running **socketcluster** as a single instance vs running it as a cluster is
-that in cluster mode, you need to point each **socketcluster** instance to a working `scc-state` (state server) instance. Note that when you run **socketcluster** in this mode and the state server goes down, the **socketcluster** instance will keep trying to reconnect to the state server (and you might get some `Socket hung Up` errors until the state server becomes available again).
+that in cluster mode, you need to point each **socketcluster** instance to a working `scc-state` (state server) instance.
 
 The **scc-broker** service can be made up of any number of **scc-broker** instances - This is a special backend-only service which is designed to broker
 messages between multiple frontend-facing **socketcluster** instances. All the pub/sub channels in your entire system will be sharded evenly across available **scc-broker** instances.
