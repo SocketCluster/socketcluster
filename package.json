@@ -23,7 +23,7 @@
     "sc-broker-cluster": "~4.0.0",
     "sc-domain": "~1.0.1",
     "sc-emitter": "~1.1.0",
-    "sc-errors": "~1.2.0",
+    "sc-errors": "~1.2.1",
     "socketcluster-server": "~5.13.0",
     "uid-number": "0.0.5",
     "uuid": "3.0.1"
