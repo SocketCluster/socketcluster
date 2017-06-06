@@ -17,8 +17,8 @@
     "sc-framework-health-check": "~1.0.0",
     "sc-hot-reboot": "~1.0.0",
     "serve-static": "1.11.2",
-    "socketcluster": "~5.13.2",
-    "socketcluster-client": "~5.5.0"
+    "socketcluster": "~5.13.3",
+    "socketcluster-client": "~5.5.1"
   },
   "keywords": [
     "websocket",
