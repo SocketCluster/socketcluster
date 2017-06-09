@@ -17,6 +17,10 @@ spec:
         env:
         - name: SCC_STATE_SERVER_HOST
           value: scc-state
+        - name: SOCKETCLUSTER_WORKERS
+          value: "1"
+        - name: SOCKETCLUSTER_BROKERS
+          value: "1"
         - name: SCC_INSTANCE_IP
           valueFrom:
             fieldRef:
