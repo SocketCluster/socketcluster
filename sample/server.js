@@ -45,10 +45,11 @@ for (var i in SOCKETCLUSTER_OPTIONS) {
   }
 }
 
+var optionsControllerPath = argv.oc || process.env.SOCKETCLUSTER_OPTIONS_CONTROLLER;
 var masterControllerPath = argv.mc || process.env.SOCKETCLUSTER_MASTER_CONTROLLER;
 
-var start = function () {
-  var socketCluster = new SocketCluster(options);
+var launch = function (startOptions) {
+  var socketCluster = new SocketCluster(startOptions);
 
   if (masterControllerPath) {
     var masterController = require(masterControllerPath);
@@ -64,6 +65,15 @@ var start = function () {
       cwd: __dirname,
       ignored: ['public', 'node_modules', 'README.md', 'Dockerfile', 'server.js', 'broker.js', /[\/\\]\./, '*.log']
     });
+  }
+};
+
+var start = function () {
+  if (optionsControllerPath) {
+    var optionsController = require(optionsControllerPath);
+    optionsController.run(options, launch);
+  } else {
+    launch(options);
   }
 };
 
@@ -90,6 +100,7 @@ if (workerControllerPath) {
     });
   };
   var filesReadyPromises = [
+    startWhenFileIsReady(optionsControllerPath),
     startWhenFileIsReady(masterControllerPath),
     startWhenFileIsReady(workerControllerPath),
     startWhenFileIsReady(brokerControllerPath),
