@@ -20,7 +20,7 @@
     "inquirer": "1.1.3",
     "minimist": "1.1.0",
     "sc-auth": "~4.1.0",
-    "sc-broker-cluster": "~4.0.1",
+    "sc-broker-cluster": "~4.0.3",
     "sc-domain": "~1.0.1",
     "sc-emitter": "~1.1.0",
     "sc-errors": "~1.3.0",

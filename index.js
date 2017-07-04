@@ -35,6 +35,8 @@ var SocketCluster = function (options) {
   self.EVENT_READY = 'ready';
   self.EVENT_WORKER_START = 'workerStart';
   self.EVENT_WORKER_EXIT = 'workerExit';
+  self.EVENT_BROKER_START = 'brokerStart';
+  self.EVENT_BROKER_EXIT = 'brokerExit';
 
   self._errorAnnotations = {
     'EADDRINUSE': 'Failed to bind to a port because it was already used by another process.'
@@ -677,6 +679,14 @@ SocketCluster.prototype._start = function () {
     });
 
     self._brokerEngineServer.on('ready', brokerEngineServerReady);
+
+    self._brokerEngineServer.on('brokerStart', function (brokerInfo) {
+      self.emit(self.EVENT_BROKER_START, brokerInfo);
+    });
+
+    self._brokerEngineServer.on('brokerExit', function (brokerInfo) {
+      self.emit(self.EVENT_BROKER_EXIT, brokerInfo);
+    });
 
     self._brokerEngineServer.on('brokerMessage', function (brokerId, data) {
       self.emit('brokerMessage', brokerId, data);
