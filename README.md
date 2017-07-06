@@ -173,7 +173,7 @@ If you would like to contribute to the SocketCluster project financially, you ca
 
 ## Change log
 
-**23 September 2016** (v5.0.15)
+See GitHub releases for changes.
 
 ### Custom Codecs
 
