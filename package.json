@@ -41,6 +41,6 @@
   "license": "MIT",
   "readmeFilename": "README.md",
   "devDependencies": {
-    "socketcluster-client": "~5.5.2"
+    "socketcluster-client": "~6.1.1"
   }
 }
