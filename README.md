@@ -3,8 +3,6 @@ SocketCluster
 
 [![Join the chat at https://gitter.im/SocketCluster/socketcluster](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/SocketCluster/socketcluster?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-[![NPM](https://nodei.co/npm/socketcluster.png?stars&downloads&downloadRank)](https://nodei.co/npm/socketcluster/)
-
 [![SocketCluster logo](https://raw.github.com/SocketCluster/socketcluster/master/assets/logo.png)](http://socketcluster.io/)
 
 Complete documentation available at: http://socketcluster.io/
