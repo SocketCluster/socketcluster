@@ -17,7 +17,7 @@
     "sc-framework-health-check": "~1.0.0",
     "sc-hot-reboot": "~1.0.0",
     "serve-static": "1.11.2",
-    "socketcluster": "~6.2.2",
+    "socketcluster": "~6.2.3",
     "socketcluster-client": "~6.2.2"
   },
   "keywords": [
