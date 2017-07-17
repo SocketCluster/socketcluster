@@ -23,9 +23,9 @@ var socketClusterSingleton = null;
 var SocketCluster = function (options) {
   var self = this;
   if (socketClusterSingleton) {
-    var doubleInstantiationError = new Error('The SocketCluster master object is a singleton - It can only be instantiated once per process.');
-    doubleInstantiationError.name = 'DoubleInstantiationError';
-    throw doubleInstantiationError;
+    var errorMessage = 'The SocketCluster master object is a singleton; ' +
+      'it can only be instantiated once per process';
+    throw new InvalidActionError(errorMessage);
   }
   socketClusterSingleton = self;
 
