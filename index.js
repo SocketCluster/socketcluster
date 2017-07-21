@@ -37,6 +37,9 @@ var SocketCluster = function (options) {
   self.EVENT_WORKER_EXIT = 'workerExit';
   self.EVENT_BROKER_START = 'brokerStart';
   self.EVENT_BROKER_EXIT = 'brokerExit';
+  self.EVENT_WORKER_CLUSTER_START = 'workerClusterStart';
+  self.EVENT_WORKER_CLUSTER_READY = 'workerClusterReady';
+  self.EVENT_WORKER_CLUSTER_EXIT = 'workerClusterExit';
 
   self._errorAnnotations = {
     'EADDRINUSE': 'Failed to bind to a port because it was already used by another process.'
@@ -116,7 +119,7 @@ SocketCluster.prototype._init = function (options) {
   };
 
   self._active = false;
-  self._workerCluster = null;
+  self.workerCluster = null;
 
   self._colorCodes = {
     red: 31,
@@ -491,6 +494,12 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
     this._active = true;
     this._logDeploymentDetails();
   }
+
+  var workerClusterInfo = {
+    pid: this.workerCluster.pid,
+    childProcess: this.workerCluster
+  };
+  this.emit(this.EVENT_WORKER_CLUSTER_READY, workerClusterInfo);
 };
 
 SocketCluster.prototype._workerExitHandler = function (workerInfo) {
@@ -504,14 +513,22 @@ SocketCluster.prototype._workerExitHandler = function (workerInfo) {
   this.emit(this.EVENT_WORKER_EXIT, workerInfo);
 };
 
-SocketCluster.prototype._workerStartHandler = function (workerInfo) {
+SocketCluster.prototype._workerStartHandler = function (workerInfo, signal) {
   if (this._active && this.options.logLevel > 0 && workerInfo.respawn) {
     this.log('Worker ' + workerInfo.id + ' was respawned');
   }
   this.emit(this.EVENT_WORKER_START, workerInfo);
 };
 
-SocketCluster.prototype._handleWorkerClusterExit = function (errorCode) {
+SocketCluster.prototype._handleWorkerClusterExit = function (errorCode, signal) {
+  var workerClusterInfo = {
+    pid: this.workerCluster.pid,
+    code: errorCode,
+    signal: signal,
+    childProcess: this.workerCluster
+  };
+  this.emit(this.EVENT_WORKER_CLUSTER_EXIT, workerClusterInfo);
+
   var message = 'workerCluster exited with code: ' + errorCode;
   if (errorCode == 0) {
     this.log(message);
@@ -556,7 +573,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     execOptions.execArgv.push('--inspect=' + inspectPort);
   }
 
-  this._workerCluster = fork(__dirname + '/lib/workercluster.js', process.argv.slice(2), execOptions);
+  this.workerCluster = fork(__dirname + '/lib/workercluster.js', process.argv.slice(2), execOptions);
 
   var workerOpts = this._cloneObject(this.options);
   workerOpts.paths = this._paths;
@@ -580,12 +597,12 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     }
   }
 
-  this._workerCluster.send({
+  this.workerCluster.send({
     type: 'init',
     data: workerOpts
   });
 
-  this._workerCluster.on('message', function workerHandler(m) {
+  this.workerCluster.on('message', function workerHandler(m) {
     if (m.type == 'error') {
       var error = scErrors.hydrateError(m.data.error);
       if (m.data.workerPid) {
@@ -607,7 +624,13 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     }
   });
 
-  this._workerCluster.on('exit', this._handleWorkerClusterExit.bind(this));
+  var workerClusterInfo = {
+    pid: this.workerCluster.pid,
+    childProcess: this.workerCluster
+  };
+  this.emit(this.EVENT_WORKER_CLUSTER_START, workerClusterInfo);
+
+  this.workerCluster.on('exit', this._handleWorkerClusterExit.bind(this));
 };
 
 SocketCluster.prototype._logDeploymentDetails = function () {
@@ -697,7 +720,7 @@ SocketCluster.prototype._start = function () {
 };
 
 SocketCluster.prototype.sendToWorker = function (workerId, data) {
-  this._workerCluster.send({
+  this.workerCluster.send({
     type: 'masterMessage',
     workerId: workerId,
     data: data
@@ -712,8 +735,8 @@ SocketCluster.prototype.sendToBroker = function (brokerId, data) {
 // immediate: Shut down the workers immediately without waiting for termination timeout.
 // killClusterMaster: Shut down the cluster master (load balancer) as well as all the workers.
 SocketCluster.prototype.killWorkers = function (options) {
-  if (this._workerCluster) {
-    this._workerCluster.send({
+  if (this.workerCluster) {
+    this.workerCluster.send({
       type: 'terminate',
       data: options || {}
     });
