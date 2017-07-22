@@ -1,7 +1,9 @@
 var fs = require('fs');
 var argv = require('minimist')(process.argv.slice(2));
+var scErrors = require('sc-errors');
+var TimeoutError = scErrors.TimeoutError;
+
 var SocketCluster = require('socketcluster').SocketCluster;
-var scHotReboot = require('sc-hot-reboot');
 
 var workerControllerPath = argv.wc || process.env.SOCKETCLUSTER_WORKER_CONTROLLER;
 var brokerControllerPath = argv.bc || process.env.SOCKETCLUSTER_BROKER_CONTROLLER;
@@ -33,6 +35,7 @@ var options = {
   environment: environment
 };
 
+var SOCKETCLUSTER_CONTROLLER_BOOT_TIMEOUT = Number(process.env.SOCKETCLUSTER_CONTROLLER_BOOT_TIMEOUT) || 10000;
 var SOCKETCLUSTER_OPTIONS;
 
 if (process.env.SOCKETCLUSTER_OPTIONS) {
@@ -48,22 +51,29 @@ for (var i in SOCKETCLUSTER_OPTIONS) {
 var optionsControllerPath = argv.oc || process.env.SOCKETCLUSTER_OPTIONS_CONTROLLER;
 var masterControllerPath = argv.mc || process.env.SOCKETCLUSTER_MASTER_CONTROLLER;
 
+var fileExists = function (filePath, callback) {
+  fs.access(filePath, fs.constants.F_OK, (err) => {
+    callback(!err);
+  });
+};
+
+var runMasterController = function (socketCluster, filePath) {
+  var masterController = require(filePath);
+  masterController.run(socketCluster);
+};
+
 var launch = function (startOptions) {
   var socketCluster = new SocketCluster(startOptions);
+  var masterController;
 
   if (masterControllerPath) {
-    var masterController = require(masterControllerPath);
-    masterController.run(socketCluster);
-  }
-
-  if (environment == 'dev') {
-    // This will cause SC workers to reboot when code changes anywhere in the app directory.
-    // The second options argument here is passed directly to chokidar.
-    // See https://github.com/paulmillr/chokidar#api for details.
-    console.log(`   !! The sc-hot-reboot plugin is watching for code changes in the ${__dirname} directory`);
-    scHotReboot.attach(socketCluster, {
-      cwd: __dirname,
-      ignored: ['public', 'node_modules', 'README.md', 'Dockerfile', 'server.js', 'broker.js', /[\/\\]\./, '*.log']
+    runMasterController(socketCluster, masterControllerPath);
+  } else {
+    var defaultMasterControllerPath = __dirname + '/master.js';
+    fileExists(defaultMasterControllerPath, (exists) => {
+      if (exists) {
+        runMasterController(socketCluster, defaultMasterControllerPath);
+      }
     });
   }
 };
@@ -78,37 +88,49 @@ var start = function () {
 };
 
 var bootCheckInterval = Number(process.env.SOCKETCLUSTER_BOOT_CHECK_INTERVAL) || 200;
+var bootStartTime = Date.now();
 
-if (workerControllerPath) {
-  // Detect when Docker volumes are ready.
-  var startWhenFileIsReady = (filePath) => {
-    return new Promise((resolve) => {
-      if (!filePath) {
-        resolve();
-        return;
-      }
-      var checkIsReady = () => {
-        fs.exists(filePath, (exists) => {
-          if (exists) {
-            resolve();
+// Detect when Docker volumes are ready.
+var startWhenFileIsReady = (filePath) => {
+  return new Promise((resolve, reject) => {
+    if (!filePath) {
+      resolve();
+      return;
+    }
+    var checkIsReady = () => {
+      var now = Date.now();
+
+      fileExists(filePath, (exists) => {
+        if (exists) {
+          resolve();
+        } else {
+          if (now - bootStartTime >= SOCKETCLUSTER_CONTROLLER_BOOT_TIMEOUT) {
+            var errorMessage = `Could not locate a controller file at path ${filePath} ` +
+              `before SOCKETCLUSTER_CONTROLLER_BOOT_TIMEOUT`;
+            var volumeBootTimeoutError = new TimeoutError(errorMessage);
+            reject(volumeBootTimeoutError);
           } else {
             setTimeout(checkIsReady, bootCheckInterval);
           }
-        });
-      };
-      checkIsReady();
-    });
-  };
-  var filesReadyPromises = [
-    startWhenFileIsReady(optionsControllerPath),
-    startWhenFileIsReady(masterControllerPath),
-    startWhenFileIsReady(workerControllerPath),
-    startWhenFileIsReady(brokerControllerPath),
-    startWhenFileIsReady(initControllerPath)
-  ];
-  Promise.all(filesReadyPromises).then(() => {
-    start();
+        }
+      });
+    };
+    checkIsReady();
   });
-} else {
+};
+
+var filesReadyPromises = [
+  startWhenFileIsReady(optionsControllerPath),
+  startWhenFileIsReady(masterControllerPath),
+  startWhenFileIsReady(workerControllerPath),
+  startWhenFileIsReady(brokerControllerPath),
+  startWhenFileIsReady(initControllerPath)
+];
+Promise.all(filesReadyPromises)
+.then(() => {
   start();
-}
+})
+.catch((err) => {
+  console.error(err.stack);
+  process.exit(1);
+});

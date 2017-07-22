@@ -15,10 +15,19 @@ var commandRawArgs = process.argv.slice(3);
 var arg1 = argv._[1];
 var force = argv.force ? true : false;
 
+var fileExistsSync = function (filePath) {
+  try {
+    fs.accessSync(filePath, fs.constants.F_OK);
+  } catch (err) {
+    return false;
+  }
+  return true;
+};
+
 var parsePackageFile = function (moduleDir) {
   var packageFile = moduleDir + '/package.json';
   try {
-    if (fs.existsSync(packageFile)) {
+    if (fileExistsSync(packageFile)) {
       return JSON.parse(fs.readFileSync(packageFile, {encoding: 'utf8'}));
     }
   } catch (e) {}
@@ -173,7 +182,7 @@ var confirmReplaceSetup = function (confirm) {
 
 if (command == 'create') {
   if (arg1) {
-    if (fs.existsSync(destDir)) {
+    if (fileExistsSync(destDir)) {
       if (force) {
         confirmReplaceSetup(true);
       } else {

@@ -10,8 +10,17 @@ var getTestSocketPath = require('./testsocketpath').getTestSocketPath;
 var scServer = childProcess.fork(__dirname + '/server.js');
 var resultSocketPath = getTestSocketPath();
 
+var fileExistsSync = function (filePath) {
+  try {
+    fs.accessSync(filePath, fs.constants.F_OK);
+  } catch (err) {
+    return false;
+  }
+  return true;
+};
+
 if (process.platform != 'win32') {
-  if (fs.existsSync(resultSocketPath)) {
+  if (fileExistsSync(resultSocketPath)) {
     fs.unlinkSync(resultSocketPath);
   }
 }

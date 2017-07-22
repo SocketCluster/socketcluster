@@ -182,7 +182,7 @@ SocketCluster.prototype._init = function (options) {
   var pathHasher = crypto.createHash('md5');
   pathHasher.update(self._paths.appDirPath, 'utf8');
   var pathHash = pathHasher.digest('hex').substr(0, 10);
-  // Trimp it because some OSes (e.g. OSX) do not like long path names for domain sockets.
+  // Trim it because some OSes (e.g. OSX) do not like long path names for domain sockets.
   var shortAppName = self.options.appName.substr(0, 13);
 
   if (process.platform == 'win32') {
@@ -199,7 +199,7 @@ SocketCluster.prototype._init = function (options) {
       socketParentDir = os.tmpdir() + '/socketcluster/';
       socketDir = socketParentDir + shortAppName + '_' + pathHash + '/';
     }
-    if (fs.existsSync(socketDir)) {
+    if (self._fileExistsSync(socketDir)) {
       try {
         fs.removeSync(socketDir);
       } catch (err) {
@@ -327,6 +327,15 @@ SocketCluster.prototype._init = function (options) {
   } else {
     self._start();
   }
+};
+
+SocketCluster.prototype._fileExistsSync = function (filePath) {
+  try {
+    fs.accessSync(filePath, fs.constants.F_OK);
+  } catch (err) {
+    return false;
+  }
+  return true;
 };
 
 SocketCluster.prototype._getBrokerSocketName = function (brokerId) {
