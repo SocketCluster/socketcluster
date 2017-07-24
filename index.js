@@ -17,6 +17,7 @@ var InvalidActionError = scErrors.InvalidActionError;
 var BrokerError = scErrors.BrokerError;
 var ProcessExitError = scErrors.ProcessExitError;
 var UnknownError = scErrors.UnknownError;
+var decycle = scErrors.decycle;
 
 var socketClusterSingleton = null;
 
@@ -380,59 +381,61 @@ SocketCluster.prototype._logObject = function (obj, objType, time) {
   this.log(logMessage, time);
 };
 
-SocketCluster.prototype.errorHandler = function (err, origin) {
-  if (!(err instanceof Object)) {
-    // If a string (or null...)
+SocketCluster.prototype._convertValueToUnknownError = function (err, origin) {
+  if (err && typeof err == 'object') {
+    // If err has neither a stack or message property
+    // then the error message will be the JSON stringified object.
+    if (!err.message && !err.stack) {
+      var errorMessage;
+      try {
+        errorMessage = JSON.stringify(err);
+      } catch (e1) {
+        try {
+          errorMessage = JSON.stringify(decycle(err));
+        } catch (e2) {
+          errorMessage = '[object NotJSON]';
+        }
+      }
+      err = new UnknownError(errorMessage);
+    }
+  } else if (typeof err == 'function') {
+    var errorMessage = '[function ' + (err.name || 'anonymous') + ']';
+    err = new UnknownError(errorMessage);
+  } else if (typeof err == 'undefined') {
+    err = new UnknownError('undefined');
+  } else if (err === null) {
+    err = new UnknownError('null');
+  } else {
+    // For number, string and boolean types.
     err = new UnknownError(err);
-  } else if (err.stack == null) {
-    err.stack = err.message;
-  }
-  var annotation = this._errorAnnotations[err.code];
-  if (annotation) {
-    err.stack += '\n    ' + this.colorText('!!', 'red') + ' ' + annotation;
   }
 
   err.origin = origin;
   err.time = Date.now();
+
+  return err;
+};
+
+SocketCluster.prototype.errorHandler = function (err, origin) {
+  err = this._convertValueToUnknownError(err, origin);
+
+  var annotation = this._errorAnnotations[err.code];
+  if (annotation && err.stack) {
+    err.stack += '\n    ' + this.colorText('!!', 'red') + ' ' + annotation;
+  }
+
   this.emit(this.EVENT_FAIL, err);
 
   this._logObject(err, 'Error');
 };
 
 SocketCluster.prototype.warningHandler = function (warning, origin) {
-  if (!(warning instanceof Object)) {
-    // If a string (or null...)
-    warning = new UnknownError(warning);
-  } else if (warning.stack == null) {
-    warning.stack = warning.message;
-  }
-  warning.origin = origin;
-  warning.time = Date.now();
+  warning = this._convertValueToUnknownError(warning, origin);
 
   this.emit(this.EVENT_WARNING, warning);
 
   if (this.options.logLevel > 1) {
     this._logObject(warning, 'Warning');
-  }
-};
-
-SocketCluster.prototype.triggerInfo = function (info, origin) {
-  if (this._active) {
-    if (!(origin instanceof Object)) {
-      origin = {
-        type: origin
-      };
-    }
-    var infoData = {
-      origin: origin,
-      message: info,
-      time: Date.now()
-    };
-    this.emit(this.EVENT_WARNING, infoData);
-
-    if (this.options.logLevel > 0) {
-      this._logObject(infoData, 'Info', infoData.time)
-    }
   }
 };
 
@@ -613,11 +616,10 @@ SocketCluster.prototype._launchWorkerCluster = function () {
 
   this.workerCluster.on('message', function workerHandler(m) {
     if (m.type == 'error') {
-      var error = scErrors.hydrateError(m.data.error);
       if (m.data.workerPid) {
-        self._workerErrorHandler(m.data.workerPid, error);
+        self._workerErrorHandler(m.data.workerPid, m.data.error);
       } else {
-        self._workerClusterErrorHandler(m.data.pid, error);
+        self._workerClusterErrorHandler(m.data.pid, m.data.error);
       }
     } else if (m.type == 'warning') {
       var warning = scErrors.hydrateError(m.data.error);
