@@ -730,12 +730,12 @@ SocketCluster.prototype._start = function () {
   launchBrokerEngine();
 };
 
-SocketCluster.prototype.sendToWorker = function (workerId, data) {
+SocketCluster.prototype.sendToWorker = function (workerId, data, res) {
   this.workerCluster.send({
     type: 'masterMessage',
     workerId: workerId,
     data: data
-  });
+  },res);
 };
 
 SocketCluster.prototype.sendToBroker = function (brokerId, data) {
