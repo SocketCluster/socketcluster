@@ -13,6 +13,10 @@
     "type": "git",
     "url": "git://github.com/SocketCluster/socketcluster.git"
   },
+  "scripts":{
+    "test":"npm run test::masterToWorkerCallback",
+    "test::masterToWorkerCallback":"node test/internal/serverToWorker.js"
+  },
   "dependencies": {
     "async": "2.0.0",
     "base64id": "0.1.0",

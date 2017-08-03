@@ -2,11 +2,11 @@ var path = require('path');
 var crypto = require('crypto');
 var EventEmitter = require('events').EventEmitter;
 var domain = require('sc-domain');
+var uuid = require('uuid');
 var fork = require('child_process').fork;
 var os = require('os');
 var fs = require('fs-extra');
 var uidNumber = require('uid-number');
-var uuid = require('uuid');
 var pkg = require('./package.json');
 var argv = require('minimist')(process.argv.slice(2));
 var cluster = require('cluster');
@@ -17,6 +17,7 @@ var InvalidActionError = scErrors.InvalidActionError;
 var BrokerError = scErrors.BrokerError;
 var ProcessExitError = scErrors.ProcessExitError;
 var UnknownError = scErrors.UnknownError;
+var TimeoutError = scErrors.TimeoutError;
 var decycle = scErrors.decycle;
 
 var socketClusterSingleton = null;
@@ -41,6 +42,8 @@ var SocketCluster = function (options) {
   self.EVENT_WORKER_CLUSTER_START = 'workerClusterStart';
   self.EVENT_WORKER_CLUSTER_READY = 'workerClusterReady';
   self.EVENT_WORKER_CLUSTER_EXIT = 'workerClusterExit';
+
+  self._pendingResponseHandlers = {};
 
   self._errorAnnotations = {
     'EADDRINUSE': 'Failed to bind to a port because it was already used by another process.'
@@ -89,6 +92,7 @@ SocketCluster.prototype._init = function (options) {
     logLevel: 2,
     handshakeTimeout: 10000,
     ackTimeout: 10000,
+    ipcAckTimeout: 10000,
     pingInterval: 8000,
     pingTimeout: 20000,
     origins: '*:*',
@@ -147,6 +151,7 @@ SocketCluster.prototype._init = function (options) {
   };
 
   verifyDuration('ackTimeout');
+  verifyDuration('ipcAckTimeout');
   verifyDuration('pingInterval');
   verifyDuration('pingTimeout');
   verifyDuration('workerStatusInterval');
@@ -635,7 +640,18 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     } else if (m.type == 'workerExit') {
       self._workerExitHandler(m.data);
     } else if (m.type == 'workerMessage') {
-      self.emit('workerMessage', m.workerId, m.data);
+      self.emit('workerMessage', m.workerId, m.data, function (data) {
+        if (m.cid) {
+          self.respondToWorker(data, m.workerId, m.cid);
+        }
+      });
+    } else if (m.type == 'workerResponse') {
+      var responseHandler = self._pendingResponseHandlers[m.rid];
+      if (responseHandler) {
+        clearTimeout(responseHandler.timeout);
+        delete self._pendingResponseHandlers[m.rid];
+        responseHandler.callback(null, m.data, m.workerId);
+      }
     }
   });
 
@@ -646,6 +662,14 @@ SocketCluster.prototype._launchWorkerCluster = function () {
   this.emit(this.EVENT_WORKER_CLUSTER_START, workerClusterInfo);
 
   this.workerCluster.on('exit', this._handleWorkerClusterExit.bind(this));
+};
+
+SocketCluster.prototype.respondToWorker = function (data, workerId, rid) {
+  this.workerCluster.send({
+    type: 'masterResponse',
+    data: data,
+    rid: rid
+  });
 };
 
 SocketCluster.prototype._logDeploymentDetails = function () {
@@ -734,15 +758,40 @@ SocketCluster.prototype._start = function () {
   launchBrokerEngine();
 };
 
-SocketCluster.prototype.sendToWorker = function (workerId, data) {
-  this.workerCluster.send({
+SocketCluster.prototype._createIPCResponseHandler = function (callback) {
+  var cid = uuid.v4();
+
+  var responseTimeout = setTimeout(function () {
+    var responseHandler = self._pendingResponseHandlers[cid];
+    delete self._pendingResponseHandlers[cid];
+    var timeoutError = new TimeoutError('IPC response timed out');
+    responseHandler.callback(timeoutError);
+  }, this.options.ipcAckTimeout);
+
+  this._pendingResponseHandlers[cid] = {
+    callback: callback,
+    timeout: responseTimeout
+  };
+
+  return cid;
+};
+
+SocketCluster.prototype.sendToWorker = function (workerId, data, callback) {
+  var self = this;
+
+  var messagePacket = {
     type: 'masterMessage',
     workerId: workerId,
     data: data
-  });
+  };
+
+  if (callback) {
+    messagePacket.cid = this._createIPCResponseHandler(callback);
+  }
+  this.workerCluster.send(messagePacket);
 };
 
-SocketCluster.prototype.sendToBroker = function (brokerId, data) {
+SocketCluster.prototype.sendToBroker = function (brokerId, data, callback) {
   this._brokerEngineServer.sendToBroker(brokerId, data);
 };
 
