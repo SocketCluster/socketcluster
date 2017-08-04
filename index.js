@@ -609,6 +609,10 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     }
   }
 
+  this.workerCluster.on('error', function (err) {
+    self._workerClusterErrorHandler(self.workerCluster.pid, err);
+  });
+
   this.workerCluster.send({
     type: 'init',
     data: workerOpts
