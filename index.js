@@ -2,11 +2,11 @@ var path = require('path');
 var crypto = require('crypto');
 var EventEmitter = require('events').EventEmitter;
 var domain = require('sc-domain');
+var uuid = require('uuid');
 var fork = require('child_process').fork;
 var os = require('os');
 var fs = require('fs-extra');
 var uidNumber = require('uid-number');
-var uuid = require('uuid');
 var pkg = require('./package.json');
 var argv = require('minimist')(process.argv.slice(2));
 var cluster = require('cluster');
@@ -632,6 +632,8 @@ SocketCluster.prototype._launchWorkerCluster = function () {
       self._workerExitHandler(m.data);
     } else if (m.type == 'workerMessage') {
       self.emit('workerMessage', m.workerId, m.data);
+    } else if (m.type) {
+      self.emit(m.type,m.workerId,m.data)
     }
   });
 
@@ -731,11 +733,24 @@ SocketCluster.prototype._start = function () {
 };
 
 SocketCluster.prototype.sendToWorker = function (workerId, data, res) {
-  this.workerCluster.send({
+  var self = this
+  var uniqueChannel = null
+  if (res) {
+    uniqueChannel = uuid.v4()
+    var callback = function(fromWorkerId,resData) {
+      res && res(fromWorkerId,resData)
+      self.removeListener(uniqueChannel,callback)
+    }
+
+    self.on(uniqueChannel,callback)
+  }
+
+  self.workerCluster.send({
     type: 'masterMessage',
     workerId: workerId,
-    data: data
-  },res);
+    data: data,
+    res:uniqueChannel
+  });
 };
 
 SocketCluster.prototype.sendToBroker = function (brokerId, data) {
