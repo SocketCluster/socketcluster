@@ -5,7 +5,7 @@ var assert = require('assert');
 var http = require('http');
 var util = require('util');
 var fs = require('fs');
-var getTestSocketPath = require('./testsocketpath').getTestSocketPath;
+var getTestSocketPath = require('./test-socket-path').getTestSocketPath;
 
 var scServer = childProcess.fork(__dirname + '/server.js');
 var resultSocketPath = getTestSocketPath();

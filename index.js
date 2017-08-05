@@ -44,6 +44,7 @@ var SocketCluster = function (options) {
   self.EVENT_WORKER_CLUSTER_EXIT = 'workerClusterExit';
 
   self._pendingResponseHandlers = {};
+  self.workerClusterMessageBuffer = [];
 
   self._errorAnnotations = {
     'EADDRINUSE': 'Failed to bind to a port because it was already used by another process.'
@@ -125,6 +126,7 @@ SocketCluster.prototype._init = function (options) {
 
   self._active = false;
   self.workerCluster = null;
+  self.isWorkerClusterReady = false;
 
   self._colorCodes = {
     red: 31,
@@ -388,9 +390,11 @@ SocketCluster.prototype._logObject = function (obj, objType, time) {
 
 SocketCluster.prototype._convertValueToUnknownError = function (err, origin) {
   if (err && typeof err == 'object') {
-    // If err has neither a stack or message property
-    // then the error message will be the JSON stringified object.
-    if (!err.message && !err.stack) {
+    if (err.message || err.stack) {
+      err = scErrors.hydrateError(err, true);
+    } else {
+      // If err has neither a stack nor a message property
+      // then the error message will be the JSON stringified object.
       var errorMessage;
       try {
         errorMessage = JSON.stringify(err);
@@ -489,6 +493,8 @@ SocketCluster.prototype._workerWarningHandler = function (workerPid, warning) {
 SocketCluster.prototype._workerClusterReadyHandler = function () {
   var self = this;
 
+  this.isWorkerClusterReady = true;
+
   if (!this._active) {
     if (this.options.rebootOnSignal) {
       process.on('SIGUSR2', function () {
@@ -511,6 +517,8 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
     this._active = true;
     this._logDeploymentDetails();
   }
+
+  this._flushWorkerClusterMessageBuffer();
 
   var workerClusterInfo = {
     pid: this.workerCluster.pid,
@@ -538,6 +546,8 @@ SocketCluster.prototype._workerStartHandler = function (workerInfo, signal) {
 };
 
 SocketCluster.prototype._handleWorkerClusterExit = function (errorCode, signal) {
+  this.isWorkerClusterReady = false;
+
   var workerClusterInfo = {
     pid: this.workerCluster.pid,
     code: errorCode,
@@ -591,6 +601,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
   }
 
   this.workerCluster = fork(__dirname + '/lib/workercluster.js', process.argv.slice(2), execOptions);
+  this.isWorkerClusterReady = false;
 
   var workerOpts = this._cloneObject(this.options);
   workerOpts.paths = this._paths;
@@ -631,7 +642,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
         self._workerClusterErrorHandler(m.data.pid, m.data.error);
       }
     } else if (m.type == 'warning') {
-      var warning = scErrors.hydrateError(m.data.error);
+      var warning = scErrors.hydrateError(m.data.error, true);
       self._workerWarningHandler(m.data.workerPid, warning);
     } else if (m.type == 'ready') {
       self._workerClusterReadyHandler();
@@ -640,17 +651,18 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     } else if (m.type == 'workerExit') {
       self._workerExitHandler(m.data);
     } else if (m.type == 'workerMessage') {
-      self.emit('workerMessage', m.workerId, m.data, function (data) {
+      self.emit('workerMessage', m.workerId, m.data, function (err, data) {
         if (m.cid) {
-          self.respondToWorker(data, m.workerId, m.cid);
+          self.respondToWorker(err, data, m.workerId, m.cid);
         }
       });
-    } else if (m.type == 'workerResponse') {
+    } else if (m.type == 'workerResponse' || m.type == 'workerClusterResponse') {
       var responseHandler = self._pendingResponseHandlers[m.rid];
       if (responseHandler) {
         clearTimeout(responseHandler.timeout);
         delete self._pendingResponseHandlers[m.rid];
-        responseHandler.callback(null, m.data, m.workerId);
+        var properError = scErrors.hydrateError(m.error, true);
+        responseHandler.callback(properError, m.data, m.workerId);
       }
     }
   });
@@ -662,11 +674,15 @@ SocketCluster.prototype._launchWorkerCluster = function () {
   this.emit(this.EVENT_WORKER_CLUSTER_START, workerClusterInfo);
 
   this.workerCluster.on('exit', this._handleWorkerClusterExit.bind(this));
+  this.workerCluster.on('disconnect', function () {
+    self.isWorkerClusterReady = false;
+  });
 };
 
-SocketCluster.prototype.respondToWorker = function (data, workerId, rid) {
+SocketCluster.prototype.respondToWorker = function (err, data, workerId, rid) {
   this.workerCluster.send({
     type: 'masterResponse',
+    error: scErrors.dehydrateError(err, true),
     data: data,
     rid: rid
   });
@@ -727,6 +743,7 @@ SocketCluster.prototype._start = function () {
       expiryAccuracy: self._dataExpiryAccuracy,
       downgradeToUser: self.options.downgradeToUser,
       processTermTimeout: self.options.processTermTimeout,
+      ipcAckTimeout: self.options.ipcAckTimeout,
       brokerOptions: self.options,
       appBrokerControllerPath: self._paths.appBrokerControllerPath,
       appInitControllerPath: self._paths.appInitControllerPath
@@ -750,8 +767,8 @@ SocketCluster.prototype._start = function () {
       self.emit(self.EVENT_BROKER_EXIT, brokerInfo);
     });
 
-    self._brokerEngineServer.on('brokerMessage', function (brokerId, data) {
-      self.emit('brokerMessage', brokerId, data);
+    self._brokerEngineServer.on('brokerMessage', function (brokerId, data, callback) {
+      self.emit('brokerMessage', brokerId, data, callback);
     });
   };
 
@@ -759,6 +776,7 @@ SocketCluster.prototype._start = function () {
 };
 
 SocketCluster.prototype._createIPCResponseHandler = function (callback) {
+  var self = this;
   var cid = uuid.v4();
 
   var responseTimeout = setTimeout(function () {
@@ -776,6 +794,15 @@ SocketCluster.prototype._createIPCResponseHandler = function (callback) {
   return cid;
 };
 
+SocketCluster.prototype._flushWorkerClusterMessageBuffer = function () {
+  var self = this;
+
+  this.workerClusterMessageBuffer.forEach(function (messagePacket) {
+    self.workerCluster.send(messagePacket);
+  });
+  this.workerClusterMessageBuffer = [];
+};
+
 SocketCluster.prototype.sendToWorker = function (workerId, data, callback) {
   var self = this;
 
@@ -788,11 +815,15 @@ SocketCluster.prototype.sendToWorker = function (workerId, data, callback) {
   if (callback) {
     messagePacket.cid = this._createIPCResponseHandler(callback);
   }
-  this.workerCluster.send(messagePacket);
+  this.workerClusterMessageBuffer.push(messagePacket);
+
+  if (this.isWorkerClusterReady) {
+    this._flushWorkerClusterMessageBuffer();
+  }
 };
 
 SocketCluster.prototype.sendToBroker = function (brokerId, data, callback) {
-  this._brokerEngineServer.sendToBroker(brokerId, data);
+  this._brokerEngineServer.sendToBroker(brokerId, data, callback);
 };
 
 // The options object is optional and can have two boolean fields:

@@ -1,6 +1,6 @@
 var fs = require('fs');
 var http = require('http');
-var getTestSocketPath = require('./testsocketpath').getTestSocketPath;
+var getTestSocketPath = require('./test-socket-path').getTestSocketPath;
 var util = require('util');
 
 module.exports.run = function (broker) {
