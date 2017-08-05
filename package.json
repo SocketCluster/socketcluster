@@ -30,7 +30,7 @@
     "sc-errors": "~1.3.3",
     "socketcluster-server": "~6.2.0",
     "uid-number": "0.0.5",
-    "uuid": "^3.0.1"
+    "uuid": "3.0.1"
   },
   "bin": {
     "socketcluster": "bin/cli.js"
