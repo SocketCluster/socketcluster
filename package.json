@@ -13,6 +13,10 @@
     "type": "git",
     "url": "git://github.com/SocketCluster/socketcluster.git"
   },
+  "scripts":{
+    "test":"npm run test::masterToWorkerCallback",
+    "test::masterToWorkerCallback":"node test/internal/serverToWorker.js"
+  },
   "dependencies": {
     "async": "2.0.0",
     "base64id": "0.1.0",
@@ -26,7 +30,7 @@
     "sc-errors": "~1.3.3",
     "socketcluster-server": "~6.2.0",
     "uid-number": "0.0.5",
-    "uuid": "3.0.1"
+    "uuid": "^3.0.1"
   },
   "bin": {
     "socketcluster": "bin/cli.js"
