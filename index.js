@@ -53,9 +53,11 @@ var SocketCluster = function (options) {
   self._errorDomain = domain.create();
   self._errorDomain.on('error', function (err) {
     self.errorHandler(err, {
-      type: 'master'
+      type: 'Master',
+      pid: process.pid
     });
   });
+
   self._errorDomain.add(self);
 
   self._errorDomain.run(function () {
@@ -307,7 +309,10 @@ SocketCluster.prototype._init = function (options) {
   }
 
   process.stdin.on('error', function (err) {
-    self.warningHandler(err, {type: 'master'});
+    self.warningHandler(err, {
+      type: 'Master',
+      pid: process.pid
+    });
   });
 
   /*
@@ -493,20 +498,24 @@ SocketCluster.prototype._workerWarningHandler = function (workerPid, warning) {
 SocketCluster.prototype._workerClusterReadyHandler = function () {
   var self = this;
 
-  this.isWorkerClusterReady = true;
-
   if (!this._active) {
     if (this.options.rebootOnSignal) {
       process.on('SIGUSR2', function () {
-        var warning;
+        var warningMessage;
         var killOptions = {};
         if (self.options.environment == 'dev') {
-          warning = 'Master received SIGUSR2 signal - Shutting down all workers immediately';
+          warningMessage = 'Master received SIGUSR2 signal - Shutting down all workers immediately';
           killOptions.immediate = true;
         } else {
-          warning = 'Master received SIGUSR2 signal - Shutting down all workers in accordance with processTermTimeout';
+          warningMessage = 'Master received SIGUSR2 signal - Shutting down all workers in accordance with processTermTimeout';
         }
-        self.warningHandler(warning, {type: 'master'});
+
+        var warning = new ProcessExitError(warningMessage);
+
+        self.warningHandler(warning, {
+          type: 'Master',
+          pid: process.pid
+        });
         self.killWorkers(killOptions);
         if (self.options.killMasterOnSignal) {
           process.exit();
@@ -518,6 +527,7 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
     this._logDeploymentDetails();
   }
 
+  this.isWorkerClusterReady = true;
   this._flushWorkerClusterMessageBuffer();
 
   var workerClusterInfo = {
@@ -547,22 +557,26 @@ SocketCluster.prototype._workerStartHandler = function (workerInfo, signal) {
 
 SocketCluster.prototype._handleWorkerClusterExit = function (errorCode, signal) {
   this.isWorkerClusterReady = false;
+  this.workerClusterMessageBuffer = [];
+
+  var wcPid = this.workerCluster.pid;
 
   var workerClusterInfo = {
-    pid: this.workerCluster.pid,
+    pid: wcPid,
     code: errorCode,
     signal: signal,
     childProcess: this.workerCluster
   };
   this.emit(this.EVENT_WORKER_CLUSTER_EXIT, workerClusterInfo);
 
-  var message = 'workerCluster exited with code: ' + errorCode;
+  var message = 'WorkerCluster exited with code: ' + errorCode;
   if (errorCode == 0) {
     this.log(message);
   } else {
     var error = new ProcessExitError(message, errorCode);
     this.errorHandler(error, {
-      type: 'workerCluster'
+      type: 'WorkerCluster',
+      pid: wcPid
     });
   }
   this._launchWorkerCluster();
@@ -676,6 +690,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
   this.workerCluster.on('exit', this._handleWorkerClusterExit.bind(this));
   this.workerCluster.on('disconnect', function () {
     self.isWorkerClusterReady = false;
+    self.workerClusterMessageBuffer = [];
   });
 };
 
@@ -781,9 +796,11 @@ SocketCluster.prototype._createIPCResponseHandler = function (callback) {
 
   var responseTimeout = setTimeout(function () {
     var responseHandler = self._pendingResponseHandlers[cid];
-    delete self._pendingResponseHandlers[cid];
-    var timeoutError = new TimeoutError('IPC response timed out');
-    responseHandler.callback(timeoutError);
+    if (responseHandler) {
+      delete self._pendingResponseHandlers[cid];
+      var timeoutError = new TimeoutError('IPC response timed out');
+      responseHandler.callback(timeoutError);
+    }
   }, this.options.ipcAckTimeout);
 
   this._pendingResponseHandlers[cid] = {
