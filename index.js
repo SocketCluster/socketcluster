@@ -108,6 +108,7 @@ SocketCluster.prototype._init = function (options) {
     tcpSynBacklog: null,
     workerController: null,
     brokerController: null,
+    brokerConnectRetryErrorThreshold: null,
     initController: null,
     rebootOnSignal: true,
     downgradeToUser: false,
