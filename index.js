@@ -14,7 +14,6 @@ var cluster = require('cluster');
 var scErrors = require('sc-errors');
 var InvalidOptionsError = scErrors.InvalidOptionsError;
 var InvalidActionError = scErrors.InvalidActionError;
-var BrokerError = scErrors.BrokerError;
 var ProcessExitError = scErrors.ProcessExitError;
 var UnknownError = scErrors.UnknownError;
 var TimeoutError = scErrors.TimeoutError;
@@ -394,34 +393,37 @@ SocketCluster.prototype._logObject = function (obj, objType, time) {
 };
 
 SocketCluster.prototype._convertValueToUnknownError = function (err, origin) {
-  if (err && typeof err == 'object') {
-    if (err.message || err.stack) {
-      err = scErrors.hydrateError(err, true);
-    } else {
-      // If err has neither a stack nor a message property
-      // then the error message will be the JSON stringified object.
-      var errorMessage;
-      try {
-        errorMessage = JSON.stringify(err);
-      } catch (e1) {
+  if (!(err instanceof Error)) {
+    if (err && typeof err == 'object') {
+      if (err.message || err.stack) {
+        // TODO 2
+        err = scErrors.hydrateError(err, true);
+      } else {
+        // If err has neither a stack nor a message property
+        // then the error message will be the JSON stringified object.
+        var errorMessage;
         try {
-          errorMessage = JSON.stringify(decycle(err));
-        } catch (e2) {
-          errorMessage = '[object NotJSON]';
+          errorMessage = JSON.stringify(err);
+        } catch (e1) {
+          try {
+            errorMessage = JSON.stringify(decycle(err));
+          } catch (e2) {
+            errorMessage = '[object NotJSON]';
+          }
         }
+        err = new UnknownError(errorMessage);
       }
+    } else if (typeof err == 'function') {
+      var errorMessage = '[function ' + (err.name || 'anonymous') + ']';
       err = new UnknownError(errorMessage);
+    } else if (typeof err == 'undefined') {
+      err = new UnknownError('undefined');
+    } else if (err === null) {
+      err = new UnknownError('null');
+    } else {
+      // For number, string and boolean types.
+      err = new UnknownError(err);
     }
-  } else if (typeof err == 'function') {
-    var errorMessage = '[function ' + (err.name || 'anonymous') + ']';
-    err = new UnknownError(errorMessage);
-  } else if (typeof err == 'undefined') {
-    err = new UnknownError('undefined');
-  } else if (err === null) {
-    err = new UnknownError('null');
-  } else {
-    // For number, string and boolean types.
-    err = new UnknownError(err);
   }
 
   err.origin = origin;
@@ -468,9 +470,6 @@ SocketCluster.prototype._workerErrorHandler = function (workerPid, error) {
 };
 
 SocketCluster.prototype._brokerEngineErrorHandler = function (pid, error) {
-  if (typeof error == 'string') {
-    error = new BrokerError(error);
-  }
   this.errorHandler(error, {
     type: 'BrokerEngine',
     pid: pid
@@ -478,9 +477,6 @@ SocketCluster.prototype._brokerEngineErrorHandler = function (pid, error) {
 };
 
 SocketCluster.prototype._brokerErrorHandler = function (brokerPid, error) {
-  if (typeof error == 'string') {
-    error = new BrokerError(error);
-  }
   this.errorHandler(error, {
     type: 'Broker',
     pid: brokerPid
