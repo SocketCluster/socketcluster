@@ -1,7 +1,6 @@
 var path = require('path');
 var crypto = require('crypto');
 var EventEmitter = require('events').EventEmitter;
-var domain = require('sc-domain');
 var uuid = require('uuid');
 var fork = require('child_process').fork;
 var os = require('os');
@@ -49,18 +48,18 @@ var SocketCluster = function (options) {
     'EADDRINUSE': 'Failed to bind to a port because it was already used by another process.'
   };
 
-  self._errorDomain = domain.create();
-  self._errorDomain.on('error', function (err) {
-    self.errorHandler(err, {
+  self.on('error', function (error) {
+    self.emitFail(error, {
       type: 'Master',
       pid: process.pid
     });
   });
 
-  self._errorDomain.add(self);
-
-  self._errorDomain.run(function () {
+  // Capture any errors that are thrown during initialization.
+  new Promise(function () {
     self._init(options);
+  }).catch(function (error) {
+    self.emit('error', error);
   });
 };
 
@@ -309,7 +308,7 @@ SocketCluster.prototype._init = function (options) {
   }
 
   process.stdin.on('error', function (err) {
-    self.warningHandler(err, {
+    self.emitWarning(err, {
       type: 'Master',
       pid: process.pid
     });
@@ -397,7 +396,6 @@ SocketCluster.prototype._convertValueToUnknownError = function (err, origin) {
   if (!(err instanceof Error)) {
     if (err && typeof err == 'object') {
       if (err.message || err.stack) {
-        // TODO 2
         err = scErrors.hydrateError(err, true);
       } else {
         // If err has neither a stack nor a message property
@@ -433,7 +431,7 @@ SocketCluster.prototype._convertValueToUnknownError = function (err, origin) {
   return err;
 };
 
-SocketCluster.prototype.errorHandler = function (err, origin) {
+SocketCluster.prototype.emitFail = function (err, origin) {
   err = this._convertValueToUnknownError(err, origin);
 
   var annotation = this._errorAnnotations[err.code];
@@ -446,7 +444,7 @@ SocketCluster.prototype.errorHandler = function (err, origin) {
   this._logObject(err, 'Error');
 };
 
-SocketCluster.prototype.warningHandler = function (warning, origin) {
+SocketCluster.prototype.emitWarning = function (warning, origin) {
   warning = this._convertValueToUnknownError(warning, origin);
 
   this.emit(this.EVENT_WARNING, warning);
@@ -457,28 +455,28 @@ SocketCluster.prototype.warningHandler = function (warning, origin) {
 };
 
 SocketCluster.prototype._workerClusterErrorHandler = function (pid, error) {
-  this.errorHandler(error, {
+  this.emitFail(error, {
     type: 'WorkerCluster',
     pid: pid
   });
 };
 
 SocketCluster.prototype._workerErrorHandler = function (workerPid, error) {
-  this.errorHandler(error, {
+  this.emitFail(error, {
     type: 'Worker',
     pid: workerPid
   });
 };
 
 SocketCluster.prototype._brokerEngineErrorHandler = function (pid, error) {
-  this.errorHandler(error, {
+  this.emitFail(error, {
     type: 'BrokerEngine',
     pid: pid
   });
 };
 
 SocketCluster.prototype._brokerErrorHandler = function (brokerPid, error) {
-  this.errorHandler(error, {
+  this.emitFail(error, {
     type: 'Broker',
     pid: brokerPid
   });
@@ -489,7 +487,7 @@ SocketCluster.prototype._workerWarningHandler = function (workerPid, warning) {
     type: 'Worker',
     pid: workerPid
   };
-  this.warningHandler(warning, origin);
+  this.emitWarning(warning, origin);
 };
 
 SocketCluster.prototype._workerClusterReadyHandler = function () {
@@ -509,7 +507,7 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
 
         var warning = new ProcessExitError(warningMessage);
 
-        self.warningHandler(warning, {
+        self.emitWarning(warning, {
           type: 'Master',
           pid: process.pid
         });
@@ -571,7 +569,7 @@ SocketCluster.prototype._handleWorkerClusterExit = function (errorCode, signal) 
     this.log(message);
   } else {
     var error = new ProcessExitError(message, errorCode);
-    this.errorHandler(error, {
+    this.emitFail(error, {
       type: 'WorkerCluster',
       pid: wcPid
     });
