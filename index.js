@@ -109,7 +109,7 @@ SocketCluster.prototype._init = function (options) {
     brokerController: null,
     brokerConnectRetryErrorThreshold: null,
     initController: null,
-    initWorkerClusterController: null,
+    workerClusterController: null,
     rebootOnSignal: true,
     downgradeToUser: false,
     path: '/socketcluster/',
@@ -183,10 +183,10 @@ SocketCluster.prototype._init = function (options) {
       self._paths.appInitControllerPath = null;
   }
 
-  if (self.options.initWorkerClusterController) {
-    self._paths.appInitWorkerClusterControllerPath = path.resolve(self.options.initWorkerClusterController);
+  if (self.options.workerClusterController) {
+    self._paths.appWorkerClusterControllerPath = path.resolve(self.options.workerClusterController);
   } else {
-    self._paths.appInitWorkerClusterControllerPath = null;
+    self._paths.appWorkerClusterControllerPath = null;
   }
 
   if (/\.js$/.test(self.options.wsEngine)) {
