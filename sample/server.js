@@ -8,6 +8,7 @@ var SocketCluster = require('socketcluster').SocketCluster;
 var workerControllerPath = argv.wc || process.env.SOCKETCLUSTER_WORKER_CONTROLLER;
 var brokerControllerPath = argv.bc || process.env.SOCKETCLUSTER_BROKER_CONTROLLER;
 var initControllerPath = argv.ic || process.env.SOCKETCLUSTER_INIT_CONTROLLER;
+var initWorkerClusterControllerPath = argv.iwc || process.env.SOCKETCLUSTER_INIT_WORKERCLUSTER_CONTROLLER;
 var environment = process.env.ENV || 'dev';
 
 var options = {
@@ -20,6 +21,7 @@ var options = {
   workerController: workerControllerPath || __dirname + '/worker.js',
   brokerController: brokerControllerPath || __dirname + '/broker.js',
   initController: initControllerPath || null,
+  initWorkerClusterController: initWorkerClusterControllerPath || null,
   socketChannelLimit: Number(process.env.SOCKETCLUSTER_SOCKET_CHANNEL_LIMIT) || 1000,
   clusterStateServerHost: argv.cssh || process.env.SCC_STATE_SERVER_HOST || null,
   clusterStateServerPort: process.env.SCC_STATE_SERVER_PORT || null,
