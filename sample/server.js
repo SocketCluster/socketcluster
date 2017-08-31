@@ -126,7 +126,8 @@ var filesReadyPromises = [
   startWhenFileIsReady(masterControllerPath),
   startWhenFileIsReady(workerControllerPath),
   startWhenFileIsReady(brokerControllerPath),
-  startWhenFileIsReady(initControllerPath)
+  startWhenFileIsReady(initControllerPath),
+  startWhenFileIsReady(workerClusterControllerPath)
 ];
 Promise.all(filesReadyPromises)
 .then(() => {
