@@ -112,3 +112,5 @@ Nevertheless, it is recommended that you run the **scc-state** instance inside y
 The **scc-state** instance does not handle any pub/sub messages and so it is not a bottleneck with regards to the scalability of your cluster (SCC scales linearly).
 
 Note that you can launch the services in any order you like but if your state server is not available, you may get harmless `Socket hung up` warnings on other instances (while they keep trying to reconnect) until **scc-state** becomes available again.
+
+The **socketcluster** deployment in https://github.com/SocketCluster/socketcluster/kubernetes/ uses podAntiAffinity rule to ensure only one socketcluster instance is scheduled for any given kubernetes node. This may be preferred, since we want to run on as many cores as possible.
