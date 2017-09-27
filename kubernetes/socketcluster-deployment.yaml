@@ -33,3 +33,13 @@ spec:
             port: 8000
           initialDelaySeconds: 30
           timeoutSeconds: 5
+  affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - socketcluster
+            topologyKey: "kubernetes.io/hostname"
