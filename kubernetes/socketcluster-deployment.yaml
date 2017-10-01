@@ -33,7 +33,7 @@ spec:
             port: 8000
           initialDelaySeconds: 30
           timeoutSeconds: 5
-  affinity:
+      affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
           - labelSelector:
