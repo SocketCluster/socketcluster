@@ -59,7 +59,12 @@ process.on('message', function (masterMessage) {
     workers = [];
 
     var launchWorker = function (i, respawn) {
-      var worker = cluster.fork();
+      var workerInitOptions = masterMessage.data;
+      workerInitOptions.id = i;
+
+      var worker = cluster.fork({
+        workerInitOptions: JSON.stringify(workerInitOptions)
+      });
       workers[i] = worker;
 
       worker.on('error', sendErrorToMaster);
@@ -81,15 +86,6 @@ process.on('message', function (masterMessage) {
               type: 'ready'
             });
           }
-        } else if (workerMessage.type == 'readyToInit') {
-          var workerInitOptions = {};
-          for (var j in masterMessage) {
-            if (masterMessage.hasOwnProperty(j)) {
-              workerInitOptions[j] = masterMessage[j];
-            }
-          }
-          workerInitOptions.data.id = i;
-          worker.send(workerInitOptions);
         } else {
           process.send(workerMessage);
         }

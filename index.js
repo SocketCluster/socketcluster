@@ -9,7 +9,6 @@ var uidNumber = require('uid-number');
 var pkg = require('./package.json');
 var argv = require('minimist')(process.argv.slice(2));
 var cluster = require('cluster');
-var SCWorker = require('./lib/scworker').SCWorker;
 
 var scErrors = require('sc-errors');
 var InvalidOptionsError = scErrors.InvalidOptionsError;
@@ -617,7 +616,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     execOptions.execArgv.push('--inspect=' + inspectPort);
   }
 
-  this.workerCluster = fork(__dirname + '/lib/workercluster.js', process.argv.slice(2), execOptions);
+  this.workerCluster = fork(__dirname + '/workercluster.js', process.argv.slice(2), execOptions);
   this.isWorkerClusterReady = false;
 
   var workerOpts = this._cloneObject(this.options);
@@ -891,4 +890,3 @@ SocketCluster.prototype.colorText = function (message, color) {
 };
 
 module.exports.SocketCluster = SocketCluster;
-module.exports.SCWorker = SCWorker;
