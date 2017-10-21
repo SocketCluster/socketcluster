@@ -54,9 +54,13 @@ var handleExit = function () {
 };
 
 var scWorker;
-var scWorkerIsInitialized = false;
 
 var SCWorker = function (options) {
+  if (scWorker) {
+    // SCWorker is a singleton; it can only be instantiated once per process.
+    throw new InvalidActionError('Attempted to instantiate a worker which has already been instantiated');
+  }
+
   var self = this;
   scWorker = this;
 
@@ -99,10 +103,6 @@ SCWorker.prototype._init = function (options) {
     }
   }
 
-  if (scWorkerIsInitialized) {
-    // SCWorker is a singleton; it can only be instantiated once per process.
-    throw new InvalidActionError('Attempted to initialize a worker which has already been initialized');
-  }
   if (this.options.processTermTimeout) {
     processTermTimeout = this.options.processTermTimeout;
   }
@@ -174,16 +174,8 @@ SCWorker.prototype._init = function (options) {
   });
   this.exchange = this.global = this.brokerEngineClient.exchange();
 
-  if (this.options.httpServerModule) {
-    var httpServerFactory = require(this.options.httpServerModule);
-    this.httpServer = httpServerFactory.createServer(this.options.protocolOptions);
-  } else {
-    if (this.options.protocol == 'https') {
-      this.httpServer = https.createServer(this.options.protocolOptions);
-    } else {
-      this.httpServer = http.createServer();
-    }
-  }
+  this.httpServer = this.createHTTPServer();
+
   this.httpServer.on('request', this._httpRequestHandler.bind(this));
   this.httpServer.on('upgrade', this._httpRequestHandler.bind(this));
 
@@ -254,8 +246,16 @@ SCWorker.prototype._init = function (options) {
   this.scServer.on('ready', function () {
     self.emit(self.EVENT_READY);
   });
+};
 
-  scWorkerIsInitialized = true;
+SCWorker.prototype.createHTTPServer = function () {
+  var httpServer;
+  if (this.options.protocol == 'https') {
+    httpServer = https.createServer(this.options.protocolOptions);
+  } else {
+    httpServer = http.createServer();
+  }
+  return httpServer;
 };
 
 SCWorker.prototype.run = function () {};

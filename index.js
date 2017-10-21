@@ -118,7 +118,6 @@ SocketCluster.prototype._init = function (options) {
     allowClientPublish: true,
     defaultWorkerDebugPort: 5858,
     defaultBrokerDebugPort: 6858,
-    httpServerModule: null,
     pubSubBatchDuration: null,
     environment: 'dev',
     killMasterOnSignal: false,
