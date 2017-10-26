@@ -108,7 +108,6 @@ SocketCluster.prototype._init = function (options) {
     workerController: null,
     brokerController: null,
     brokerConnectRetryErrorThreshold: null,
-    initController: null,
     workerClusterController: null,
     rebootOnSignal: true,
     downgradeToUser: false,
@@ -176,16 +175,10 @@ SocketCluster.prototype._init = function (options) {
     appWorkerControllerPath: path.resolve(self.options.workerController)
   };
 
-  if (self.options.initController) {
-      self._paths.appInitControllerPath = path.resolve(self.options.initController);
-  } else {
-      self._paths.appInitControllerPath = null;
-  }
-
   if (self.options.workerClusterController) {
     self._paths.appWorkerClusterControllerPath = path.resolve(self.options.workerClusterController);
   } else {
-    self._paths.appWorkerClusterControllerPath = null;
+    self._paths.appWorkerClusterControllerPath = __dirname + '/default-workercluster-controller.js';
   }
 
   if (/\.js$/.test(self.options.wsEngine)) {
@@ -615,9 +608,6 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     execOptions.execArgv.push('--inspect=' + inspectPort);
   }
 
-  this.workerCluster = fork(__dirname + '/workercluster.js', process.argv.slice(2), execOptions);
-  this.isWorkerClusterReady = false;
-
   var workerOpts = this._cloneObject(this.options);
   workerOpts.paths = this._paths;
   workerOpts.sourcePort = this.options.port;
@@ -640,13 +630,15 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     }
   }
 
+  execOptions.env = {
+    workerInitOptions: JSON.stringify(workerOpts)
+  };
+
+  this.workerCluster = fork(this._paths.appWorkerClusterControllerPath, process.argv.slice(2), execOptions);
+  this.isWorkerClusterReady = false;
+
   this.workerCluster.on('error', function (err) {
     self._workerClusterErrorHandler(self.workerCluster.pid, err);
-  });
-
-  this.workerCluster.send({
-    type: 'init',
-    data: workerOpts
   });
 
   this.workerCluster.on('message', function workerHandler(m) {
@@ -698,6 +690,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
 SocketCluster.prototype.respondToWorker = function (err, data, workerId, rid) {
   this.workerCluster.send({
     type: 'masterResponse',
+    workerId: workerId,
     error: scErrors.dehydrateError(err, true),
     data: data,
     rid: rid
@@ -761,8 +754,7 @@ SocketCluster.prototype._start = function () {
       processTermTimeout: self.options.processTermTimeout,
       ipcAckTimeout: self.options.ipcAckTimeout,
       brokerOptions: self.options,
-      appBrokerControllerPath: self._paths.appBrokerControllerPath,
-      appInitControllerPath: self._paths.appInitControllerPath
+      appBrokerControllerPath: self._paths.appBrokerControllerPath
     });
 
     self._brokerEngineServer.on('error', function (err) {

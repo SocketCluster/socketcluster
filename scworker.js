@@ -55,13 +55,11 @@ var handleExit = function () {
 
 var scWorker;
 
-var SCWorker = function (options) {
+function SCWorker(options) {
   if (scWorker) {
     // SCWorker is a singleton; it can only be instantiated once per process.
     throw new InvalidActionError('Attempted to instantiate a worker which has already been instantiated');
   }
-
-  var self = this;
   scWorker = this;
 
   this.EVENT_ERROR = 'error';
@@ -335,14 +333,7 @@ SCWorker.prototype.start = function () {
   }
   this._statusInterval = setInterval(this._calculateStatus.bind(this), this.options.workerStatusInterval);
 
-  // Run the initController to initialize the global context
-  // if (this._paths.appInitControllerPath != null) { // TODO 2
-  //   this._initController = require(this._paths.appInitControllerPath);
-  //   this._initController.run(this);
-  // }
-
   this.run();
-
   this._startServer();
 };
 
@@ -488,17 +479,7 @@ SCWorker.prototype.emitWarning = function (warning) {
 };
 
 var handleWorkerClusterMessage = function (wcMessage) {
-  if (wcMessage.type == 'emit') {
-    if (wcMessage.data) {
-      scWorker.handleMasterEvent(wcMessage.event, wcMessage.data);
-    } else {
-      scWorker.handleMasterEvent(wcMessage.event);
-    }
-  } else if (wcMessage.type == 'masterMessage') {
-    scWorker.handleMasterMessage(wcMessage);
-  } else if (wcMessage.type == 'masterResponse') {
-    scWorker.handleMasterResponse(wcMessage);
-  } else if (wcMessage.type == 'terminate') {
+  if (wcMessage.type == 'terminate') {
     if (scWorker && !wcMessage.data.immediate) {
       scWorker.close(function () {
         process.exit();
@@ -509,9 +490,28 @@ var handleWorkerClusterMessage = function (wcMessage) {
     } else {
       process.exit();
     }
+  } else {
+    if (!scWorker) {
+      throw new InvalidActionError(`Attempted to send '${wcMessage.type}' to worker ${workerInitOptions.id} before it was instantiated`);
+    }
+    if (wcMessage.type == 'emit') {
+      if (wcMessage.data) {
+        scWorker.handleMasterEvent(wcMessage.event, wcMessage.data);
+      } else {
+        scWorker.handleMasterEvent(wcMessage.event);
+      }
+    } else if (wcMessage.type == 'masterMessage') {
+      scWorker.handleMasterMessage(wcMessage);
+    } else if (wcMessage.type == 'masterResponse') {
+      scWorker.handleMasterResponse(wcMessage);
+    }
   }
 };
 
 process.on('message', handleWorkerClusterMessage);
+
+process.on('uncaughtException', function (err) {
+  handleError(true, err);
+});
 
 module.exports = SCWorker;

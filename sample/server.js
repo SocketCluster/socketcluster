@@ -7,7 +7,6 @@ var SocketCluster = require('socketcluster').SocketCluster;
 
 var workerControllerPath = argv.wc || process.env.SOCKETCLUSTER_WORKER_CONTROLLER;
 var brokerControllerPath = argv.bc || process.env.SOCKETCLUSTER_BROKER_CONTROLLER;
-var initControllerPath = argv.ic || process.env.SOCKETCLUSTER_INIT_CONTROLLER;
 var workerClusterControllerPath = argv.wcc || process.env.SOCKETCLUSTER_WORKERCLUSTER_CONTROLLER;
 var environment = process.env.ENV || 'dev';
 
@@ -20,7 +19,6 @@ var options = {
   appName: argv.n || process.env.SOCKETCLUSTER_APP_NAME || null,
   workerController: workerControllerPath || __dirname + '/worker.js',
   brokerController: brokerControllerPath || __dirname + '/broker.js',
-  initController: initControllerPath || null,
   workerClusterController: workerClusterControllerPath || null,
   socketChannelLimit: Number(process.env.SOCKETCLUSTER_SOCKET_CHANNEL_LIMIT) || 1000,
   clusterStateServerHost: argv.cssh || process.env.SCC_STATE_SERVER_HOST || null,
@@ -126,7 +124,6 @@ var filesReadyPromises = [
   startWhenFileIsReady(masterControllerPath),
   startWhenFileIsReady(workerControllerPath),
   startWhenFileIsReady(brokerControllerPath),
-  startWhenFileIsReady(initControllerPath),
   startWhenFileIsReady(workerClusterControllerPath)
 ];
 Promise.all(filesReadyPromises)
