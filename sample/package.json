@@ -28,5 +28,9 @@
     "cluster",
     "scalable"
   ],
-  "readmeFilename": "README.md"
+  "readmeFilename": "README.md",
+  "scripts": {
+    "start": "node server.js",
+    "start:docker": "node dockerwait.js && node server.js"
+  }
 }

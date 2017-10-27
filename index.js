@@ -880,4 +880,4 @@ SocketCluster.prototype.colorText = function (message, color) {
   return message;
 };
 
-module.exports.SocketCluster = SocketCluster;
+module.exports = SocketCluster;
