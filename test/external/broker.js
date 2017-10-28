@@ -1,5 +1,9 @@
-var fs = require('fs');
+var SCBroker = require('../../scbroker');
 
-module.exports.run = function (broker) {
-  console.log('   >> Broker PID:', process.pid);
-};
+class Broker extends SCBroker {
+  run() {
+    console.log('   >> Broker PID:', process.pid);
+  }
+}
+
+new Broker();

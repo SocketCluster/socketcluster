@@ -1,11 +1,15 @@
+var SCWorker = require('../../scworker');
 var fs = require('fs');
 
-module.exports.run = function (worker) {
-  console.log('   >> Worker PID:', process.pid);
+class Worker extends SCWorker {
+  run() {
+    console.log('   >> Worker PID:', process.pid);
 
-  // Get a reference to our raw Node HTTP server
-  var httpServer = worker.getHTTPServer();
-  // Get a reference to our WebSocket server
-  var wsServer = worker.getSCServer();
-  
-};
+    // Get a reference to our raw Node HTTP server
+    var httpServer = this.getHTTPServer();
+    // Get a reference to our WebSocket server
+    var wsServer = this.getSCServer();
+  }
+}
+
+new Worker()
