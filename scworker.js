@@ -256,6 +256,7 @@ SCWorker.prototype.createHTTPServer = function () {
   return httpServer;
 };
 
+// To be overriden.
 SCWorker.prototype.run = function () {};
 
 SCWorker.prototype.open = function () {

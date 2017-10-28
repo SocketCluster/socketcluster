@@ -519,6 +519,9 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
 
     this._active = true;
     this._logDeploymentDetails();
+
+    this.emit(this.EVENT_READY);
+    this.run();
   }
 
   this.isWorkerClusterReady = true;
@@ -709,8 +712,10 @@ SocketCluster.prototype._logDeploymentDetails = function () {
     console.log('            Broker count: ' + this.options.brokers);
     console.log();
   }
-  this.emit(this.EVENT_READY);
 };
+
+// Can be overriden.
+SocketCluster.prototype.run = function () {};
 
 SocketCluster.prototype._start = function () {
   var self = this;
