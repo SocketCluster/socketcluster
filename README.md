@@ -143,7 +143,7 @@ Note that if you want to attach any volumes to your SocketCluster container, you
 For example, if you wanted to quickly run SocketCluster with your own workerController file (```worker.js```), you could just put your ```worker.js``` file inside a ```/home/my-username/controllers/``` directory (on your host system) and then bundle it into the container as a volume by running a command like this (example):
 
 ```
-docker run -d -v /home/my-username/controllers/:/usr/src/controllers/ -e "SOCKETCLUSTER_WORKER_CONTROLLER=/usr/src/controllers/worker.js" socketcluster/socketcluster
+docker run -d -v /home/my-username/controllers/:/usr/src/controllers/ -p 8000:8000 -e "SOCKETCLUSTER_WORKER_CONTROLLER=/usr/src/controllers/worker.js" socketcluster/socketcluster
 ```
 
 To summarize:
