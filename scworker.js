@@ -60,6 +60,7 @@ function SCWorker(options) {
     // SCWorker is a singleton; it can only be instantiated once per process.
     throw new InvalidActionError('Attempted to instantiate a worker which has already been instantiated');
   }
+  options = options || {};
   scWorker = this;
 
   this.EVENT_ERROR = 'error';
@@ -73,7 +74,18 @@ function SCWorker(options) {
   this.type = 'worker';
   this._pendingResponseHandlers = {};
 
+  if (options.run != null) {
+    this.run = options.run;
+  }
+  if (options.createHTTPServer != null) {
+    this.createHTTPServer = options.createHTTPServer;
+  }
+
   this._init(workerInitOptions);
+}
+
+SCWorker.create = function (options) {
+  return new SCWorker(options);
 };
 
 SCWorker.prototype = Object.create(EventEmitter.prototype);

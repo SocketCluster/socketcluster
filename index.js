@@ -20,7 +20,7 @@ var decycle = scErrors.decycle;
 
 var socketClusterSingleton = null;
 
-var SocketCluster = function (options) {
+function SocketCluster(options) {
   var self = this;
   if (socketClusterSingleton) {
     var errorMessage = 'The SocketCluster master object is a singleton; ' +
@@ -61,6 +61,10 @@ var SocketCluster = function (options) {
   }).catch(function (error) {
     self.emit('error', error);
   });
+}
+
+SocketCluster.create = function (options) {
+  return new SocketCluster(options);
 };
 
 SocketCluster.prototype = Object.create(EventEmitter.prototype);
@@ -161,6 +165,10 @@ SocketCluster.prototype._init = function (options) {
 
   if (self.options.appName == null) {
     self.options.appName = uuid.v4();
+  }
+
+  if (self.options.run != null) {
+    self.run = self.options.run;
   }
 
   if (self.options.workerController == null) {
