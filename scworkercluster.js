@@ -83,14 +83,23 @@ process.on('uncaughtException', function (err) {
   process.exit(1);
 });
 
-function SCWorkerCluster() {
+function SCWorkerCluster(options) {
   if (scWorkerCluster) {
     // SCWorkerCluster is a singleton; it can only be instantiated once per process.
     throw new InvalidActionError('Attempted to instantiate a worker cluster which has already been instantiated');
   }
+  options = options || {};
   scWorkerCluster = this;
 
+  if (options.run != null) {
+    this.run = options.run;
+  }
+
   this._init(workerInitOptions);
+}
+
+SCWorkerCluster.create = function (options) {
+  return new SCWorkerCluster(options);
 };
 
 SCWorkerCluster.prototype._init = function (options) {
