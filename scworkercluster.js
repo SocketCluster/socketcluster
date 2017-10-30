@@ -109,6 +109,7 @@ SCWorkerCluster.prototype._init = function (options) {
   var readyCount = 0;
   var isReady = false;
   workers = [];
+  this.workers = workers;
 
   var launchWorker = function (i, respawn) {
     var workerInitOptions = options;
@@ -170,6 +171,10 @@ SCWorkerCluster.prototype._init = function (options) {
   for (var i = 0; i < workerCount; i++) {
     launchWorker(i);
   }
+
+  this.run();
 };
+
+SCWorkerCluster.prototype.run = function () {};
 
 module.exports = SCWorkerCluster;

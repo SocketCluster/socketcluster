@@ -133,7 +133,7 @@ SCWorker.prototype._init = function (options) {
     this.on('exit', handleExit);
   }
 
-  this.on('ready', function () {
+  this.on(this.EVENT_READY, function () {
     self.start();
     handleReady();
   });
@@ -253,7 +253,7 @@ SCWorker.prototype._init = function (options) {
   this.scServer.on('error', function (error) {
     self.emitError(error);
   });
-  this.scServer.on('ready', function () {
+  this.scServer.once('ready', function () {
     self.emit(self.EVENT_READY);
   });
 };
@@ -272,7 +272,7 @@ SCWorker.prototype.createHTTPServer = function () {
 SCWorker.prototype.run = function () {};
 
 SCWorker.prototype.open = function () {
-  this._startServer();
+  this.startHTTPServer();
 };
 
 SCWorker.prototype.close = function (callback) {
@@ -297,7 +297,7 @@ SCWorker.prototype.removeMiddleware = function (type, middleware) {
   });
 };
 
-SCWorker.prototype._startServer = function () {
+SCWorker.prototype.startHTTPServer = function () {
   var self = this;
 
   var options = this.options;
@@ -347,7 +347,7 @@ SCWorker.prototype.start = function () {
   this._statusInterval = setInterval(this._calculateStatus.bind(this), this.options.workerStatusInterval);
 
   this.run();
-  this._startServer();
+  this.startHTTPServer();
 };
 
 SCWorker.prototype._httpRequestHandler = function (req, res) {
