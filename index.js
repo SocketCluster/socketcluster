@@ -641,9 +641,11 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     }
   }
 
-  execOptions.env = {
-    workerInitOptions: JSON.stringify(workerOpts)
-  };
+  execOptions.env = {};
+  Object.keys(process.env).forEach(function (key) {
+    execOptions.env[key] = process.env[key];
+  });
+  execOptions.env.workerInitOptions = JSON.stringify(workerOpts);
 
   this.workerCluster = fork(this._paths.appWorkerClusterControllerPath, process.argv.slice(2), execOptions);
   this.isWorkerClusterReady = false;
