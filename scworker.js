@@ -524,7 +524,7 @@ var handleWorkerClusterMessage = function (wcMessage) {
 process.on('message', handleWorkerClusterMessage);
 
 process.on('uncaughtException', function (err) {
-  handleError(true, err);
+  handleError(workerInitOptions.crashWorkerOnError, err);
 });
 
 module.exports = SCWorker;
