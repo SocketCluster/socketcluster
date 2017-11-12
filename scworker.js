@@ -224,7 +224,9 @@ SCWorker.prototype._init = function (options) {
     middlewareEmitWarnings: this.options.middlewareEmitWarnings,
     socketChannelLimit: this.options.socketChannelLimit,
     pubSubBatchDuration: this.options.pubSubBatchDuration,
-    perMessageDeflate: this.options.perMessageDeflate
+    perMessageDeflate: this.options.perMessageDeflate,
+    maxPayload: this.options.maxPayload,
+    wsEngineServerOptions: this.options.wsEngineServerOptions
   });
 
   if (this.brokerEngineClient.setSCServer) {
