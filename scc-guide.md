@@ -47,11 +47,8 @@ Note that the step above is crucial if you don't want to use TLS/SSL - Otherwise
 
 ### Running on Kubernetes with Baasil (for simple development and deployment)
 
-Baasil is an open source CLI tool and Baasil.io is a hosted 'as-a-service' Rancher/Kubernetes control panel.
-If you want to try SCC on K8s and you do not already have a K8s environment/cluster, the simplest way to get started is to sign up to a free trial account on http://baasil.io
-
-Note that you can use the baasil CLI tool (https://www.npmjs.com/package/baasil) to deploy your SocketCluster service/app to any Rancher/Kubernetes environment, you just have to modify the `~/.kube/config` file on your local machine to hold the configs for your own Rancher control panel (instead of the one hosted on Baasil.io).
-It is strongly recommended that you use Kubernetes with Rancher for consistency. See http://rancher.com/ for more details.
+You can use the baasil CLI tool (https://www.npmjs.com/package/baasil) to deploy your SocketCluster service/app to any Rancher/Kubernetes environment, you just have to modify the `~/.kube/config` file on your local machine to hold the configs for your own Rancher control panel.
+It ecommended that you use Kubernetes with Rancher for consistency. See http://rancher.com/ for more details.
 
 To run your service/app locally inside containers and to deploy to your own Rancher/K8s cluster, follow this guide: https://docs.baasil.io/
 
