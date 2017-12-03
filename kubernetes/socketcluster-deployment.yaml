@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
       - name: socketcluster
-        image: socketcluster/socketcluster:v9.1.7
+        image: socketcluster/socketcluster:v9.1.8
         ports:
         - containerPort: 8000
         env:
