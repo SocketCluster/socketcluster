@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
       - name: scc-state
-        image: socketcluster/scc-state:v1.5.1
+        image: socketcluster/scc-state:v1.5.2
         ports:
         - containerPort: 7777
         livenessProbe:
