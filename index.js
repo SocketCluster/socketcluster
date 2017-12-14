@@ -44,6 +44,8 @@ function SocketCluster(options) {
   self._pendingResponseHandlers = {};
   self.workerClusterMessageBuffer = [];
 
+  self._shuttingDown = false;
+
   self._errorAnnotations = {
     'EADDRINUSE': 'Failed to bind to a port because it was already used by another process.'
   };
@@ -448,7 +450,7 @@ SocketCluster.prototype.emitFail = function (err, origin) {
 
   this.emit(this.EVENT_FAIL, err);
 
-  if (this.options.logLevel > 0) {
+  if (this.options.logLevel > 0 && !this._shuttingDown) {
     this._logObject(err, 'Error');
   }
 };
@@ -458,7 +460,7 @@ SocketCluster.prototype.emitWarning = function (warning, origin) {
 
   this.emit(this.EVENT_WARNING, warning);
 
-  if (this.options.logLevel > 1) {
+  if (this.options.logLevel > 1 && !this._shuttingDown) {
     this._logObject(warning, 'Warning');
   }
 };
@@ -586,6 +588,11 @@ SocketCluster.prototype._handleWorkerClusterExit = function (errorCode, signal) 
       pid: wcPid
     });
   }
+
+  if (this._shuttingDown) {
+    return;
+  }
+
   this._launchWorkerCluster();
 };
 
@@ -865,9 +872,9 @@ SocketCluster.prototype.killWorkers = function (options) {
   }
 };
 
-SocketCluster.prototype.killBrokers = function () {
+SocketCluster.prototype.killBrokers = function (options) {
   if (this._brokerEngineServer) {
-    this._brokerEngineServer.destroy();
+    this._brokerEngineServer.destroy(options);
   }
 };
 
@@ -895,6 +902,47 @@ SocketCluster.prototype.colorText = function (message, color) {
     return '\x1b[' + color + 'm' + message + '\x1b[0m';
   }
   return message;
+};
+
+SocketCluster.prototype.destroy = function (callback) {
+  var self = this;
+
+  if (this._shuttingDown) {
+    return;
+  }
+  this._shuttingDown = true;
+
+  Promise.all([
+    new Promise(function (resolve, reject) {
+      self.once(self.EVENT_WORKER_CLUSTER_EXIT, function () {
+        resolve();
+      });
+    }),
+    new Promise(function (resolve, reject) {
+      var killedBrokerLookup = {};
+      var killedBrokerCount = 0;
+      var handleBrokerExit = function (brokerDetails) {
+        if (!killedBrokerLookup[brokerDetails.id]) {
+          killedBrokerLookup[brokerDetails.id] = true;
+          killedBrokerCount++;
+        }
+        if (killedBrokerCount >= self.options.brokers) {
+          self.removeListener(self.EVENT_BROKER_EXIT, handleBrokerExit);
+          resolve();
+        }
+      };
+      self.on(self.EVENT_BROKER_EXIT, handleBrokerExit);
+    })
+  ])
+  .then(function () {
+    callback && callback();
+  })
+  .catch(function (error) {
+    self.emit('error', error);
+  });
+
+  this.killWorkers({killClusterMaster: true});
+  this.killBrokers({permanent: true});
 };
 
 module.exports = SocketCluster;

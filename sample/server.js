@@ -64,6 +64,15 @@ for (var i in SOCKETCLUSTER_OPTIONS) {
 var start = function () {
   var socketCluster = new SocketCluster(options);
 
+  process.on('SIGINT', () => {
+    socketCluster.destroy(function () {
+      console.log('DESTROYEDD'); // TODO 2
+    });
+    setTimeout(() => {
+      process.exit(1);
+    }, 1000);
+  }); // TODO 2 Remove this block
+
   socketCluster.on(socketCluster.EVENT_WORKER_CLUSTER_START, function (workerClusterInfo) {
     console.log('   >> WorkerCluster PID:', workerClusterInfo.pid);
   });
