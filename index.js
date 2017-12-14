@@ -42,7 +42,10 @@ function SocketCluster(options) {
   self.EVENT_WORKER_CLUSTER_EXIT = 'workerClusterExit';
 
   self._pendingResponseHandlers = {};
+  self._destroyCallbacks = [];
   self.workerClusterMessageBuffer = [];
+
+  self._shuttingDown = false;
 
   self._errorAnnotations = {
     'EADDRINUSE': 'Failed to bind to a port because it was already used by another process.'
@@ -314,12 +317,14 @@ SocketCluster.prototype._init = function (options) {
     console.log('   ' + self.colorText('[Busy]', 'yellow') + ' Launching SocketCluster');
   }
 
-  process.stdin.on('error', function (err) {
+  self._stdinErrorHandler = function (err) {
     self.emitWarning(err, {
       type: 'Master',
       pid: process.pid
     });
-  });
+  };
+
+  process.stdin.on('error', self._stdinErrorHandler);
 
   /*
     To allow inserting blank lines in console on Windows to aid with debugging.
@@ -329,12 +334,25 @@ SocketCluster.prototype._init = function (options) {
     process.stdin.setEncoding('utf8');
   }
 
+  if (self.options.secretKey == null) {
+    self.options.secretKey = crypto.randomBytes(32).toString('hex');
+  }
+  if (self.options.authKey == null && self.options.authPrivateKey == null && self.options.authPublicKey == null) {
+    self.options.authKey = crypto.randomBytes(32).toString('hex');
+  }
+  if (self.options.instanceId == null) {
+    self.options.instanceId = uuid.v4();
+  }
+
   if (self.options.downgradeToUser && process.platform != 'win32') {
     if (typeof self.options.downgradeToUser == 'number') {
       fs.chownSync(self._socketDirPath, self.options.downgradeToUser, 0);
       self._start();
     } else {
       uidNumber(self.options.downgradeToUser, function (err, uid, gid) {
+        if (self._shuttingDown) {
+          return;
+        }
         if (err) {
           throw new InvalidActionError('Failed to downgrade to user "' + self.options.downgradeToUser + '" - ' + err);
         } else {
@@ -448,7 +466,7 @@ SocketCluster.prototype.emitFail = function (err, origin) {
 
   this.emit(this.EVENT_FAIL, err);
 
-  if (this.options.logLevel > 0) {
+  if (this.options.logLevel > 0 && !this._shuttingDown) {
     this._logObject(err, 'Error');
   }
 };
@@ -458,7 +476,7 @@ SocketCluster.prototype.emitWarning = function (warning, origin) {
 
   this.emit(this.EVENT_WARNING, warning);
 
-  if (this.options.logLevel > 1) {
+  if (this.options.logLevel > 1 && !this._shuttingDown) {
     this._logObject(warning, 'Warning');
   }
 };
@@ -504,7 +522,7 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
 
   if (!this._active) {
     if (this.options.rebootOnSignal) {
-      process.on('SIGUSR2', function () {
+      this._sigusr2SignalHandler = function () {
         var warningMessage;
         var killOptions = {};
         if (self.options.environment == 'dev') {
@@ -524,7 +542,9 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
         if (self.options.killMasterOnSignal) {
           process.exit();
         }
-      });
+      };
+
+      process.on('SIGUSR2', this._sigusr2SignalHandler);
     }
 
     this._active = true;
@@ -586,6 +606,11 @@ SocketCluster.prototype._handleWorkerClusterExit = function (errorCode, signal) 
       pid: wcPid
     });
   }
+
+  if (this._shuttingDown) {
+    return;
+  }
+
   this._launchWorkerCluster();
 };
 
@@ -732,72 +757,56 @@ SocketCluster.prototype.run = function () {};
 SocketCluster.prototype._start = function () {
   var self = this;
 
-  if (self.options.secretKey == null) {
-    self.options.secretKey = crypto.randomBytes(32).toString('hex');
-  }
-  if (this.options.authKey == null && this.options.authPrivateKey == null && this.options.authPublicKey == null) {
-    this.options.authKey = crypto.randomBytes(32).toString('hex');
-  }
-  if (self.options.instanceId == null) {
-    self.options.instanceId = uuid.v4();
-  }
-
-  self._active = false;
-
   var brokerEngineServerReady = function () {
     self._brokerEngineServer.removeListener('ready', brokerEngineServerReady);
     self._launchWorkerCluster();
   };
 
-  var launchBrokerEngine = function () {
-    var brokerDebugPort = argv['debug-brokers'];
-    if (brokerDebugPort == true) {
-      brokerDebugPort = self.options.defaultBrokerDebugPort;
+  var brokerDebugPort = argv['debug-brokers'];
+  if (brokerDebugPort == true) {
+    brokerDebugPort = self.options.defaultBrokerDebugPort;
+  }
+
+  var brokerInspectPort = argv['inspect-brokers'];
+  if (brokerInspectPort == true) {
+    brokerInspectPort = self.options.defaultBrokerDebugPort;
+  }
+
+  self._brokerEngineServer = new self._brokerEngine.Server({
+    brokers: self._getBrokerSocketPaths(),
+    debug: brokerDebugPort,
+    inspect: brokerInspectPort,
+    instanceId: self.options.instanceId,
+    secretKey: self.options.secretKey,
+    expiryAccuracy: self._dataExpiryAccuracy,
+    downgradeToUser: self.options.downgradeToUser,
+    processTermTimeout: self.options.processTermTimeout,
+    ipcAckTimeout: self.options.ipcAckTimeout,
+    brokerOptions: self.options,
+    appBrokerControllerPath: self._paths.appBrokerControllerPath
+  });
+
+  self._brokerEngineServer.on('error', function (err) {
+    if (err.brokerPid) {
+      self._brokerErrorHandler(err.brokerPid, err);
+    } else {
+      self._brokerEngineErrorHandler(err.pid, err);
     }
+  });
 
-    var brokerInspectPort = argv['inspect-brokers'];
-    if (brokerInspectPort == true) {
-      brokerInspectPort = self.options.defaultBrokerDebugPort;
-    }
+  self._brokerEngineServer.on('ready', brokerEngineServerReady);
 
-    self._brokerEngineServer = new self._brokerEngine.Server({
-      brokers: self._getBrokerSocketPaths(),
-      debug: brokerDebugPort,
-      inspect: brokerInspectPort,
-      instanceId: self.options.instanceId,
-      secretKey: self.options.secretKey,
-      expiryAccuracy: self._dataExpiryAccuracy,
-      downgradeToUser: self.options.downgradeToUser,
-      processTermTimeout: self.options.processTermTimeout,
-      ipcAckTimeout: self.options.ipcAckTimeout,
-      brokerOptions: self.options,
-      appBrokerControllerPath: self._paths.appBrokerControllerPath
-    });
+  self._brokerEngineServer.on('brokerStart', function (brokerInfo) {
+    self.emit(self.EVENT_BROKER_START, brokerInfo);
+  });
 
-    self._brokerEngineServer.on('error', function (err) {
-      if (err.brokerPid) {
-        self._brokerErrorHandler(err.brokerPid, err);
-      } else {
-        self._brokerEngineErrorHandler(err.pid, err);
-      }
-    });
+  self._brokerEngineServer.on('brokerExit', function (brokerInfo) {
+    self.emit(self.EVENT_BROKER_EXIT, brokerInfo);
+  });
 
-    self._brokerEngineServer.on('ready', brokerEngineServerReady);
-
-    self._brokerEngineServer.on('brokerStart', function (brokerInfo) {
-      self.emit(self.EVENT_BROKER_START, brokerInfo);
-    });
-
-    self._brokerEngineServer.on('brokerExit', function (brokerInfo) {
-      self.emit(self.EVENT_BROKER_EXIT, brokerInfo);
-    });
-
-    self._brokerEngineServer.on('brokerMessage', function (brokerId, data, callback) {
-      self.emit('brokerMessage', brokerId, data, callback);
-    });
-  };
-
-  launchBrokerEngine();
+  self._brokerEngineServer.on('brokerMessage', function (brokerId, data, callback) {
+    self.emit('brokerMessage', brokerId, data, callback);
+  });
 };
 
 SocketCluster.prototype._createIPCResponseHandler = function (callback) {
@@ -850,6 +859,9 @@ SocketCluster.prototype.sendToWorker = function (workerId, data, callback) {
 };
 
 SocketCluster.prototype.sendToBroker = function (brokerId, data, callback) {
+  if (!this._brokerEngineServer) {
+    throw new InvalidActionError('Cannot send a message to a broker until the master instance is ready');
+  }
   this._brokerEngineServer.sendToBroker(brokerId, data, callback);
 };
 
@@ -867,7 +879,7 @@ SocketCluster.prototype.killWorkers = function (options) {
 
 SocketCluster.prototype.killBrokers = function () {
   if (this._brokerEngineServer) {
-    this._brokerEngineServer.destroy();
+    this._brokerEngineServer.killBrokers();
   }
 };
 
@@ -895,6 +907,75 @@ SocketCluster.prototype.colorText = function (message, color) {
     return '\x1b[' + color + 'm' + message + '\x1b[0m';
   }
   return message;
+};
+
+SocketCluster.prototype.destroy = function (callback) {
+  var self = this;
+
+  if (callback) {
+    this._destroyCallbacks.push(callback);
+  }
+
+  if (this._shuttingDown) {
+    return;
+  }
+  this._shuttingDown = true;
+
+  Promise.all([
+    new Promise(function (resolve, reject) {
+      if (!this.workerCluster) {
+        resolve();
+        return;
+      }
+      self.once(self.EVENT_WORKER_CLUSTER_EXIT, function () {
+        resolve();
+      });
+    }),
+    new Promise(function (resolve, reject) {
+      if (!this._brokerEngineServer) {
+        resolve();
+        return;
+      }
+      var killedBrokerLookup = {};
+      var killedBrokerCount = 0;
+      var handleBrokerExit = function (brokerDetails) {
+        if (!killedBrokerLookup[brokerDetails.id]) {
+          killedBrokerLookup[brokerDetails.id] = true;
+          killedBrokerCount++;
+        }
+        if (killedBrokerCount >= self.options.brokers) {
+          self.removeListener(self.EVENT_BROKER_EXIT, handleBrokerExit);
+          resolve();
+        }
+      };
+      self.on(self.EVENT_BROKER_EXIT, handleBrokerExit);
+    })
+  ])
+  .then(function () {
+    socketClusterSingleton = null;
+    self.removeAllListeners();
+    if (self._stdinErrorHandler) {
+      process.stdin.removeListener('error', self._stdinErrorHandler);
+    }
+    if (self._sigusr2SignalHandler) {
+      process.removeListener('SIGUSR2', self._sigusr2SignalHandler);
+    }
+
+    self._destroyCallbacks.forEach(function (callback) {
+      callback();
+    });
+    self._destroyCallbacks = [];
+  })
+  .catch(function (error) {
+    self.emit('error', error);
+  });
+
+  if (this.workerCluster) {
+    this.killWorkers({killClusterMaster: true});
+  }
+  if (this._brokerEngineServer) {
+    this._brokerEngineServer.destroy();
+  }
 };
 
 module.exports = SocketCluster;
