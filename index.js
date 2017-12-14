@@ -448,7 +448,9 @@ SocketCluster.prototype.emitFail = function (err, origin) {
 
   this.emit(this.EVENT_FAIL, err);
 
-  this._logObject(err, 'Error');
+  if (this.options.logLevel > 0) {
+    this._logObject(err, 'Error');
+  }
 };
 
 SocketCluster.prototype.emitWarning = function (warning, origin) {
