@@ -288,8 +288,7 @@ SCWorker.prototype.close = function (callback) {
   this.httpServer.close(callback);
 };
 
-// getSocketURL is deprecated
-SCWorker.prototype.getSocketPath = SCWorker.prototype.getSocketURL = function () {
+SCWorker.prototype.getSocketPath = function () {
   return this._socketPath;
 };
 
