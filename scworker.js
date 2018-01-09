@@ -348,8 +348,9 @@ SCWorker.prototype.start = function () {
   }
   this._statusInterval = setInterval(this._calculateStatus.bind(this), this.options.workerStatusInterval);
 
-  this.run();
-  this.startHTTPServer();
+  var runResult = this.run();
+  Promise.resolve(runResult)
+  .then(this.startHTTPServer.bind(this));
 };
 
 SCWorker.prototype._httpRequestHandler = function (req, res) {
