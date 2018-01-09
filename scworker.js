@@ -240,7 +240,6 @@ SCWorker.prototype._init = function (options) {
     self.codec = self.scServer.codec;
 
     self._socketPath = self.scServer.getPath();
-    self._socketPathRegex = new RegExp('^' + self._socketPath);
 
     self.scServer.on('_connection', function (socket) {
       // The connection event counts as a WS request
