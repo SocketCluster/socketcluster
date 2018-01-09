@@ -182,14 +182,14 @@ SCWorker.prototype._init = function (options) {
   this.brokerEngineClient.on('warning', function (warning) {
     self.emitWarning(warning);
   });
-  this.exchange = this.global = this.brokerEngineClient.exchange();
+  this.exchange = this.brokerEngineClient.exchange();
 
   this.httpServer = this.createHTTPServer();
 
   this.httpServer.on('request', this._httpRequestHandler.bind(this));
   this.httpServer.on('upgrade', this._httpRequestHandler.bind(this));
 
-  this.httpServer.exchange = this.httpServer.global = this.exchange;
+  this.httpServer.exchange = this.exchange;
 
   this.httpServer.on('error', function (err) {
     var error;
@@ -357,7 +357,7 @@ SCWorker.prototype._httpRequestHandler = function (req, res) {
 
   this._httpRequestCount++;
 
-  req.exchange = req.global = this.exchange;
+  req.exchange = this.exchange;
 
   var forwardedFor = req.headers['x-forwarded-for'];
 
