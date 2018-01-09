@@ -184,79 +184,86 @@ SCWorker.prototype._init = function (options) {
   });
   this.exchange = this.brokerEngineClient.exchange();
 
-  this.httpServer = this.createHTTPServer();
+  var createHTTPServerResult = this.createHTTPServer();
+  Promise.resolve(createHTTPServerResult)
+  .then(function (httpServer) {
+    self.httpServer = httpServer;
+    self.httpServer.on('request', self._httpRequestHandler.bind(self));
+    self.httpServer.on('upgrade', self._httpRequestHandler.bind(self));
 
-  this.httpServer.on('request', this._httpRequestHandler.bind(this));
-  this.httpServer.on('upgrade', this._httpRequestHandler.bind(this));
+    self.httpServer.exchange = self.exchange;
 
-  this.httpServer.exchange = this.exchange;
-
-  this.httpServer.on('error', function (err) {
-    var error;
-    if (typeof err == 'string') {
-      error = new HTTPServerError(err);
-    } else {
-      error = err;
-    }
-    self.emitError(error);
-  });
-
-  var secure = this.options.protocol == 'https' ? 1 : 0;
-
-  this.scServer = socketClusterServer.attach(this.httpServer, {
-    brokerEngine: this.brokerEngineClient,
-    wsEngine: this._paths.wsEnginePath,
-    allowClientPublish: this.options.allowClientPublish,
-    handshakeTimeout: this.options.handshakeTimeout,
-    ackTimeout: this.options.ackTimeout,
-    pingTimeout: this.options.pingTimeout,
-    pingInterval: this.options.pingInterval,
-    origins: this.options.origins,
-    appName: this.options.appName,
-    path: this.options.path,
-    authKey: this.options.authKey,
-    authPrivateKey: this.options.authPrivateKey,
-    authPublicKey: this.options.authPublicKey,
-    authAlgorithm: this.options.authAlgorithm,
-    authSignAsync: this.options.authSignAsync,
-    authVerifyAsync: this.options.authVerifyAsync,
-    authDefaultExpiry: this.options.authDefaultExpiry,
-    middlewareEmitWarnings: this.options.middlewareEmitWarnings,
-    socketChannelLimit: this.options.socketChannelLimit,
-    pubSubBatchDuration: this.options.pubSubBatchDuration,
-    perMessageDeflate: this.options.perMessageDeflate,
-    maxPayload: this.options.maxPayload,
-    wsEngineServerOptions: this.options.wsEngineServerOptions
-  });
-
-  if (this.brokerEngineClient.setSCServer) {
-    this.brokerEngineClient.setSCServer(this.scServer);
-  }
-
-  // Default authentication engine
-  this.setAuthEngine(new AuthEngine());
-  this.codec = this.scServer.codec;
-
-  this._socketPath = this.scServer.getPath();
-  this._socketPathRegex = new RegExp('^' + this._socketPath);
-
-  this.scServer.on('_connection', function (socket) {
-    // The connection event counts as a WS request
-    self._wsRequestCount++;
-    socket.on('message', function () {
-      self._wsRequestCount++;
+    self.httpServer.on('error', function (err) {
+      var error;
+      if (typeof err == 'string') {
+        error = new HTTPServerError(err);
+      } else {
+        error = err;
+      }
+      self.emitError(error);
     });
-    self.emit(self.EVENT_CONNECTION, socket);
-  });
 
-  this.scServer.on('warning', function (warning) {
-    self.emitWarning(warning);
-  });
-  this.scServer.on('error', function (error) {
-    self.emitError(error);
-  });
-  this.scServer.once('ready', function () {
-    self.emit(self.EVENT_READY);
+    var secure = self.options.protocol == 'https' ? 1 : 0;
+
+    self.scServer = socketClusterServer.attach(self.httpServer, {
+      brokerEngine: self.brokerEngineClient,
+      wsEngine: self._paths.wsEnginePath,
+      allowClientPublish: self.options.allowClientPublish,
+      handshakeTimeout: self.options.handshakeTimeout,
+      ackTimeout: self.options.ackTimeout,
+      pingTimeout: self.options.pingTimeout,
+      pingInterval: self.options.pingInterval,
+      origins: self.options.origins,
+      appName: self.options.appName,
+      path: self.options.path,
+      authKey: self.options.authKey,
+      authPrivateKey: self.options.authPrivateKey,
+      authPublicKey: self.options.authPublicKey,
+      authAlgorithm: self.options.authAlgorithm,
+      authSignAsync: self.options.authSignAsync,
+      authVerifyAsync: self.options.authVerifyAsync,
+      authDefaultExpiry: self.options.authDefaultExpiry,
+      middlewareEmitWarnings: self.options.middlewareEmitWarnings,
+      socketChannelLimit: self.options.socketChannelLimit,
+      pubSubBatchDuration: self.options.pubSubBatchDuration,
+      perMessageDeflate: self.options.perMessageDeflate,
+      maxPayload: self.options.maxPayload,
+      wsEngineServerOptions: self.options.wsEngineServerOptions
+    });
+
+    if (self.brokerEngineClient.setSCServer) {
+      self.brokerEngineClient.setSCServer(self.scServer);
+    }
+
+    // Default authentication engine
+    self.setAuthEngine(new AuthEngine());
+    self.codec = self.scServer.codec;
+
+    self._socketPath = self.scServer.getPath();
+    self._socketPathRegex = new RegExp('^' + self._socketPath);
+
+    self.scServer.on('_connection', function (socket) {
+      // The connection event counts as a WS request
+      self._wsRequestCount++;
+      socket.on('message', function () {
+        self._wsRequestCount++;
+      });
+      self.emit(self.EVENT_CONNECTION, socket);
+    });
+
+    self.scServer.on('warning', function (warning) {
+      self.emitWarning(warning);
+    });
+    self.scServer.on('error', function (error) {
+      self.emitError(error);
+    });
+    if (self.scServer.isReady) {
+      self.emit(self.EVENT_READY);
+    } else {
+      self.scServer.once('ready', function () {
+        self.emit(self.EVENT_READY);
+      });
+    }
   });
 };
 
