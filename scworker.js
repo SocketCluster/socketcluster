@@ -357,7 +357,7 @@ SCWorker.prototype.start = function () {
   var runResult = this.run();
 
   return Promise.resolve(runResult)
-    .then(this.startHTTPServer.bind(this));
+  .then(this.startHTTPServer.bind(this));
 };
 
 SCWorker.prototype._httpRequestHandler = function (req, res) {
