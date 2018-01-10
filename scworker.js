@@ -134,8 +134,9 @@ SCWorker.prototype._init = function (options) {
   }
 
   this.on(this.EVENT_READY, function () {
-    self.start();
-    handleReady();
+    self.start().then(function () {
+      handleReady();
+    }).catch(this.emitError.bind(this));
   });
 
   this.id = this.options.id;
@@ -354,8 +355,9 @@ SCWorker.prototype.start = function () {
   this._statusInterval = setInterval(this._calculateStatus.bind(this), this.options.workerStatusInterval);
 
   var runResult = this.run();
-  Promise.resolve(runResult)
-  .then(this.startHTTPServer.bind(this));
+
+  return Promise.resolve(runResult)
+    .then(this.startHTTPServer.bind(this));
 };
 
 SCWorker.prototype._httpRequestHandler = function (req, res) {
