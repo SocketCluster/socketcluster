@@ -1,5 +1,4 @@
 var SCWorker = require('socketcluster/scworker');
-var fs = require('fs');
 var express = require('express');
 var serveStatic = require('serve-static');
 var path = require('path');
@@ -16,7 +15,7 @@ class Worker extends SCWorker {
     var httpServer = this.httpServer;
     var scServer = this.scServer;
 
-    if (environment == 'dev') {
+    if (environment === 'dev') {
       // Log every HTTP request. See https://github.com/expressjs/morgan for other
       // available formats.
       app.use(morgan('dev'));
