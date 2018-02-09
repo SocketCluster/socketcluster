@@ -619,11 +619,16 @@ SocketCluster.prototype._launchWorkerCluster = function () {
 
   var debugPort, inspectPort;
 
+  var debugRegex = /^--debug(=[0-9]*)?$/;
+  var debugBrkRegex = /^--debug-brk(=[0-9]*)?$/;
+  var inspectRegex = /^--inspect(=[0-9]*)?$/;
+  var inspectBrkRegex = /^--inspect-brk(=[0-9]*)?$/;
+
   // Workers should not inherit the master --debug argument
   // because they have their own --debug-workers option.
   var execOptions = {
     execArgv: process.execArgv.filter(function (arg) {
-      return arg != '--debug' && arg != '--debug-brk' && arg != '--inspect';
+      return !debugRegex.test(arg) && !debugBrkRegex.test(arg) && !inspectRegex.test(arg) && !inspectBrkRegex.test(arg);
     })
   };
 
