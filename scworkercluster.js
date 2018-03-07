@@ -4,6 +4,7 @@ var InvalidActionError = scErrors.InvalidActionError;
 
 var workerInitOptions = JSON.parse(process.env.workerInitOptions);
 var processTermTimeout = 10000;
+var forceKillTimeout =15000;
 
 process.on('disconnect', function () {
   process.exit();
@@ -70,6 +71,19 @@ process.on('message', function (masterMessage) {
     if (masterMessage.type == 'terminate' && masterMessage.data.killClusterMaster) {
       terminate();
     }
+    if (masterMessage.type == 'terminate' && forceKillTimeout) {      
+      childExitMessage = {}
+      setTimeout(function () {
+        for (var i in workers) { 
+          if (!childExitMessage[i]) {            
+            console.warn(forceKillTimeout + " ms no exit signal from Worker " + i + "(PID:"+workers[i].process.pid+') force kill it' );
+            //process.kill(workers[i].process.pid,'SIGINT')
+            process.kill(workers[i].process.pid,'SIGHUP') 
+            //process.kill(workers[i].process.pid,'SIGKILL')  
+          }
+        }
+      }, forceKillTimeout)
+    }
     for (var i in workers) {
       if (workers.hasOwnProperty(i)) {
         workers[i].send(masterMessage);
@@ -86,7 +100,7 @@ process.on('uncaughtException', function (err) {
 function SCWorkerCluster(options) {
   if (scWorkerCluster) {
     // SCWorkerCluster is a singleton; it can only be instantiated once per process.
-    throw new InvalidActionError('Attempted to instantiate a worker cluster which has already been instantiated');
+    throw new InvalidActionError('Attempted to instantiate a worker cluster which has already been instantiated'); 
   }
   options = options || {};
   scWorkerCluster = this;
@@ -99,7 +113,7 @@ function SCWorkerCluster(options) {
 }
 
 SCWorkerCluster.create = function (options) {
-  return new SCWorkerCluster(options);
+  return new SCWorkerCluster(options); 
 };
 
 SCWorkerCluster.prototype._init = function (options) {
@@ -108,6 +122,9 @@ SCWorkerCluster.prototype._init = function (options) {
   }
   if (options.processTermTimeout) {
     processTermTimeout = options.processTermTimeout;
+  }
+  if (options.forceKillTimeout) {
+    forceKillTimeout = options.forceKillTimeout;
   }
 
   cluster.setupMaster({
