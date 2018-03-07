@@ -107,6 +107,7 @@ SocketCluster.prototype._init = function (options) {
     socketChannelLimit: 1000,
     workerStatusInterval: 10000,
     processTermTimeout: 10000,
+    forceKillTimeout:15000,
     propagateErrors: true,
     propagateWarnings: true,
     middlewareEmitWarnings: true,
@@ -165,6 +166,7 @@ SocketCluster.prototype._init = function (options) {
   verifyDuration('pingTimeout');
   verifyDuration('workerStatusInterval');
   verifyDuration('processTermTimeout');
+  verifyDuration('forceKillTimeout');
 
   if (self.options.appName == null) {
     self.options.appName = uuid.v4();
@@ -786,6 +788,7 @@ SocketCluster.prototype._start = function () {
     expiryAccuracy: self._dataExpiryAccuracy,
     downgradeToUser: self.options.downgradeToUser,
     processTermTimeout: self.options.processTermTimeout,
+    forceKillTimeout: self.options.forceKillTimeout,
     ipcAckTimeout: self.options.ipcAckTimeout,
     brokerOptions: self.options,
     appBrokerControllerPath: self._paths.appBrokerControllerPath
@@ -872,7 +875,6 @@ SocketCluster.prototype.sendToBroker = function (brokerId, data, callback) {
 
 // The options object is optional and can have two boolean fields:
 // immediate: Shut down the workers immediately without waiting for termination timeout.
-// killClusterMaster: Shut down the cluster master (load balancer) as well as all the workers.
 SocketCluster.prototype.killWorkers = function (options) {
   if (this.workerCluster) {
     this.workerCluster.send({
