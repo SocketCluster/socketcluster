@@ -73,7 +73,6 @@ process.on('message', function (masterMessage) {
     }
     if (masterMessage.type == 'terminate' && forceKillTimeout) {      
       childExitMessage = {}
-      console.log(forceKillTimeout); 
       setTimeout(function () {
         for (var i in workers) { 
           if (!childExitMessage[i]) {            
@@ -95,7 +94,7 @@ process.on('message', function (masterMessage) {
 
 process.on('uncaughtException', function (err) {
   sendErrorToMaster(err);
-  process.exit(1); 
+  process.exit(1);
 });
 
 function SCWorkerCluster(options) {
@@ -205,7 +204,3 @@ SCWorkerCluster.prototype._init = function (options) {
 SCWorkerCluster.prototype.run = function () {};
 
 module.exports = SCWorkerCluster;
-
-
-
-
