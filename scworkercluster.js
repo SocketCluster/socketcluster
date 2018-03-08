@@ -111,7 +111,7 @@ function SCWorkerCluster(options) {
 }
 
 SCWorkerCluster.create = function (options) {
-  return new SCWorkerCluster(options); 
+  return new SCWorkerCluster(options);
 };
 
 SCWorkerCluster.prototype._init = function (options) {
