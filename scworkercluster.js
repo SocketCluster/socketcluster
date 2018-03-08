@@ -76,10 +76,8 @@ process.on('message', function (masterMessage) {
       setTimeout(function () {
         for (var i in workers) { 
           if (!childExitMessage[i]) {            
-            console.warn(forceKillTimeout + " ms no exit signal from Worker " + i + "(PID:"+workers[i].process.pid+') force kill it' );
-            //process.kill(workers[i].process.pid,'SIGINT')
-            process.kill(workers[i].process.pid,'SIGHUP') 
-            //process.kill(workers[i].process.pid,'SIGKILL')  
+            console.warn(forceKillTimeout + " ms no exit signal from Worker " + i + "(PID:"+workers[i].process.pid+') force kill it' );            
+            process.kill(workers[i].process.pid,'SIGHUP')
           }
         }
       }, forceKillTimeout)
