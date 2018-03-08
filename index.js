@@ -790,7 +790,7 @@ SocketCluster.prototype._start = function () {
     downgradeToUser: self.options.downgradeToUser,
     processTermTimeout: self.options.processTermTimeout,
     forceKillTimeout: self.options.forceKillTimeout,
-    forceKillSignal:self.options.forceKillSignal,
+    forceKillSignal: self.options.forceKillSignal,
     ipcAckTimeout: self.options.ipcAckTimeout,
     brokerOptions: self.options,
     appBrokerControllerPath: self._paths.appBrokerControllerPath
