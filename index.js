@@ -875,6 +875,7 @@ SocketCluster.prototype.sendToBroker = function (brokerId, data, callback) {
 
 // The options object is optional and can have two boolean fields:
 // immediate: Shut down the workers immediately without waiting for termination timeout.
+// killClusterMaster: Shut down the cluster master (load balancer) as well as all the workers.
 SocketCluster.prototype.killWorkers = function (options) {
   if (this.workerCluster) {
     this.workerCluster.send({
