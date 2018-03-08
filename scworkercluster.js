@@ -5,6 +5,7 @@ var InvalidActionError = scErrors.InvalidActionError;
 var workerInitOptions = JSON.parse(process.env.workerInitOptions);
 var processTermTimeout = 10000;
 var forceKillTimeout = 15000;
+var forceKillSignal = 'SIGHUP';
 
 process.on('disconnect', function () {
   process.exit();
@@ -77,7 +78,7 @@ process.on('message', function (masterMessage) {
         for (var i in workers) {
           if (!childExitMessage[i]) {
             console.warn(forceKillTimeout + " ms no exit signal from Worker " + i + "(PID:"+workers[i].process.pid+') force kill it' );
-            process.kill(workers[i].process.pid,'SIGHUP')
+            process.kill(workers[i].process.pid,forceKillSignal)
           }
         }
       }, forceKillTimeout)
@@ -118,11 +119,14 @@ SCWorkerCluster.prototype._init = function (options) {
   if (options.schedulingPolicy != null) {
     cluster.schedulingPolicy = options.schedulingPolicy;
   }
-  if (options.processTermTimeout) {
+  if (options.processTermTimeout != null) {
     processTermTimeout = options.processTermTimeout;
   }
-  if (options.forceKillTimeout) {
+  if (options.forceKillTimeout != null) {
     forceKillTimeout = options.forceKillTimeout;
+  }
+  if (options.forceKillSignal != null) {
+    forceKillSignal = options.forceKillSignal;
   }
 
   cluster.setupMaster({
