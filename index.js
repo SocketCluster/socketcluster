@@ -788,7 +788,7 @@ SocketCluster.prototype._start = function () {
     secretKey: self.options.secretKey,
     expiryAccuracy: self._dataExpiryAccuracy,
     downgradeToUser: self.options.downgradeToUser,
-    processTermTimeout: self.options.processTermTimeout,    
+    processTermTimeout: self.options.processTermTimeout,
     forceKillTimeout: self.options.forceKillTimeout,
     forceKillSignal:self.options.forceKillSignal,
     ipcAckTimeout: self.options.ipcAckTimeout,
