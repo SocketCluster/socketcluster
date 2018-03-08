@@ -71,12 +71,12 @@ process.on('message', function (masterMessage) {
     if (masterMessage.type == 'terminate' && masterMessage.data.killClusterMaster) {
       terminate();
     }
-    if (masterMessage.type == 'terminate' && forceKillTimeout) {      
+    if (masterMessage.type == 'terminate' && forceKillTimeout) {
       childExitMessage = {}
       setTimeout(function () {
-        for (var i in workers) { 
-          if (!childExitMessage[i]) {            
-            console.warn(forceKillTimeout + " ms no exit signal from Worker " + i + "(PID:"+workers[i].process.pid+') force kill it' );            
+        for (var i in workers) {
+          if (!childExitMessage[i]) {
+            console.warn(forceKillTimeout + " ms no exit signal from Worker " + i + "(PID:"+workers[i].process.pid+') force kill it' );
             process.kill(workers[i].process.pid,'SIGHUP')
           }
         }
