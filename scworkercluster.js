@@ -4,7 +4,7 @@ var InvalidActionError = scErrors.InvalidActionError;
 
 var workerInitOptions = JSON.parse(process.env.workerInitOptions);
 var processTermTimeout = 10000;
-var forceKillTimeout =15000;
+var forceKillTimeout = 15000;
 
 process.on('disconnect', function () {
   process.exit();
