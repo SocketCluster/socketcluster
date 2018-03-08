@@ -108,6 +108,7 @@ SocketCluster.prototype._init = function (options) {
     workerStatusInterval: 10000,
     processTermTimeout: 10000,
     forceKillTimeout: 15000,
+    forceKillSignal:'SIGHUP',
     propagateErrors: true,
     propagateWarnings: true,
     middlewareEmitWarnings: true,
@@ -787,8 +788,9 @@ SocketCluster.prototype._start = function () {
     secretKey: self.options.secretKey,
     expiryAccuracy: self._dataExpiryAccuracy,
     downgradeToUser: self.options.downgradeToUser,
-    processTermTimeout: self.options.processTermTimeout,
+    processTermTimeout: self.options.processTermTimeout,    
     forceKillTimeout: self.options.forceKillTimeout,
+    forceKillSignal:self.options.forceKillSignal,
     ipcAckTimeout: self.options.ipcAckTimeout,
     brokerOptions: self.options,
     appBrokerControllerPath: self._paths.appBrokerControllerPath
