@@ -108,7 +108,7 @@ SocketCluster.prototype._init = function (options) {
     workerStatusInterval: 10000,
     processTermTimeout: 10000,
     forceKillTimeout: 15000,
-    forceKillSignal:'SIGHUP',
+    forceKillSignal: 'SIGHUP',
     propagateErrors: true,
     propagateWarnings: true,
     middlewareEmitWarnings: true,
