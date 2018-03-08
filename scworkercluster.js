@@ -98,7 +98,7 @@ process.on('uncaughtException', function (err) {
 function SCWorkerCluster(options) {
   if (scWorkerCluster) {
     // SCWorkerCluster is a singleton; it can only be instantiated once per process.
-    throw new InvalidActionError('Attempted to instantiate a worker cluster which has already been instantiated'); 
+    throw new InvalidActionError('Attempted to instantiate a worker cluster which has already been instantiated');
   }
   options = options || {};
   scWorkerCluster = this;
