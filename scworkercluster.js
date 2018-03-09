@@ -16,7 +16,7 @@ var workers;
 var alive = true;
 var hasExited = false;
 var terminatedCount = 0;
-var childExitMessage;
+var childExitMessage={};
 
 var sendErrorToMaster = function (err) {
   var error = scErrors.dehydrateError(err, true);
