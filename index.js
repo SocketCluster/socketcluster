@@ -597,6 +597,7 @@ SocketCluster.prototype._handleWorkerClusterExit = function (errorCode, signal) 
     signal: signal,
     childProcess: this.workerCluster
   };
+
   this.emit(this.EVENT_WORKER_CLUSTER_EXIT, workerClusterInfo);
 
   var message = 'WorkerCluster exited with code: ' + errorCode;
@@ -933,7 +934,7 @@ SocketCluster.prototype.destroy = function (callback) {
 
   Promise.all([
     new Promise(function (resolve, reject) {
-      if (!this.workerCluster) {
+      if (!self.workerCluster) {
         resolve();
         return;
       }
@@ -942,7 +943,7 @@ SocketCluster.prototype.destroy = function (callback) {
       });
     }),
     new Promise(function (resolve, reject) {
-      if (!this._brokerEngineServer) {
+      if (!self._brokerEngineServer) {
         resolve();
         return;
       }
@@ -962,6 +963,13 @@ SocketCluster.prototype.destroy = function (callback) {
     })
   ])
   .then(function () {
+    return new Promise(function (resolve) {
+      setTimeout(function () {
+        resolve();
+      }, 0);
+    });
+  })
+  .then(function () {
     socketClusterSingleton = null;
     self.removeAllListeners();
     if (self._stdinErrorHandler) {
@@ -970,7 +978,6 @@ SocketCluster.prototype.destroy = function (callback) {
     if (self._sigusr2SignalHandler) {
       process.removeListener('SIGUSR2', self._sigusr2SignalHandler);
     }
-
     self._destroyCallbacks.forEach(function (callback) {
       callback();
     });
