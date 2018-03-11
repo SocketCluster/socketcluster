@@ -1,6 +1,7 @@
 var cluster = require('cluster');
 var scErrors = require('sc-errors');
 var InvalidActionError = scErrors.InvalidActionError;
+var ProcessExitError = scErrors.ProcessExitError;
 
 var workerInitOptions = JSON.parse(process.env.workerInitOptions);
 var processTermTimeout = 10000;
@@ -13,10 +14,11 @@ process.on('disconnect', function () {
 
 var scWorkerCluster;
 var workers;
-var alive = true;
 var hasExited = false;
 var terminatedCount = 0;
-var childExitMessage={};
+var childExitLookup = {};
+var isTerminating = false;
+var isForceKillingWorkers = false;
 
 var sendErrorToMaster = function (err) {
   var error = scErrors.dehydrateError(err, true);
@@ -29,14 +31,53 @@ var sendErrorToMaster = function (err) {
   });
 };
 
-var terminate = function () {
-  alive = false;
+var terminateNow = function () {
+  if (!hasExited) {
+    hasExited = true;
+    process.exit();
+  }
+};
+
+var terminate = function (immediate) {
+  if (immediate) {
+    terminateNow();
+    return;
+  }
+  if (isTerminating) {
+    return;
+  }
+  isTerminating = true;
   setTimeout(function () {
-    if (!hasExited) {
-      hasExited = true;
-      process.exit();
-    }
+    terminateNow();
   }, processTermTimeout);
+};
+
+var killUnresponsiveWorkersNow = function () {
+  for (var i in workers) {
+    if (workers.hasOwnProperty(i)) {
+      if (!childExitLookup[i]) {
+        process.kill(workers[i].process.pid, forceKillSignal);
+        var errorMessage = 'No exit signal was received by worker with id ' + i +
+        ' (PID: ' + workers[i].process.pid + ') before forceKillTimeout of ' + forceKillTimeout +
+        ' ms was reached - As a result, kill signal ' + forceKillSignal + ' was sent to worker';
+
+        var processExitError = new ProcessExitError(errorMessage);
+        sendErrorToMaster(processExitError);
+      }
+    }
+  }
+  isForceKillingWorkers = false;
+};
+
+var killUnresponsiveWorkers = function () {
+  childExitLookup = {};
+  if (isForceKillingWorkers) {
+    return;
+  }
+  isForceKillingWorkers = true;
+  setTimeout(function () {
+    killUnresponsiveWorkersNow();
+  }, forceKillTimeout);
 };
 
 process.on('message', function (masterMessage) {
@@ -70,21 +111,12 @@ process.on('message', function (masterMessage) {
       }
     }
   } else {
-    if (masterMessage.type == 'terminate' && masterMessage.data.killClusterMaster) {
-      terminate();
-    }
-    if (masterMessage.type == 'terminate' && forceKillTimeout) {
-      childExitMessage = {}
-      setTimeout(function () {
-        for (var i in workers) {
-          if (!childExitMessage[i]) {
-		        var errorMessage = forceKillTimeout + " ms no exit signal from Worker " + i + "(PID:"+workers[i].process.pid+') force kill it';
-		        var processExitError = new ProcessExitError(errorMessage);
-		        sendErrorToMaster(processExitError);
-            process.kill(workers[i].process.pid,forceKillSignal);
-          }
-        }
-      }, forceKillTimeout);
+    if (masterMessage.type == 'terminate') {
+      if (masterMessage.data.killClusterMaster) {
+        terminate(masterMessage.data.immediate);
+      } else {
+        killUnresponsiveWorkers();
+      }
     }
     for (var i in workers) {
       if (workers.hasOwnProperty(i)) {
@@ -176,8 +208,8 @@ SCWorkerCluster.prototype._init = function (options) {
     });
 
     worker.on('exit', function (code, signal) {
-      childExitMessage[i] = true;
-      if (alive) {
+      childExitLookup[i] = true;
+      if (!isTerminating) {
         process.send({
           type: 'workerExit',
           data: {

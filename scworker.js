@@ -72,6 +72,7 @@ function SCWorker(options) {
   this.MIDDLEWARE_START = 'start';
 
   this.type = 'worker';
+  this.isTerminating = false;
   this._pendingResponseHandlers = {};
 
   if (options.run != null) {
@@ -504,12 +505,15 @@ SCWorker.prototype.emitWarning = function (warning) {
 var handleWorkerClusterMessage = function (wcMessage) {
   if (wcMessage.type == 'terminate') {
     if (scWorker && !wcMessage.data.immediate) {
-      scWorker.close(function () {
-        process.exit();
-      });
-      setTimeout(function () {
-        process.exit();
-      }, processTermTimeout);
+      if (!scWorker.isTerminating) {
+        scWorker.isTerminating = true;
+        scWorker.close(function () {
+          process.exit();
+        });
+        setTimeout(function () {
+          process.exit();
+        }, processTermTimeout);
+      }
     } else {
       process.exit();
     }

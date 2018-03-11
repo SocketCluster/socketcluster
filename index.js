@@ -532,7 +532,7 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
           warningMessage = 'Master received SIGUSR2 signal - Shutting down all workers immediately';
           killOptions.immediate = true;
         } else {
-          warningMessage = 'Master received SIGUSR2 signal - Shutting down all workers in accordance with processTermTimeout';
+          warningMessage = 'Master received SIGUSR2 signal - Shutting down all workers gracefully within processTermTimeout limit';
         }
 
         var warning = new ProcessExitError(warningMessage);
