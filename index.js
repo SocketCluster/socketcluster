@@ -535,7 +535,8 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
           warningMessage = 'Master received SIGUSR2 signal - Shutting down all workers gracefully within processTermTimeout limit';
         }
 
-        var warning = new ProcessExitError(warningMessage);
+        var warning = new ProcessExitError(warningMessage, null);
+        warning.signal = 'SIGUSR2';
 
         self.emitWarning(warning, {
           type: 'Master',
@@ -600,11 +601,17 @@ SocketCluster.prototype._handleWorkerClusterExit = function (errorCode, signal) 
 
   this.emit(this.EVENT_WORKER_CLUSTER_EXIT, workerClusterInfo);
 
-  var message = 'WorkerCluster exited with code: ' + errorCode;
+  var message = 'WorkerCluster exited with code ' + errorCode;
+  if (signal != null) {
+    message += ' and signal ' + signal;
+  }
   if (errorCode == 0) {
     this.log(message);
   } else {
     var error = new ProcessExitError(message, errorCode);
+    if (signal != null) {
+      error.signal = signal;
+    }
     this.emitFail(error, {
       type: 'WorkerCluster',
       pid: wcPid
