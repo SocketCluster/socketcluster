@@ -265,6 +265,9 @@ SCWorker.prototype._init = function (options) {
         self.emit(self.EVENT_READY);
       });
     }
+  })
+  .catch(function (error) {
+    self.emitError(error);
   });
 };
 
