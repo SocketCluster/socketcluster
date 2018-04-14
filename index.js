@@ -129,7 +129,7 @@ SocketCluster.prototype._init = function (options) {
     pubSubBatchDuration: null,
     environment: 'dev',
     killMasterOnSignal: false,
-    wsEngine: 'uws',
+    wsEngine: 'ws',
     brokerEngine: 'sc-broker-cluster'
   };
 
