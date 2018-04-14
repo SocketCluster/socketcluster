@@ -1,7 +1,7 @@
 {
   "name": "socketcluster",
   "description": "SocketCluster - A Highly parallelized WebSocket server cluster to make the most of multi-core machines/instances.",
-  "version": "11.1.0",
+  "version": "11.2.0",
   "homepage": "http://socketcluster.io",
   "contributors": [
     {
@@ -38,6 +38,6 @@
   "license": "MIT",
   "readmeFilename": "README.md",
   "devDependencies": {
-    "socketcluster-client": "^11.0.0"
+    "socketcluster-client": "^11.0.1"
   }
 }
