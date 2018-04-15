@@ -34,6 +34,8 @@ var options = {
   socketChannelLimit: Number(process.env.SOCKETCLUSTER_SOCKET_CHANNEL_LIMIT) || 1000,
   clusterStateServerHost: argv.cssh || process.env.SCC_STATE_SERVER_HOST || null,
   clusterStateServerPort: process.env.SCC_STATE_SERVER_PORT || null,
+  clusterMappingEngine: process.env.SCC_MAPPING_ENGINE || null,
+  clusterClientPoolSize: process.env.SCC_CLIENT_POOL_SIZE || null,
   clusterAuthKey: process.env.SCC_AUTH_KEY || null,
   clusterInstanceIp: process.env.SCC_INSTANCE_IP || null,
   clusterInstanceIpFamily: process.env.SCC_INSTANCE_IP_FAMILY || null,

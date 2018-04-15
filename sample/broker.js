@@ -15,6 +15,8 @@ class Broker extends SCBroker {
       scClusterBrokerClient.attach(this, {
         stateServerHost: this.options.clusterStateServerHost,
         stateServerPort: this.options.clusterStateServerPort,
+        mappingEngine: this.options.clusterMappingEngine,
+        clientPoolSize: this.options.clusterClientPoolSize,
         authKey: this.options.clusterAuthKey,
         stateServerConnectTimeout: this.options.clusterStateServerConnectTimeout,
         stateServerAckTimeout: this.options.clusterStateServerAckTimeout,
