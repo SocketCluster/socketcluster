@@ -92,7 +92,7 @@ SCC_STATE_SERVER_HOST='127.0.0.1' SOCKETCLUSTER_PORT='8001' node server
 ```
 Now if you navigate to either `localhost:8000` or `localhost:8001` in your browser, you should see that your pub/sub channels are shared between the two **socketcluster** instances.
 
-Note that you can provide additional environment variables to various instances to set custom post numbers, passwords etc...
+Note that you can provide additional environment variables to various instances to set custom port numbers, passwords etc...
 For more info, you can look inside the code in the `server.js` file in each repo and see what `process.env` vars are used.
 
 When running multiples instances of any service on the same machine, make sure that the ports don't clash  - Modify the `SOCKETCLUSTER_SERVER_PORT` or `SOCKETCLUSTER_PORT` environment variable for each instance to make sure that they are unique.
