@@ -19,7 +19,7 @@
     "scc-broker-client": "^5.0.2",
     "serve-static": "1.11.2",
     "socketcluster": "^11.4.4",
-    "socketcluster-client": "^11.2.0"
+    "socketcluster-client": "^12.0.0"
   },
   "keywords": [
     "websocket",
