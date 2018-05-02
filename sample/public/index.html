@@ -74,21 +74,21 @@
       var socket = socketCluster.connect();
 
       socket.on('error', function (err) {
-        throw 'Socket error - ' + err;
+        console.error(err);
       });
 
       socket.on('connect', function () {
-        console.log('CONNECTED');
+        console.log('Socket is connected');
       });
 
-      socket.on('rand', function (data) {
-        console.log('RANDOM STREAM: ' + data.rand);
+      socket.on('random', function (data) {
+        console.log('Received "random" event with data: ' + data.number);
       });
 
       var sampleChannel = socket.subscribe('sample');
 
       sampleChannel.on('subscribeFail', function (err) {
-        console.log('Failed to subscribe to the sample channel due to error: ' + err);
+        console.error('Failed to subscribe to the sample channel due to error: ' + err);
       });
 
       sampleChannel.watch(function (num) {

@@ -44,8 +44,8 @@ class Worker extends SCWorker {
       });
 
       var interval = setInterval(function () {
-        socket.emit('rand', {
-          rand: Math.floor(Math.random() * 5)
+        socket.emit('random', {
+          number: Math.floor(Math.random() * 5)
         });
       }, 1000);
 
