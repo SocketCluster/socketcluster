@@ -222,6 +222,7 @@ SCWorker.prototype._init = function (options) {
       authPrivateKey: self.options.authPrivateKey,
       authPublicKey: self.options.authPublicKey,
       authAlgorithm: self.options.authAlgorithm,
+      authVerifyAlgorithms: self.options.authVerifyAlgorithms,
       authSignAsync: self.options.authSignAsync,
       authVerifyAsync: self.options.authVerifyAsync,
       authDefaultExpiry: self.options.authDefaultExpiry,

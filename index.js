@@ -90,6 +90,7 @@ SocketCluster.prototype._init = function (options) {
     authPublicKey: null,
     authDefaultExpiry: 86400,
     authAlgorithm: null,
+    authVerifyAlgorithms: null,
     authSignAsync: false,
     authVerifyAsync: true,
     crashWorkerOnError: true,
@@ -673,6 +674,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
   workerOpts.authPublicKey = this.options.authPublicKey;
   workerOpts.authDefaultExpiry = this.options.authDefaultExpiry;
   workerOpts.authAlgorithm = this.options.authAlgorithm;
+  workerOpts.authVerifyAlgorithms = this.options.authVerifyAlgorithms;
   workerOpts.authSignAsync = this.options.authSignAsync;
   workerOpts.authVerifyAsync = this.options.authVerifyAsync;
 
