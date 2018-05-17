@@ -5,7 +5,6 @@ var uuid = require('uuid');
 var http = require('http');
 var https = require('https');
 var fs = require('fs');
-var base64id = require('base64id');
 var async = require('async');
 var AuthEngine = require('sc-auth').AuthEngine;
 
