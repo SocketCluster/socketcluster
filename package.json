@@ -19,9 +19,9 @@
     "inquirer": "5.2.0",
     "minimist": "1.2.0",
     "sc-auth": "^5.0.1",
-    "sc-broker-cluster": "^6.1.4",
+    "sc-broker-cluster": "^6.1.5",
     "sc-errors": "^1.4.0",
-    "socketcluster-server": "^13.1.1",
+    "socketcluster-server": "^13.1.2",
     "uid-number": "0.0.6",
     "uuid": "3.2.1"
   },
