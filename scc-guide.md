@@ -76,7 +76,7 @@ node server
 Next, to launch a broker, you should navigate to your **scc-broker** repo and run the command:
 
 ```
-SCC_STATE_SERVER_HOST='127.0.0.1' SOCKETCLUSTER_SERVER_PORT='8888' node server
+SCC_STATE_SERVER_HOST='127.0.0.1' SCC_BROKER_SERVER_PORT='8888' node server
 ```
 
 Finally, to run a frontend-facing SocketCluster instance, you can navigate to your socketcluster project directory and run:
@@ -95,7 +95,7 @@ Now if you navigate to either `localhost:8000` or `localhost:8001` in your brows
 Note that you can provide additional environment variables to various instances to set custom port numbers, passwords etc...
 For more info, you can look inside the code in the `server.js` file in each repo and see what `process.env` vars are used.
 
-When running multiples instances of any service on the same machine, make sure that the ports don't clash  - Modify the `SOCKETCLUSTER_SERVER_PORT` or `SOCKETCLUSTER_PORT` environment variable for each instance to make sure that they are unique.
+When running multiples instances of any service on the same machine, make sure that the ports don't clash - Modify the `SCC_BROKER_SERVER_PORT` or `SOCKETCLUSTER_PORT` environment variable for each instance to make sure that they are unique.
 
 ## Notes
 
