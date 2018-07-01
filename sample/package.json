@@ -16,9 +16,9 @@
     "sc-errors": "^1.4.0",
     "sc-framework-health-check": "^2.0.0",
     "sc-hot-reboot": "^1.0.0",
-    "scc-broker-client": "^5.0.2",
+    "scc-broker-client": "^6.0.0",
     "serve-static": "1.13.2",
-    "socketcluster": "^13.1.8",
+    "socketcluster": "^14.0.0",
     "socketcluster-client": "^13.0.0"
   },
   "keywords": [
