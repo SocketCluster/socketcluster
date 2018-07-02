@@ -76,7 +76,7 @@ SocketCluster.prototype._init = function (options) {
   var self = this;
 
   var backslashRegex = /\\/g;
-  var appDirPath = path.dirname(require.main.filename).replace(backslashRegex, '/');
+  this.appDirPath = path.dirname(require.main.filename).replace(backslashRegex, '/');
 
   self.options = {
     port: 8000,
@@ -184,26 +184,8 @@ SocketCluster.prototype._init = function (options) {
       "boot controller for each worker in the cluster");
   }
 
-  self._paths = {
-    appDirPath: appDirPath,
-    statusURL: '/~status',
-    appWorkerControllerPath: path.resolve(self.options.workerController)
-  };
-
-  if (self.options.workerClusterController) {
-    self._paths.appWorkerClusterControllerPath = path.resolve(self.options.workerClusterController);
-  } else {
-    self._paths.appWorkerClusterControllerPath = __dirname + '/default-workercluster-controller.js';
-  }
-
-  if (/\.js$/.test(self.options.wsEngine)) {
-    self._paths.wsEnginePath = path.resolve(self.options.wsEngine);
-  } else {
-    self._paths.wsEnginePath = self.options.wsEngine;
-  }
-
   var pathHasher = crypto.createHash('md5');
-  pathHasher.update(self._paths.appDirPath, 'utf8');
+  pathHasher.update(self.appDirPath, 'utf8');
   var pathHash = pathHasher.digest('hex').substr(0, 10);
   // Trim it because some OSes (e.g. OSX) do not like long path names for domain sockets.
   var shortAppName = self.options.appName.substr(0, 13);
@@ -236,12 +218,6 @@ SocketCluster.prototype._init = function (options) {
       } catch (err) {}
     }
     self._socketDirPath = socketDir;
-  }
-
-  if (self.options.brokerController) {
-    self._paths.appBrokerControllerPath = path.resolve(self.options.brokerController);
-  } else {
-    self._paths.appBrokerControllerPath = null;
   }
 
   if (self.options.protocolOptions) {
@@ -368,6 +344,34 @@ SocketCluster.prototype._init = function (options) {
   } else {
     self._start();
   }
+};
+
+SocketCluster.prototype._getPaths = function () {
+  var paths = {
+    appDirPath: this.appDirPath,
+    statusURL: '/~status',
+    appWorkerControllerPath: path.resolve(this.options.workerController)
+  };
+
+  if (this.options.workerClusterController) {
+    paths.appWorkerClusterControllerPath = path.resolve(this.options.workerClusterController);
+  } else {
+    paths.appWorkerClusterControllerPath = __dirname + '/default-workercluster-controller.js';
+  }
+
+  if (/\.js$/.test(this.options.wsEngine)) {
+    paths.wsEnginePath = path.resolve(this.options.wsEngine);
+  } else {
+    paths.wsEnginePath = this.options.wsEngine;
+  }
+
+  if (this.options.brokerController) {
+    paths.appBrokerControllerPath = path.resolve(this.options.brokerController);
+  } else {
+    paths.appBrokerControllerPath = null;
+  }
+
+  return paths;
 };
 
 SocketCluster.prototype._fileExistsSync = function (filePath) {
@@ -663,8 +667,10 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     execOptions.execArgv.push('--inspect=' + inspectPort);
   }
 
+  var paths = this._getPaths();
+
   var workerOpts = this._cloneObject(this.options);
-  workerOpts.paths = this._paths;
+  workerOpts.paths = paths;
   workerOpts.sourcePort = this.options.port;
   workerOpts.workerCount = this.options.workers;
   workerOpts.brokers = this._getBrokerSocketPaths();
@@ -692,7 +698,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
   });
   execOptions.env.workerInitOptions = JSON.stringify(workerOpts);
 
-  this.workerCluster = fork(this._paths.appWorkerClusterControllerPath, process.argv.slice(2), execOptions);
+  this.workerCluster = fork(paths.appWorkerClusterControllerPath, process.argv.slice(2), execOptions);
   this.isWorkerClusterReady = false;
 
   this.workerCluster.on('error', function (err) {
@@ -775,6 +781,8 @@ SocketCluster.prototype.run = function () {};
 SocketCluster.prototype._start = function () {
   var self = this;
 
+  var paths = self._getPaths();
+
   var brokerEngineServerReady = function () {
     self._brokerEngineServer.removeListener('ready', brokerEngineServerReady);
     self._launchWorkerCluster();
@@ -803,7 +811,7 @@ SocketCluster.prototype._start = function () {
     forceKillSignal: self.options.forceKillSignal,
     ipcAckTimeout: self.options.ipcAckTimeout,
     brokerOptions: self.options,
-    appBrokerControllerPath: self._paths.appBrokerControllerPath
+    appBrokerControllerPath: paths.appBrokerControllerPath
   });
 
   self._brokerEngineServer.on('error', function (err) {
