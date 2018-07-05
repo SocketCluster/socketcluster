@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
       - name: scc-broker
-        image: socketcluster/scc-broker:v3.0.0
+        image: socketcluster/scc-broker:v6.0.1
         ports:
         - containerPort: 8888
         env:
