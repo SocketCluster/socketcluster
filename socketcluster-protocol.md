@@ -127,7 +127,7 @@ Note that there are three kinds of strings which have special meaning within Soc
 2. Event packets (I.e. JSON objects that have an `event` property)
 3. Response packets (I.e. JSON objects that have an `rid` property)
 
-Every other kind of string/binary packet will be interpreted as a raw message and should trigger a `raw` event on the client side.
+Every other kind of string/binary packet will be interpreted as a raw message and should trigger a `raw` event on the client socket.
 
 
 ### The pub/sub layer
