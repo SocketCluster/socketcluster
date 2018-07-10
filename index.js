@@ -104,6 +104,7 @@ SocketCluster.prototype._init = function (options) {
     ipcAckTimeout: 10000,
     pingInterval: 8000,
     pingTimeout: 20000,
+    pingTimeoutDisabled: false,
     origins: '*:*',
     socketChannelLimit: 1000,
     workerStatusInterval: 10000,

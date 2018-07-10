@@ -214,6 +214,7 @@ SCWorker.prototype._init = function (options) {
       ackTimeout: self.options.ackTimeout,
       pingTimeout: self.options.pingTimeout,
       pingInterval: self.options.pingInterval,
+      pingTimeoutDisabled: self.options.pingTimeoutDisabled,
       origins: self.options.origins,
       appName: self.options.appName,
       path: self.options.path,
