@@ -165,7 +165,7 @@ SCWorkerCluster.prototype._init = function (options) {
   }
 
   cluster.setupMaster({
-    exec: options.paths.appWorkerControllerPath,
+    exec: options.paths.appWorkerControllerPath
   });
 
   var workerCount = options.workerCount;
