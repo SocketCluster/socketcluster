@@ -16,10 +16,10 @@
     "sc-errors": "^1.4.0",
     "sc-framework-health-check": "^2.0.0",
     "sc-hot-reboot": "^1.0.0",
-    "scc-broker-client": "^6.0.0",
+    "scc-broker-client": "^6.0.1",
     "serve-static": "1.13.2",
-    "socketcluster": "^14.0.2",
-    "socketcluster-client": "^13.0.0"
+    "socketcluster": "^14.0.3",
+    "socketcluster-client": "^13.0.1"
   },
   "keywords": [
     "websocket",
