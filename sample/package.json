@@ -18,7 +18,7 @@
     "sc-hot-reboot": "^1.0.0",
     "scc-broker-client": "^6.0.1",
     "serve-static": "1.13.2",
-    "socketcluster": "^14.0.3",
+    "socketcluster": "^14.0.4",
     "socketcluster-client": "^13.0.1"
   },
   "keywords": [
