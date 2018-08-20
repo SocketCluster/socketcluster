@@ -151,8 +151,8 @@ SocketCluster.prototype._init = function (options) {
     }
   }
 
-  // Make sure there is always a trailing slash in WS path
-  self.options.path = self.options.path.replace(/\/?$/, '/');
+  // Make sure there is always a leading and a trailing slash in the WS path
+  self.options.path = self.options.path.replace(/\/?$/, '/').replace(/^\/?/, '/');
 
   var maxTimeout = Math.pow(2, 31) - 1;
 
