@@ -171,7 +171,7 @@ If you would like to contribute to the SocketCluster project financially, you ca
 
 ## Change log
 
-See GitHub releases for changes.
+See [GitHub releases](https://github.com/SocketCluster/socketcluster/releases) for changes.
 
 ### Custom Codecs
 
