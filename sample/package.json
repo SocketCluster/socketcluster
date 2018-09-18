@@ -9,7 +9,7 @@
     }
   ],
   "dependencies": {
-    "connect": "3.0.1",
+    "connect": "3.6.6",
     "express": "4.16.3",
     "minimist": "1.1.0",
     "morgan": "1.7.0",
