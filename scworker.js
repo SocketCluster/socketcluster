@@ -81,7 +81,8 @@ function SCWorker(options) {
     this.createHTTPServer = options.createHTTPServer;
   }
 
-  this._init(workerInitOptions);
+  var workerOptions = Object.assign({}, options, workerInitOptions);
+  this._init(workerOptions);
 }
 
 SCWorker.create = function (options) {
@@ -238,9 +239,17 @@ SCWorker.prototype._init = function (options) {
       self.brokerEngineClient.setSCServer(self.scServer);
     }
 
-    // Default authentication engine
-    self.setAuthEngine(new AuthEngine());
-    self.codec = self.scServer.codec;
+    if (options.authEngine) {
+      self.setAuthEngine(options.authEngine);
+    } else {
+      // Default authentication engine
+      self.setAuthEngine(new AuthEngine());
+    }
+    if (options.codecEngine) {
+      self.setCodecEngine(options.codecEngine);
+    } else {
+      self.codec = self.scServer.codec;
+    }
 
     self._socketPath = self.scServer.getPath();
 
