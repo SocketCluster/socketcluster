@@ -169,14 +169,6 @@ To contribute; clone this repo, then cd inside it and then run npm install to in
 
 See [GitHub releases](https://github.com/SocketCluster/socketcluster/releases) for changes.
 
-### Custom Codecs
-
-An increasing number of users have expressed interest in using SC to build massively multiplayer online games. One concern which was raised is that the standard SocketCluster protocol message format has too much overhead for certain kinds of games. See https://github.com/SocketCluster/socketcluster-client/issues/64.
-Based on the standard format, various actions can have between 40 and 70 bytes of overhead - This isn't much if each user is only sending one medium-sized message every few seconds but what if you wanted 10 to 20 tiny messages every second? The overhead bandwidth cost would add up and could negatively affect the profitability of the game.
-For this reason, we have introduced the concept of 'Custom Codecs' - Since v5.0.15, you can provide a custom Codec engine (a JavaScript/Node.js module) on both the client and server to allow you to compress messages into any format you like (optimized for your use case). If you write a Codec module which you feel might be useful for other developers, feel free to let us know <a href="https://gitter.im/SocketCluster/socketcluster">here</a> and share with the rest of the SC community.
-
-Search for 'setCodecEngine' in http://socketcluster.io/#!/docs/api-scserver and 'codecEngine' in http://socketcluster.io/#!/docs/api-socketcluster-client for more details.
-
 
 ## License
 
