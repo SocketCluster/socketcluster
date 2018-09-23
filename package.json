@@ -18,10 +18,10 @@
     "fs-extra": "6.0.1",
     "inquirer": "5.2.0",
     "minimist": "1.2.0",
-    "sc-auth": "^5.0.1",
-    "sc-broker-cluster": "^6.2.1",
-    "sc-errors": "^1.4.0",
-    "socketcluster-server": "^14.2.1",
+    "sc-auth": "^5.0.2",
+    "sc-broker-cluster": "^7.0.0",
+    "sc-errors": "^1.4.1",
+    "socketcluster-server": "^14.3.0",
     "uid-number": "0.0.6",
     "uuid": "3.2.1"
   },
@@ -38,6 +38,6 @@
   "license": "MIT",
   "readmeFilename": "README.md",
   "devDependencies": {
-    "socketcluster-client": "^14.1.0"
+    "socketcluster-client": "^14.2.1"
   }
 }
