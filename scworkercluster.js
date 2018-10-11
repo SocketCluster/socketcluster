@@ -53,19 +53,17 @@ var terminate = function (immediate) {
 };
 
 var killUnresponsiveWorkersNow = function () {
-  for (var i in workers) {
-    if (workers.hasOwnProperty(i)) {
-      if (!childExitLookup[i]) {
-        process.kill(workers[i].process.pid, forceKillSignal);
-        var errorMessage = 'No exit signal was received by worker with id ' + i +
-        ' (PID: ' + workers[i].process.pid + ') before forceKillTimeout of ' + forceKillTimeout +
-        ' ms was reached - As a result, kill signal ' + forceKillSignal + ' was sent to worker';
+  (workers || []).forEach(function (worker, i) {
+    if (!childExitLookup[i]) {
+      process.kill(worker.process.pid, forceKillSignal);
+      var errorMessage = 'No exit signal was received by worker with id ' + i +
+      ' (PID: ' + worker.process.pid + ') before forceKillTimeout of ' + forceKillTimeout +
+      ' ms was reached - As a result, kill signal ' + forceKillSignal + ' was sent to worker';
 
-        var processExitError = new ProcessExitError(errorMessage);
-        sendErrorToMaster(processExitError);
-      }
+      var processExitError = new ProcessExitError(errorMessage);
+      sendErrorToMaster(processExitError);
     }
-  }
+  });
   isForceKillingWorkers = false;
 };
 
@@ -118,11 +116,9 @@ process.on('message', function (masterMessage) {
         killUnresponsiveWorkers();
       }
     }
-    for (var i in workers) {
-      if (workers.hasOwnProperty(i)) {
-        workers[i].send(masterMessage);
-      }
-    }
+    (workers || []).forEach(function (worker) {
+      worker.send(masterMessage);
+    });
   }
 });
 

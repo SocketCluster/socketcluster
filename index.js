@@ -145,11 +145,7 @@ SocketCluster.prototype._init = function (options) {
     yellow: 33
   };
 
-  for (var i in options) {
-    if (options.hasOwnProperty(i)) {
-      self.options[i] = options[i];
-    }
-  }
+  Object.assign(self.options, options);
 
   var maxTimeout = Math.pow(2, 31) - 1;
 
@@ -354,7 +350,7 @@ SocketCluster.prototype._getPaths = function () {
   if (this.options.workerClusterController) {
     paths.appWorkerClusterControllerPath = path.resolve(this.options.workerClusterController);
   } else {
-    paths.appWorkerClusterControllerPath = __dirname + '/default-workercluster-controller.js';
+    paths.appWorkerClusterControllerPath = path.join(__dirname, 'default-workercluster-controller.js');
   }
 
   if (/\.js$/.test(this.options.wsEngine)) {
@@ -866,8 +862,6 @@ SocketCluster.prototype._flushWorkerClusterMessageBuffer = function () {
 };
 
 SocketCluster.prototype.sendToWorker = function (workerId, data, callback) {
-  var self = this;
-
   var messagePacket = {
     type: 'masterMessage',
     workerId: workerId,
@@ -917,13 +911,7 @@ SocketCluster.prototype.log = function (message, time) {
 };
 
 SocketCluster.prototype._cloneObject = function (object) {
-  var clone = {};
-  for (var i in object) {
-    if (object.hasOwnProperty(i)) {
-      clone[i] = object[i];
-    }
-  }
-  return clone;
+  return Object.assign({}, object);
 };
 
 SocketCluster.prototype.colorText = function (message, color) {

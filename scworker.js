@@ -1,10 +1,8 @@
 var socketClusterServer = require('socketcluster-server');
 var EventEmitter = require('events').EventEmitter;
-var crypto = require('crypto');
 var uuid = require('uuid');
 var http = require('http');
 var https = require('https');
-var fs = require('fs');
 var async = require('async');
 var AuthEngine = require('sc-auth').AuthEngine;
 
@@ -34,7 +32,7 @@ var handleError = function (isFatal, err) {
 };
 
 var handleWarning = function (warning) {
-  var warning = scErrors.dehydrateError(warning, true);
+  warning = scErrors.dehydrateError(warning, true);
   process.send({
     type: 'warning',
     data: {
@@ -108,22 +106,18 @@ SCWorker.prototype._init = function (options) {
 
   this.options = {};
 
-  for (var i in options) {
-    if (options.hasOwnProperty(i)) {
-      this.options[i] = options[i];
-    }
-  }
+  Object.assign(this.options, options);
 
   if (this.options.processTermTimeout) {
     processTermTimeout = this.options.processTermTimeout;
   }
 
   if (this.options && this.options.protocolOptions && this.options.protocolOptions.pfx) {
-    this.options.protocolOptions.pfx = new Buffer(this.options.protocolOptions.pfx, 'base64');
+    this.options.protocolOptions.pfx = Buffer.from(this.options.protocolOptions.pfx, 'base64');
   }
 
   if (typeof this.options.authKey === 'object' && this.options.authKey !== null && this.options.authKey.type === 'Buffer') {
-    this.options.authKey = new Buffer(this.options.authKey.data, 'base64');
+    this.options.authKey = Buffer.from(this.options.authKey.data, 'base64');
   }
 
   if (this.options.propagateErrors) {
@@ -204,8 +198,6 @@ SCWorker.prototype._init = function (options) {
       }
       self.emitError(error);
     });
-
-    var secure = self.options.protocol == 'https' ? 1 : 0;
 
     self.scServer = socketClusterServer.attach(self.httpServer, {
       brokerEngine: self.brokerEngineClient,
@@ -356,8 +348,6 @@ SCWorker.prototype.startHTTPServer = function () {
 };
 
 SCWorker.prototype.start = function () {
-  var self = this;
-
   this._httpRequestCount = 0;
   this._wsRequestCount = 0;
   this._httpRPM = 0;
@@ -375,8 +365,6 @@ SCWorker.prototype.start = function () {
 };
 
 SCWorker.prototype._httpRequestHandler = function (req, res) {
-  var self = this;
-
   this._httpRequestCount++;
 
   req.exchange = this.exchange;
