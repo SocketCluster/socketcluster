@@ -36,15 +36,15 @@ var parsePackageFile = function (moduleDir) {
 };
 
 var errorMessage = function (message) {
-  console.log('\033[0;31m[Error]\033[0m ' + message);
+  console.log('\x1b[31m[Error]\x1b[0m ' + message);
 };
 
 var successMessage = function (message) {
-  console.log('\033[0;32m[Success]\033[0m ' + message);
+  console.log('\x1b[32m[Success]\x1b[0m ' + message);
 };
 
 var warningMessage = function (message) {
-  console.log('\033[0;33m[Warning]\033[0m ' + message);
+  console.log('\x1b[33m[Warning]\x1b[0m ' + message);
 };
 
 var showCorrectUsage = function () {
