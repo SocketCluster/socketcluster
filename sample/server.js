@@ -42,7 +42,7 @@ var options = {
   clusterStateServerConnectTimeout: Number(process.env.SCC_STATE_SERVER_CONNECT_TIMEOUT) || null,
   clusterStateServerAckTimeout: Number(process.env.SCC_STATE_SERVER_ACK_TIMEOUT) || null,
   clusterStateServerReconnectRandomness: Number(process.env.SCC_STATE_SERVER_RECONNECT_RANDOMNESS) || null,
-  crashWorkerOnError: argv['auto-reboot'] != false,
+  crashWorkerOnError: argv['auto-reboot'] !== false,
   // If using nodemon, set this to true, and make sure that environment is 'dev'.
   killMasterOnSignal: false,
   environment: environment

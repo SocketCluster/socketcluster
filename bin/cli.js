@@ -180,7 +180,7 @@ var confirmReplaceSetup = function (confirm) {
   }
 };
 
-if (command == 'create') {
+if (command === 'create') {
   if (arg1) {
     if (fileExistsSync(destDir)) {
       if (force) {

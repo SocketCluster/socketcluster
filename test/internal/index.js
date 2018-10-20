@@ -19,7 +19,7 @@ var fileExistsSync = function (filePath) {
   return true;
 };
 
-if (process.platform != 'win32') {
+if (process.platform !== 'win32') {
   if (fileExistsSync(resultSocketPath)) {
     fs.unlinkSync(resultSocketPath);
   }
@@ -38,7 +38,7 @@ var resultsServer = http.createServer(function (req, res) {
     var result;
     for (var i in results) {
       result = results[i];
-      if (result.origin == 'broker') {
+      if (result.origin === 'broker') {
         if (brokerData[result.pid] == null) {
           brokerData[result.pid] = {};
         }
@@ -71,7 +71,7 @@ scServer.on('message', function (m) {
   var messageInterval = 2000;
   var socketCount = 0;
 
-  if (m.event == 'ready') {
+  if (m.event === 'ready') {
     var sockets = [];
     var tasks = [];
 
@@ -79,7 +79,7 @@ scServer.on('message', function (m) {
       tasks.push(function (cb) {
         var socket = scClient.connect(options);
         socket.once('connect', function () {
-          if (socket.getState() == socket.OPEN) {
+          if (socket.getState() === socket.OPEN) {
             // Subscribe to some events
             socket.on('event1', function () {});
             socket.on('event2', function () {});
@@ -89,7 +89,7 @@ scServer.on('message', function (m) {
             console.log('#' + ++socketCount + ' - Socket ' + socket.id + ' connected');
 
             var interval = setInterval(function () {
-              if (socket.getState() == socket.OPEN) {
+              if (socket.getState() === socket.OPEN) {
                 socket.emit('test', {id: socket.id});
               } else {
                 clearInterval(interval);

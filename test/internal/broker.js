@@ -23,7 +23,7 @@ class Broker extends SCBroker {
         method: 'POST'
       }, (res) => {
         res.on('data', (data) => {
-          if (data.toString() == 'finish') {
+          if (data.toString() === 'finish') {
             clearInterval(testDataInterval);
           }
         });

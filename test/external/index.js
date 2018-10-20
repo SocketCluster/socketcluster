@@ -13,7 +13,7 @@ var options = {
 };
 
 scServer.on('message', function (m) {
-  if (m.event == 'ready') {
+  if (m.event === 'ready') {
     var socket = scClient.connect(options);
 
     var pongChannel;
@@ -23,7 +23,7 @@ scServer.on('message', function (m) {
         socket.on('first', function (data) {
           var err;
           try {
-            assert(data == 'This is the first event', 'Received incorrect data from "first" event');
+            assert(data === 'This is the first event', 'Received incorrect data from "first" event');
           } catch (e) {
             err = e;
           }
@@ -36,7 +36,7 @@ scServer.on('message', function (m) {
         pongChannel.watch(function (data) {
           var err;
           try {
-            assert(JSON.stringify(data) == JSON.stringify({message: 'This is pong data'}),
+            assert(JSON.stringify(data) === JSON.stringify({message: 'This is pong data'}),
               'Received incorrect data from "pong" event');
           } catch (e) {
             err = e;
@@ -50,7 +50,7 @@ scServer.on('message', function (m) {
         pongChannel.watch(function (data) {
           var err;
           try {
-            assert(JSON.stringify(data) == JSON.stringify({message: 'published pong'}),
+            assert(JSON.stringify(data) === JSON.stringify({message: 'published pong'}),
               'Received incorrect data from published "pong" event');
           } catch (e) {
             err = e;
@@ -67,7 +67,7 @@ scServer.on('message', function (m) {
           var err;
           try {
             var subscriptions = socket.subscriptions();
-            assert(JSON.stringify(subscriptions) == JSON.stringify(['foo']),
+            assert(JSON.stringify(subscriptions) === JSON.stringify(['foo']),
               'Expected subscriptions() array to contain one "foo" channel');
           } catch (e) {
             err = e;
@@ -103,7 +103,7 @@ scServer.on('message', function (m) {
 
           try {
             var subscriptions = socket.subscriptions();
-            assert(JSON.stringify(subscriptions) == JSON.stringify([]),
+            assert(JSON.stringify(subscriptions) === JSON.stringify([]),
               'Did not unsubscribe from channels on disconnect');
           } catch (e) {
             err = e;
@@ -120,7 +120,7 @@ scServer.on('message', function (m) {
             try {
               var subscriptions = socket.subscriptions();
 
-              assert(JSON.stringify(subscriptions) == JSON.stringify(['foo']),
+              assert(JSON.stringify(subscriptions) === JSON.stringify(['foo']),
                 'Did not automatically resubscribe to the correct channels which were unsubscribed due to disconnection');
             } catch (e) {
               err = e;
@@ -135,7 +135,7 @@ scServer.on('message', function (m) {
           var unsubscribeEmitted = false;
 
           socket.on('unsubscribe', function (channel) {
-            if (channel == 'test') {
+            if (channel === 'test') {
               unsubscribeEmitted = true;
             }
           });
@@ -160,13 +160,13 @@ scServer.on('message', function (m) {
         var actionSequence = [];
 
         socket.on('subscribe', function (channel) {
-          if (channel == 'channel1') {
+          if (channel === 'channel1') {
             actionSequence.push('subscribe');
           }
         });
 
         socket.on('unsubscribe', function (channel) {
-          if (channel == 'channel1') {
+          if (channel === 'channel1') {
             actionSequence.push('unsubscribe');
           }
         });
@@ -185,7 +185,7 @@ scServer.on('message', function (m) {
           socket.off('unsubscribe');
 
           try {
-            assert(JSON.stringify(actionSequence) == JSON.stringify(expectedActionSequence),
+            assert(JSON.stringify(actionSequence) === JSON.stringify(expectedActionSequence),
               'Subscribing and unsubscribing to channel1 multiple times in a sequence was not handled in an optimal way');
           } catch (e) {
             err = e;
@@ -200,13 +200,13 @@ scServer.on('message', function (m) {
 
         setTimeout(function () {
           socket.on('subscribe', function (channel) {
-            if (channel == 'channel2') {
+            if (channel === 'channel2') {
               actionSequence.push('subscribe');
             }
           });
 
           socket.on('unsubscribe', function (channel) {
-            if (channel == 'channel2') {
+            if (channel === 'channel2') {
               actionSequence.push('unsubscribe');
             }
           });
@@ -229,7 +229,7 @@ scServer.on('message', function (m) {
             socket.off('subscribe');
             socket.off('unsubscribe');
             try {
-              assert(JSON.stringify(actionSequence) == JSON.stringify(expectedActionSequence),
+              assert(JSON.stringify(actionSequence) === JSON.stringify(expectedActionSequence),
                 'Subscribing and unsubscribing to channel2 multiple times in a sequence was not handled in an optimal way');
             } catch (e) {
               err = e;

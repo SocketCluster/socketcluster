@@ -12,4 +12,4 @@ class Worker extends SCWorker {
   }
 }
 
-new Worker()
+new Worker();

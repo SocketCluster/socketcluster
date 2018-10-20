@@ -80,21 +80,21 @@ var killUnresponsiveWorkers = function () {
 
 process.on('message', function (masterPacket) {
   if (
-    masterPacket.type == 'masterMessage' ||
-    masterPacket.type == 'masterRequest' ||
-    masterPacket.type == 'masterResponse'
+    masterPacket.type === 'masterMessage' ||
+    masterPacket.type === 'masterRequest' ||
+    masterPacket.type === 'masterResponse'
   ) {
     var targetWorker = workers[masterPacket.workerId];
     if (targetWorker) {
       targetWorker.send(masterPacket);
     } else {
-      if (masterPacket.type == 'masterMessage') {
+      if (masterPacket.type === 'masterMessage') {
         var errorMessage = 'Cannot send message to worker with id ' + masterPacket.workerId +
         ' because the worker does not exist';
         var notFoundError = new InvalidActionError(errorMessage);
         sendErrorToMaster(notFoundError);
 
-      } else if (masterPacket.type == 'masterRequest') {
+      } else if (masterPacket.type === 'masterRequest') {
         var errorMessage = 'Cannot send request to worker with id ' + masterPacket.workerId +
         ' because the worker does not exist';
         var notFoundError = new InvalidActionError(errorMessage);
@@ -116,7 +116,7 @@ process.on('message', function (masterPacket) {
       }
     }
   } else {
-    if (masterPacket.type == 'terminate') {
+    if (masterPacket.type === 'terminate') {
       if (masterPacket.data.killClusterMaster) {
         terminate(masterPacket.data.immediate);
       } else {
@@ -189,7 +189,7 @@ SCWorkerCluster.prototype._init = function (options) {
     worker.on('error', sendErrorToMaster);
 
     worker.on('message', function (workerPacket) {
-      if (workerPacket.type == 'ready') {
+      if (workerPacket.type === 'ready') {
         process.send({
           type: 'workerStart',
           data: {

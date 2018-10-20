@@ -184,7 +184,7 @@ SocketCluster.prototype._init = function (options) {
   // Trim it because some OSes (e.g. OSX) do not like long path names for domain sockets.
   var shortAppName = self.options.appName.substr(0, 13);
 
-  if (process.platform == 'win32') {
+  if (process.platform === 'win32') {
     if (self.options.socketRoot) {
       self._socketDirPath = self.options.socketRoot + '_';
     } else {
@@ -268,14 +268,14 @@ SocketCluster.prototype._init = function (options) {
   if (!self.options.brokers || self.options.brokers < 1) {
     self.options.brokers = 1;
   }
-  if (typeof self.options.brokers != 'number') {
+  if (typeof self.options.brokers !== 'number') {
     throw new InvalidOptionsError('The brokers option must be a number');
   }
 
   if (!self.options.workers || self.options.workers < 1) {
     self.options.workers = 1;
   }
-  if (typeof self.options.workers != 'number') {
+  if (typeof self.options.workers !== 'number') {
     throw new InvalidOptionsError('The workers option must be a number');
   }
 
@@ -303,7 +303,7 @@ SocketCluster.prototype._init = function (options) {
   /*
     To allow inserting blank lines in console on Windows to aid with debugging.
   */
-  if (process.platform == 'win32') {
+  if (process.platform === 'win32') {
     process.stdin.resume();
     process.stdin.setEncoding('utf8');
   }
@@ -318,8 +318,8 @@ SocketCluster.prototype._init = function (options) {
     self.options.instanceId = uuid.v4();
   }
 
-  if (self.options.downgradeToUser && process.platform != 'win32') {
-    if (typeof self.options.downgradeToUser == 'number') {
+  if (self.options.downgradeToUser && process.platform !== 'win32') {
+    if (typeof self.options.downgradeToUser === 'number') {
       fs.chownSync(self._socketDirPath, self.options.downgradeToUser, 0);
       self._start();
     } else {
@@ -421,7 +421,7 @@ SocketCluster.prototype._logObject = function (obj, objType, time) {
 
 SocketCluster.prototype._convertValueToUnknownError = function (err, origin) {
   if (!(err instanceof Error)) {
-    if (err && typeof err == 'object') {
+    if (err && typeof err === 'object') {
       if (err.message || err.stack) {
         err = scErrors.hydrateError(err, true);
       } else {
@@ -439,10 +439,10 @@ SocketCluster.prototype._convertValueToUnknownError = function (err, origin) {
         }
         err = new UnknownError(errorMessage);
       }
-    } else if (typeof err == 'function') {
+    } else if (typeof err === 'function') {
       var errorMessage = '[function ' + (err.name || 'anonymous') + ']';
       err = new UnknownError(errorMessage);
-    } else if (typeof err == 'undefined') {
+    } else if (typeof err === 'undefined') {
       err = new UnknownError('undefined');
     } else if (err === null) {
       err = new UnknownError('null');
@@ -527,7 +527,7 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
       this._sigusr2SignalHandler = function () {
         var warningMessage;
         var killOptions = {};
-        if (self.options.environment == 'dev') {
+        if (self.options.environment === 'dev') {
           warningMessage = 'Master received SIGUSR2 signal - Shutting down all workers immediately';
           killOptions.immediate = true;
         } else {
@@ -604,7 +604,7 @@ SocketCluster.prototype._handleWorkerClusterExit = function (errorCode, signal) 
   if (signal != null) {
     message += ' and signal ' + signal;
   }
-  if (errorCode == 0) {
+  if (errorCode === 0) {
     this.log(message);
   } else {
     var error = new ProcessExitError(message, errorCode);
@@ -643,7 +643,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
   };
 
   if (argv['debug-workers']) {
-    if (argv['debug-workers'] == true) {
+    if (argv['debug-workers'] === true) {
       debugPort = this.options.defaultWorkerDebugPort;
     } else {
       debugPort = argv['debug-workers'];
@@ -652,7 +652,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
   }
 
   if (argv['inspect-workers']) {
-    if (argv['inspect-workers'] == true) {
+    if (argv['inspect-workers'] === true) {
       inspectPort = this.options.defaultWorkerDebugPort;
     } else {
       inspectPort = argv['inspect-workers'];
@@ -678,10 +678,10 @@ SocketCluster.prototype._launchWorkerCluster = function () {
   workerOpts.authSignAsync = this.options.authSignAsync;
   workerOpts.authVerifyAsync = this.options.authVerifyAsync;
 
-  if (typeof workerOpts.schedulingPolicy == 'string') {
-    if (workerOpts.schedulingPolicy == 'rr') {
+  if (typeof workerOpts.schedulingPolicy === 'string') {
+    if (workerOpts.schedulingPolicy === 'rr') {
       workerOpts.schedulingPolicy = cluster.SCHED_RR;
-    } else if (workerOpts.schedulingPolicy == 'none') {
+    } else if (workerOpts.schedulingPolicy === 'none') {
       workerOpts.schedulingPolicy = cluster.SCHED_NONE;
     }
   }
@@ -700,28 +700,28 @@ SocketCluster.prototype._launchWorkerCluster = function () {
   });
 
   this.workerCluster.on('message', function workerHandler(message) {
-    if (message.type == 'error') {
+    if (message.type === 'error') {
       if (message.data.workerPid) {
         self._workerErrorHandler(message.data.workerPid, message.data.error);
       } else {
         self._workerClusterErrorHandler(message.data.pid, message.data.error);
       }
-    } else if (message.type == 'warning') {
+    } else if (message.type === 'warning') {
       var warning = scErrors.hydrateError(message.data.error, true);
       self._workerWarningHandler(message.data.workerPid, warning);
-    } else if (message.type == 'ready') {
+    } else if (message.type === 'ready') {
       self._workerClusterReadyHandler();
-    } else if (message.type == 'workerStart') {
+    } else if (message.type === 'workerStart') {
       self._workerStartHandler(message.data);
-    } else if (message.type == 'workerExit') {
+    } else if (message.type === 'workerExit') {
       self._workerExitHandler(message.data);
-    } else if (message.type == 'workerMessage') {
+    } else if (message.type === 'workerMessage') {
       self.emit('workerMessage', message.workerId, message.data);
-    } else if (message.type == 'workerRequest') {
+    } else if (message.type === 'workerRequest') {
       self.emit('workerRequest', message.workerId, message.data, function (err, data) {
         self.respondToWorker(err, data, message.workerId, message.cid);
       });
-    } else if (message.type == 'workerResponse' || message.type == 'workerClusterResponse') {
+    } else if (message.type === 'workerResponse' || message.type === 'workerClusterResponse') {
       var responseHandler = self._pendingResponseHandlers[message.rid];
       if (responseHandler) {
         clearTimeout(responseHandler.timeout);
@@ -783,12 +783,12 @@ SocketCluster.prototype._start = function () {
   };
 
   var brokerDebugPort = argv['debug-brokers'];
-  if (brokerDebugPort == true) {
+  if (brokerDebugPort === true) {
     brokerDebugPort = self.options.defaultBrokerDebugPort;
   }
 
   var brokerInspectPort = argv['inspect-brokers'];
-  if (brokerInspectPort == true) {
+  if (brokerInspectPort === true) {
     brokerInspectPort = self.options.defaultBrokerDebugPort;
   }
 

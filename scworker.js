@@ -135,7 +135,7 @@ SCWorker.prototype._init = function (options) {
   });
 
   this.id = this.options.id;
-  this.isLeader = this.id == 0;
+  this.isLeader = this.id === 0;
 
   this._middleware = {};
   this._middleware[this.MIDDLEWARE_START] = [];
@@ -168,7 +168,7 @@ SCWorker.prototype._init = function (options) {
 
   this.brokerEngineClient.on('error', function (err) {
     var error;
-    if (typeof err == 'string') {
+    if (typeof err === 'string') {
       error = new BrokerError(err);
     } else {
       error = err;
@@ -191,7 +191,7 @@ SCWorker.prototype._init = function (options) {
 
     self.httpServer.on('error', function (err) {
       var error;
-      if (typeof err == 'string') {
+      if (typeof err === 'string') {
         error = new HTTPServerError(err);
       } else {
         error = err;
@@ -275,7 +275,7 @@ SCWorker.prototype._init = function (options) {
 
 SCWorker.prototype.createHTTPServer = function () {
   var httpServer;
-  if (this.options.protocol == 'https') {
+  if (this.options.protocol === 'https') {
     httpServer = https.createServer(this.options.protocolOptions);
   } else {
     httpServer = http.createServer();
@@ -307,7 +307,7 @@ SCWorker.prototype.removeMiddleware = function (type, middleware) {
   var middlewareFunctions = this._middleware[type];
 
   this._middleware[type] = middlewareFunctions.filter(function (fn) {
-    return fn != middleware;
+    return fn !== middleware;
   });
 };
 
@@ -522,7 +522,7 @@ SCWorker.prototype.emitWarning = function (warning) {
 };
 
 var handleWorkerClusterMessage = function (wcMessage) {
-  if (wcMessage.type == 'terminate') {
+  if (wcMessage.type === 'terminate') {
     if (scWorker && !wcMessage.data.immediate) {
       if (!scWorker.isTerminating) {
         scWorker.isTerminating = true;
@@ -540,17 +540,17 @@ var handleWorkerClusterMessage = function (wcMessage) {
     if (!scWorker) {
       throw new InvalidActionError(`Attempted to send '${wcMessage.type}' to worker ${workerInitOptions.id} before it was instantiated`);
     }
-    if (wcMessage.type == 'emit') {
+    if (wcMessage.type === 'emit') {
       if (wcMessage.data) {
         scWorker.handleMasterEvent(wcMessage.event, wcMessage.data);
       } else {
         scWorker.handleMasterEvent(wcMessage.event);
       }
-    } else if (wcMessage.type == 'masterMessage') {
+    } else if (wcMessage.type === 'masterMessage') {
       scWorker.handleMasterMessage(wcMessage);
-    } else if (wcMessage.type == 'masterRequest') {
+    } else if (wcMessage.type === 'masterRequest') {
       scWorker.handleMasterRequest(wcMessage);
-    } else if (wcMessage.type == 'masterResponse') {
+    } else if (wcMessage.type === 'masterResponse') {
       scWorker.handleMasterResponse(wcMessage);
     }
   }
