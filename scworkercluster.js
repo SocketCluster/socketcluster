@@ -78,30 +78,37 @@ var killUnresponsiveWorkers = function () {
   }, forceKillTimeout);
 };
 
-process.on('message', function (masterMessage) {
-  if (masterMessage.type == 'masterMessage' || masterMessage.type == 'masterResponse') {
-    var targetWorker = workers[masterMessage.workerId];
+process.on('message', function (masterPacket) {
+  if (
+    masterPacket.type == 'masterMessage' ||
+    masterPacket.type == 'masterRequest' ||
+    masterPacket.type == 'masterResponse'
+  ) {
+    var targetWorker = workers[masterPacket.workerId];
     if (targetWorker) {
-      targetWorker.send(masterMessage);
+      targetWorker.send(masterPacket);
     } else {
-      if (masterMessage.type == 'masterMessage') {
-        var errorMessage = 'Cannot send message to worker with id ' + masterMessage.workerId +
+      if (masterPacket.type == 'masterMessage') {
+        var errorMessage = 'Cannot send message to worker with id ' + masterPacket.workerId +
         ' because the worker does not exist';
-
         var notFoundError = new InvalidActionError(errorMessage);
         sendErrorToMaster(notFoundError);
 
-        if (masterMessage.cid) {
-          process.send({
-            type: 'workerClusterResponse',
-            error: scErrors.dehydrateError(notFoundError, true),
-            data: null,
-            workerId: masterMessage.workerId,
-            rid: masterMessage.cid
-          });
-        }
+      } else if (masterPacket.type == 'masterRequest') {
+        var errorMessage = 'Cannot send request to worker with id ' + masterPacket.workerId +
+        ' because the worker does not exist';
+        var notFoundError = new InvalidActionError(errorMessage);
+        sendErrorToMaster(notFoundError);
+
+        process.send({
+          type: 'workerClusterResponse',
+          error: scErrors.dehydrateError(notFoundError, true),
+          data: null,
+          workerId: masterPacket.workerId,
+          rid: masterPacket.cid
+        });
       } else {
-        var errorMessage = 'Cannot send response to worker with id ' + masterMessage.workerId +
+        var errorMessage = 'Cannot send response to worker with id ' + masterPacket.workerId +
         ' because the worker does not exist';
 
         var notFoundError = new InvalidActionError(errorMessage);
@@ -109,15 +116,15 @@ process.on('message', function (masterMessage) {
       }
     }
   } else {
-    if (masterMessage.type == 'terminate') {
-      if (masterMessage.data.killClusterMaster) {
-        terminate(masterMessage.data.immediate);
+    if (masterPacket.type == 'terminate') {
+      if (masterPacket.data.killClusterMaster) {
+        terminate(masterPacket.data.immediate);
       } else {
         killUnresponsiveWorkers();
       }
     }
     (workers || []).forEach(function (worker) {
-      worker.send(masterMessage);
+      worker.send(masterPacket);
     });
   }
 });
@@ -181,8 +188,8 @@ SCWorkerCluster.prototype._init = function (options) {
 
     worker.on('error', sendErrorToMaster);
 
-    worker.on('message', function (workerMessage) {
-      if (workerMessage.type == 'ready') {
+    worker.on('message', function (workerPacket) {
+      if (workerPacket.type == 'ready') {
         process.send({
           type: 'workerStart',
           data: {
@@ -199,7 +206,7 @@ SCWorkerCluster.prototype._init = function (options) {
           });
         }
       } else {
-        process.send(workerMessage);
+        process.send(workerPacket);
       }
     });
 

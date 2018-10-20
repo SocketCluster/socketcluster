@@ -699,35 +699,35 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     self._workerClusterErrorHandler(self.workerCluster.pid, err);
   });
 
-  this.workerCluster.on('message', function workerHandler(m) {
-    if (m.type == 'error') {
-      if (m.data.workerPid) {
-        self._workerErrorHandler(m.data.workerPid, m.data.error);
+  this.workerCluster.on('message', function workerHandler(message) {
+    if (message.type == 'error') {
+      if (message.data.workerPid) {
+        self._workerErrorHandler(message.data.workerPid, message.data.error);
       } else {
-        self._workerClusterErrorHandler(m.data.pid, m.data.error);
+        self._workerClusterErrorHandler(message.data.pid, message.data.error);
       }
-    } else if (m.type == 'warning') {
-      var warning = scErrors.hydrateError(m.data.error, true);
-      self._workerWarningHandler(m.data.workerPid, warning);
-    } else if (m.type == 'ready') {
+    } else if (message.type == 'warning') {
+      var warning = scErrors.hydrateError(message.data.error, true);
+      self._workerWarningHandler(message.data.workerPid, warning);
+    } else if (message.type == 'ready') {
       self._workerClusterReadyHandler();
-    } else if (m.type == 'workerStart') {
-      self._workerStartHandler(m.data);
-    } else if (m.type == 'workerExit') {
-      self._workerExitHandler(m.data);
-    } else if (m.type == 'workerMessage') {
-      self.emit('workerMessage', m.workerId, m.data, function (err, data) {
-        if (m.cid) {
-          self.respondToWorker(err, data, m.workerId, m.cid);
-        }
+    } else if (message.type == 'workerStart') {
+      self._workerStartHandler(message.data);
+    } else if (message.type == 'workerExit') {
+      self._workerExitHandler(message.data);
+    } else if (message.type == 'workerMessage') {
+      self.emit('workerMessage', message.workerId, message.data);
+    } else if (message.type == 'workerRequest') {
+      self.emit('workerRequest', message.workerId, message.data, function (err, data) {
+        self.respondToWorker(err, data, message.workerId, message.cid);
       });
-    } else if (m.type == 'workerResponse' || m.type == 'workerClusterResponse') {
-      var responseHandler = self._pendingResponseHandlers[m.rid];
+    } else if (message.type == 'workerResponse' || message.type == 'workerClusterResponse') {
+      var responseHandler = self._pendingResponseHandlers[message.rid];
       if (responseHandler) {
         clearTimeout(responseHandler.timeout);
-        delete self._pendingResponseHandlers[m.rid];
-        var properError = scErrors.hydrateError(m.error, true);
-        responseHandler.callback(properError, m.data, m.workerId);
+        delete self._pendingResponseHandlers[message.rid];
+        var properError = scErrors.hydrateError(message.error, true);
+        responseHandler.callback(properError, message.data, message.workerId);
       }
     }
   });
@@ -826,8 +826,12 @@ SocketCluster.prototype._start = function () {
     self.emit(self.EVENT_BROKER_EXIT, brokerInfo);
   });
 
-  self._brokerEngineServer.on('brokerMessage', function (brokerId, data, callback) {
-    self.emit('brokerMessage', brokerId, data, callback);
+  self._brokerEngineServer.on('brokerMessage', function (brokerId, data) {
+    self.emit('brokerMessage', brokerId, data);
+  });
+
+  self._brokerEngineServer.on('brokerRequest', function (brokerId, data, callback) {
+    self.emit('brokerRequest', brokerId, data, callback);
   });
 };
 
@@ -861,28 +865,58 @@ SocketCluster.prototype._flushWorkerClusterMessageBuffer = function () {
   this.workerClusterMessageBuffer = [];
 };
 
-SocketCluster.prototype.sendToWorker = function (workerId, data, callback) {
+SocketCluster.prototype.sendRequestToWorker = function (workerId, data) {
+  var messagePacket = {
+    type: 'masterRequest',
+    workerId: workerId,
+    data: data
+  };
+  return new Promise((resolve, reject) => {
+    messagePacket.cid = this._createIPCResponseHandler((err, data) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(data);
+    });
+    this.workerClusterMessageBuffer.push(messagePacket);
+
+    if (this.isWorkerClusterReady) {
+      this._flushWorkerClusterMessageBuffer();
+    }
+  });
+};
+
+SocketCluster.prototype.sendMessageToWorker = function (workerId, data) {
   var messagePacket = {
     type: 'masterMessage',
     workerId: workerId,
     data: data
   };
-
-  if (callback) {
-    messagePacket.cid = this._createIPCResponseHandler(callback);
-  }
   this.workerClusterMessageBuffer.push(messagePacket);
 
   if (this.isWorkerClusterReady) {
     this._flushWorkerClusterMessageBuffer();
   }
+  return Promise.resolve();
 };
 
-SocketCluster.prototype.sendToBroker = function (brokerId, data, callback) {
+SocketCluster.prototype.sendRequestToBroker = function (brokerId, data) {
   if (!this._brokerEngineServer) {
-    throw new InvalidActionError('Cannot send a message to a broker until the master instance is ready');
+    return Promise.reject(
+      new InvalidActionError('Cannot send a request to a broker until the master instance is ready')
+    );
   }
-  this._brokerEngineServer.sendToBroker(brokerId, data, callback);
+  return this._brokerEngineServer.sendRequestToBroker(brokerId, data);
+};
+
+SocketCluster.prototype.sendMessageToBroker = function (brokerId, data) {
+  if (!this._brokerEngineServer) {
+    return Promise.reject(
+      new InvalidActionError('Cannot send a message to a broker until the master instance is ready')
+    );
+  }
+  return this._brokerEngineServer.sendMessageToBroker(brokerId, data);
 };
 
 // The options object is optional and can have two boolean fields:

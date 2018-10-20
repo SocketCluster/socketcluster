@@ -458,17 +458,33 @@ SCWorker.prototype.handleMasterResponse = function (message) {
   }
 };
 
-SCWorker.prototype.sendToMaster = function (data, callback) {
+// TODO 2: Test
+SCWorker.prototype.sendRequestToMaster = function (data) {
+  var messagePacket = {
+    type: 'workerRequest',
+    data: data,
+    workerId: this.id
+  };
+  return new Promise((resolve, reject) => {
+    messagePacket.cid = this._createIPCResponseHandler((err, data) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(data);
+    });
+    process.send(messagePacket);
+  });
+};
+
+SCWorker.prototype.sendMessageToMaster = function (data) {
   var messagePacket = {
     type: 'workerMessage',
     data: data,
     workerId: this.id
   };
-
-  if (callback) {
-    messagePacket.cid = this._createIPCResponseHandler(callback);
-  }
   process.send(messagePacket);
+  return Promise.resolve();
 };
 
 SCWorker.prototype.respondToMaster = function (err, data, rid) {
@@ -486,12 +502,14 @@ SCWorker.prototype.handleMasterEvent = function () {
 };
 
 SCWorker.prototype.handleMasterMessage = function (message) {
+  this.emit('masterMessage', message.data);
+};
+
+SCWorker.prototype.handleMasterRequest = function (request) {
   var self = this
 
-  self.emit('masterMessage', message.data, function (err, data) {
-    if (message.cid) {
-      self.respondToMaster(err, data, message.cid);
-    }
+  self.emit('masterRequest', request.data, function (err, data) {
+    self.respondToMaster(err, data, request.cid);
   });
 };
 
@@ -530,6 +548,8 @@ var handleWorkerClusterMessage = function (wcMessage) {
       }
     } else if (wcMessage.type == 'masterMessage') {
       scWorker.handleMasterMessage(wcMessage);
+    } else if (wcMessage.type == 'masterRequest') {
+      scWorker.handleMasterRequest(wcMessage);
     } else if (wcMessage.type == 'masterResponse') {
       scWorker.handleMasterResponse(wcMessage);
     }
