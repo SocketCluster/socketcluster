@@ -36,21 +36,30 @@ var packet = {
 };
 
 console.log('MASTER::Sending packet to broker 0');
-socketCluster.sendRequestToBroker(0, packet, function (err, data) {
-  console.log('MASTER::Response error from broker 0:', err);
+socketCluster.sendRequestToBroker(0, packet)
+.then(function (data) {
   console.log('MASTER::Response data from broker 0:', data);
+})
+.catch(function (err) {
+  console.log('MASTER::Response error from broker 0:', err);
 });
 
 console.log('MASTER::Sending packet to broker 1');
-socketCluster.sendRequestToBroker(1, packet, function (err, data) {
-  console.log('MASTER::Response error from broker 1:', err);
+socketCluster.sendRequestToBroker(1, packet)
+.then(function (data) {
   console.log('MASTER::Response data from broker 1:', data);
+})
+.catch(function (err) {
+  console.log('MASTER::Response error from broker 1:', err);
 });
 
 console.log('MASTER::Sending packet to non-existent broker 2');
-socketCluster.sendRequestToBroker(2, packet, function (err, data) {
-  console.log('MASTER::Response error from non-existent broker 2:', err);
+socketCluster.sendRequestToBroker(2, packet)
+.then(function (data) {
   console.log('MASTER::Response data from non-existent broker 2:', data);
+})
+.catch(function (err) {
+  console.log('MASTER::Response error from non-existent broker 2:', err);
 });
 
 var errorPacket = {
@@ -58,23 +67,29 @@ var errorPacket = {
 };
 
 console.log('MASTER::Sending error-causing packet to broker 0');
-socketCluster.sendRequestToBroker(0, errorPacket, function (err, data) {
-  console.log('MASTER::Error response error from broker 0:', err);
+socketCluster.sendRequestToBroker(0, errorPacket)
+.then(function (data) {
   console.log('MASTER::Error response data from broker 0:', data);
+})
+.catch(function (err) {
+  console.log('MASTER::Error response error from broker 0:', err);
 });
 
 console.log('MASTER::Sending error-causing packet to broker 0 without Promise');
-socketCluster.sendRequestToBroker(0, errorPacket);
+socketCluster.sendMessageToBroker(0, errorPacket);
 
 var timeoutPacket = {
   doNothing: true
 };
 
 console.log('MASTER::Sending timeout-causing packet to broker 0');
-socketCluster.sendRequestToBroker(0, timeoutPacket, function (err, data) {
-  console.log('MASTER::Timeout response error from broker 0:', err);
+socketCluster.sendRequestToBroker(0, timeoutPacket)
+.then(function (data) {
   console.log('MASTER::Timeout response data from broker 0:', data);
+})
+.catch(function (err) {
+  console.log('MASTER::Timeout response error from broker 0:', err);
 });
 
 console.log('MASTER::Sending timeout-causing packet to broker 0 without Promise');
-socketCluster.sendRequestToBroker(0, timeoutPacket);
+socketCluster.sendMessageToBroker(0, timeoutPacket);
