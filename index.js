@@ -893,12 +893,20 @@ SocketCluster.prototype.sendMessageToWorker = function (workerId, data) {
     workerId: workerId,
     data: data
   };
-  this.workerClusterMessageBuffer.push(messagePacket);
+  return new Promise((resolve, reject) => {
+    messagePacket.cid = this._createIPCResponseHandler((err, data) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(data);
+    });
+    this.workerClusterMessageBuffer.push(messagePacket);
 
-  if (this.isWorkerClusterReady) {
-    this._flushWorkerClusterMessageBuffer();
-  }
-  return Promise.resolve();
+    if (this.isWorkerClusterReady) {
+      this._flushWorkerClusterMessageBuffer();
+    }
+  });
 };
 
 SocketCluster.prototype.sendRequestToBroker = function (brokerId, data) {

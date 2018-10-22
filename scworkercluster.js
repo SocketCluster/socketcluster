@@ -87,6 +87,14 @@ process.on('message', function (masterPacket) {
     var targetWorker = workers[masterPacket.workerId];
     if (targetWorker) {
       targetWorker.send(masterPacket);
+      if (masterPacket.type === 'masterMessage') {
+        process.send({
+          type: 'workerClusterResponse',
+          error: null,
+          workerId: masterPacket.workerId,
+          rid: masterPacket.cid
+        });
+      }
     } else {
       if (masterPacket.type === 'masterMessage') {
         var errorMessage = 'Cannot send message to worker with id ' + masterPacket.workerId +
@@ -94,6 +102,12 @@ process.on('message', function (masterPacket) {
         var notFoundError = new InvalidActionError(errorMessage);
         sendErrorToMaster(notFoundError);
 
+        process.send({
+          type: 'workerClusterResponse',
+          error: scErrors.dehydrateError(notFoundError, true),
+          workerId: masterPacket.workerId,
+          rid: masterPacket.cid
+        });
       } else if (masterPacket.type === 'masterRequest') {
         var errorMessage = 'Cannot send request to worker with id ' + masterPacket.workerId +
         ' because the worker does not exist';
@@ -103,7 +117,6 @@ process.on('message', function (masterPacket) {
         process.send({
           type: 'workerClusterResponse',
           error: scErrors.dehydrateError(notFoundError, true),
-          data: null,
           workerId: masterPacket.workerId,
           rid: masterPacket.cid
         });
