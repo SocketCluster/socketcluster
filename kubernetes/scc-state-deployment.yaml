@@ -1,22 +1,25 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: scc-state
 spec:
-  replicas: 1 # Leave this as 1 - This service is a singleton.
+  replicas: 1
+  selector:
+    matchLabels:
+      component: scc-state
   template:
     metadata:
       labels:
-        app: scc-state
+        component: scc-state
     spec:
       containers:
-      - name: scc-state
-        image: socketcluster/scc-state:v6.1.0
-        ports:
-        - containerPort: 7777
-        livenessProbe:
-          httpGet:
-            path: /health-check
-            port: 7777
-          initialDelaySeconds: 15
-          timeoutSeconds: 5
+        - name: scc-state
+          image: socketcluster/scc-state:v6.1.0
+          ports:
+            - containerPort: 7777
+          livenessProbe:
+            httpGet:
+              path: /health-check
+              port: 7777
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
