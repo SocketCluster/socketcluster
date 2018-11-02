@@ -13,13 +13,13 @@ spec:
         component: scc-state
     spec:
       containers:
-        - name: scc-state
-          image: socketcluster/scc-state:v6.1.0
-          ports:
-            - containerPort: 7777
-          livenessProbe:
-            httpGet:
-              path: /health-check
-              port: 7777
-            initialDelaySeconds: 15
-            timeoutSeconds: 5
+      - name: scc-state
+        image: socketcluster/scc-state:v6.1.0
+        ports:
+        - containerPort: 7777
+        livenessProbe:
+          httpGet:
+            path: /health-check
+            port: 7777
+          initialDelaySeconds: 15
+          timeoutSeconds: 5

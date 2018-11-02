@@ -13,28 +13,28 @@ spec:
         component: scc-broker
     spec:
       containers:
-        - name: scc-broker
-          image: socketcluster/scc-broker:v6.0.1
-          ports:
-            - containerPort: 8888
-          env:
-            - name: SCC_STATE_SERVER_HOST
-              value: scc-state-cluster-ip-service
-            - name: SOCKETCLUSTER_WORKERS
-              value: "1"
-            - name: SOCKETCLUSTER_BROKERS
-              value: "1"
-            - name: SCC_INSTANCE_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.podIP
-            # Set to 3 for the highest log level - This will log every subscription
-            # and message which is shared across multiple socketcluster pods.
-            - name: SCC_BROKER_SERVER_LOG_LEVEL
-              value: "2"
-          livenessProbe:
-            httpGet:
-              path: /health-check
-              port: 8888
-            initialDelaySeconds: 30
-            timeoutSeconds: 5
+      - name: scc-broker
+        image: socketcluster/scc-broker:v6.0.1
+        ports:
+        - containerPort: 8888
+        env:
+        - name: SCC_STATE_SERVER_HOST
+          value: scc-state-cluster-ip-service
+        - name: SOCKETCLUSTER_WORKERS
+          value: "1"
+        - name: SOCKETCLUSTER_BROKERS
+          value: "1"
+        - name: SCC_INSTANCE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        # Set to 3 for the highest log level - This will log every subscription
+        # and message which is shared across multiple socketcluster pods.
+        - name: SCC_BROKER_SERVER_LOG_LEVEL
+          value: "2"
+        livenessProbe:
+          httpGet:
+            path: /health-check
+            port: 8888
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
