@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
       - name: socketcluster
-        image: socketcluster/socketcluster:v7.0.0
+        image: socketcluster/socketcluster:v14.3.2
         ports:
         - containerPort: 8000
         env:
@@ -33,3 +33,13 @@ spec:
             port: 8000
           initialDelaySeconds: 30
           timeoutSeconds: 5
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - socketcluster
+            topologyKey: "kubernetes.io/hostname"

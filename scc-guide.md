@@ -1,6 +1,6 @@
 # SCC Guide
 
-SCC is a collection of services which allow you to easily deploy and scale SocketCluster to any number of machines (almost any number, see Notes at the bottom of this page).
+SCC is a collection of services which allow you to easily deploy and scale SocketCluster to any number of machines.
 SCC is designed to scale linearly and is optimized for running on Kubernetes but it can be setup without using an orchestrator.
 
 SCC is made up of the following services:
@@ -47,11 +47,8 @@ Note that the step above is crucial if you don't want to use TLS/SSL - Otherwise
 
 ### Running on Kubernetes with Baasil (for simple development and deployment)
 
-Baasil is an open source CLI tool and Baasil.io is a hosted 'as-a-service' Rancher/Kubernetes control panel.
-If you want to try SCC on K8s and you do not already have a K8s environment/cluster, the simplest way to get started is to sign up to a free trial account on http://baasil.io
-
-Note that you can use the baasil CLI tool (https://www.npmjs.com/package/baasil) to deploy your SocketCluster service/app to any Rancher/Kubernetes environment, you just have to modify the `~/.kube/config` file on your local machine to hold the configs for your own Rancher control panel (instead of the one hosted on Baasil.io).
-It is strongly recommended that you use Kubernetes with Rancher for consistency. See http://rancher.com/ for more details.
+You can use the baasil CLI tool (https://www.npmjs.com/package/baasil) to deploy your SocketCluster service/app to any Rancher/Kubernetes environment, you just have to modify the `~/.kube/config` file on your local machine to hold the configs for your own Rancher control panel.
+It ecommended that you use Kubernetes with Rancher for consistency. See http://rancher.com/ for more details.
 
 To run your service/app locally inside containers and to deploy to your own Rancher/K8s cluster, follow this guide: https://docs.baasil.io/
 
@@ -79,7 +76,7 @@ node server
 Next, to launch a broker, you should navigate to your **scc-broker** repo and run the command:
 
 ```
-SCC_STATE_SERVER_HOST='127.0.0.1' SOCKETCLUSTER_SERVER_PORT='8888' node server
+SCC_STATE_SERVER_HOST='127.0.0.1' SCC_BROKER_SERVER_PORT='8888' node server
 ```
 
 Finally, to run a frontend-facing SocketCluster instance, you can navigate to your socketcluster project directory and run:
@@ -95,10 +92,10 @@ SCC_STATE_SERVER_HOST='127.0.0.1' SOCKETCLUSTER_PORT='8001' node server
 ```
 Now if you navigate to either `localhost:8000` or `localhost:8001` in your browser, you should see that your pub/sub channels are shared between the two **socketcluster** instances.
 
-Note that you can provide additional environment variables to various instances to set custom post numbers, passwords etc...
+Note that you can provide additional environment variables to various instances to set custom port numbers, passwords etc...
 For more info, you can look inside the code in the `server.js` file in each repo and see what `process.env` vars are used.
 
-When running multiples instances of any service on the same machine, make sure that the ports don't clash  - Modify the `SOCKETCLUSTER_SERVER_PORT` or `SOCKETCLUSTER_PORT` environment variable for each instance to make sure that they are unique.
+When running multiples instances of any service on the same machine, make sure that the ports don't clash - Modify the `SCC_BROKER_SERVER_PORT` or `SOCKETCLUSTER_PORT` environment variable for each instance to make sure that they are unique.
 
 ## Notes
 
@@ -112,3 +109,5 @@ Nevertheless, it is recommended that you run the **scc-state** instance inside y
 The **scc-state** instance does not handle any pub/sub messages and so it is not a bottleneck with regards to the scalability of your cluster (SCC scales linearly).
 
 Note that you can launch the services in any order you like but if your state server is not available, you may get harmless `Socket hung up` warnings on other instances (while they keep trying to reconnect) until **scc-state** becomes available again.
+
+The **socketcluster** deployment in https://github.com/SocketCluster/socketcluster/tree/master/kubernetes uses podAntiAffinity rule to ensure only one socketcluster instance is scheduled for any given kubernetes node. This may be preferred, since we want to run on as many cores as possible.

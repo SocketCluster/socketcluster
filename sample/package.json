@@ -9,17 +9,17 @@
     }
   ],
   "dependencies": {
-    "connect": "3.0.1",
-    "express": "4.14.0",
+    "connect": "3.6.6",
+    "express": "4.16.3",
     "minimist": "1.1.0",
     "morgan": "1.7.0",
-    "sc-errors": "~1.3.3",
-    "sc-framework-health-check": "~1.0.0",
-    "sc-hot-reboot": "~1.0.0",
-    "scc-broker-client": "~1.5.0",
-    "serve-static": "1.11.2",
-    "socketcluster": "~7.0.0",
-    "socketcluster-client": "~7.0.0"
+    "sc-errors": "^1.4.1",
+    "sc-framework-health-check": "^2.0.0",
+    "sc-hot-reboot": "^1.0.0",
+    "scc-broker-client": "^6.1.0",
+    "serve-static": "1.13.2",
+    "socketcluster": "^14.3.2",
+    "socketcluster-client": "^14.2.1"
   },
   "keywords": [
     "websocket",
@@ -28,5 +28,9 @@
     "cluster",
     "scalable"
   ],
-  "readmeFilename": "README.md"
+  "readmeFilename": "README.md",
+  "scripts": {
+    "start": "node server.js",
+    "start:docker": "node dockerwait.js && node ${SOCKETCLUSTER_MASTER_CONTROLLER:-server.js}"
+  }
 }

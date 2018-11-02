@@ -1,4 +1,4 @@
-var SocketCluster = require('../../index').SocketCluster;
+var SocketCluster = require('../../index');
 
 var socketCluster = new SocketCluster({
   workers: 3,

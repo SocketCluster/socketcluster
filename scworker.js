@@ -1,11 +1,8 @@
 var socketClusterServer = require('socketcluster-server');
 var EventEmitter = require('events').EventEmitter;
-var crypto = require('crypto');
 var uuid = require('uuid');
 var http = require('http');
 var https = require('https');
-var fs = require('fs');
-var base64id = require('base64id');
 var async = require('async');
 var AuthEngine = require('sc-auth').AuthEngine;
 
@@ -16,8 +13,52 @@ var BrokerError = scErrors.BrokerError;
 var HTTPServerError = scErrors.HTTPServerError;
 var TimeoutError = scErrors.TimeoutError;
 
-var SCWorker = function (options) {
-  var self = this;
+var processTermTimeout = 10000;
+var workerInitOptions = JSON.parse(process.env.workerInitOptions);
+
+var handleError = function (isFatal, err) {
+  var error = scErrors.dehydrateError(err, true);
+  process.send({
+    type: 'error',
+    data: {
+      error: error,
+      workerPid: process.pid
+    }
+  }, null, function () {
+    if (isFatal) {
+      process.exit(1);
+    }
+  });
+};
+
+var handleWarning = function (warning) {
+  warning = scErrors.dehydrateError(warning, true);
+  process.send({
+    type: 'warning',
+    data: {
+      error: warning,
+      workerPid: process.pid
+    }
+  });
+};
+
+var handleReady = function () {
+  process.send({type: 'ready'});
+};
+
+var handleExit = function () {
+  process.exit();
+};
+
+var scWorker;
+
+function SCWorker(options) {
+  if (scWorker) {
+    // SCWorker is a singleton; it can only be instantiated once per process.
+    throw new InvalidActionError('Attempted to instantiate a worker which has already been instantiated');
+  }
+  options = options || {};
+  scWorker = this;
 
   this.EVENT_ERROR = 'error';
   this.EVENT_WARNING = 'warning';
@@ -28,9 +69,22 @@ var SCWorker = function (options) {
   this.MIDDLEWARE_START = 'start';
 
   this.type = 'worker';
-  self._pendingResponseHandlers = {};
+  this.isTerminating = false;
+  this._pendingResponseHandlers = {};
 
-  this._init(options);
+  if (options.run != null) {
+    this.run = options.run;
+  }
+  if (options.createHTTPServer != null) {
+    this.createHTTPServer = options.createHTTPServer;
+  }
+
+  var workerOptions = Object.assign({}, options, workerInitOptions);
+  this._init(workerOptions);
+}
+
+SCWorker.create = function (options) {
+  return new SCWorker(options);
 };
 
 SCWorker.prototype = Object.create(EventEmitter.prototype);
@@ -52,11 +106,33 @@ SCWorker.prototype._init = function (options) {
 
   this.options = {};
 
-  for (var i in options) {
-    if (options.hasOwnProperty(i)) {
-      this.options[i] = options[i];
-    }
+  Object.assign(this.options, options);
+
+  if (this.options.processTermTimeout) {
+    processTermTimeout = this.options.processTermTimeout;
   }
+
+  if (this.options && this.options.protocolOptions && this.options.protocolOptions.pfx) {
+    this.options.protocolOptions.pfx = Buffer.from(this.options.protocolOptions.pfx, 'base64');
+  }
+
+  if (typeof this.options.authKey === 'object' && this.options.authKey !== null && this.options.authKey.type === 'Buffer') {
+    this.options.authKey = Buffer.from(this.options.authKey.data, 'base64');
+  }
+
+  if (this.options.propagateErrors) {
+    this.on('error', handleError.bind(null, this.options.crashWorkerOnError));
+    if (this.options.propagateWarnings) {
+      this.on('warning', handleWarning);
+    }
+    this.on('exit', handleExit);
+  }
+
+  this.on(this.EVENT_READY, function () {
+    self.start().then(function () {
+      handleReady();
+    }).catch(this.emitError.bind(this));
+  });
 
   this.id = this.options.id;
   this.isLeader = this.id == 0;
@@ -70,7 +146,7 @@ SCWorker.prototype._init = function (options) {
     } catch (err) {
       throw new InvalidActionError('Could not downgrade to user "' + this.options.downgradeToUser +
         '" - Either this user does not exist or the current process does not have the permission' +
-        ' to switch to it'); // TODO 2 test this
+        ' to switch to it');
     }
   }
 
@@ -102,91 +178,116 @@ SCWorker.prototype._init = function (options) {
   this.brokerEngineClient.on('warning', function (warning) {
     self.emitWarning(warning);
   });
-  this.exchange = this.global = this.brokerEngineClient.exchange();
+  this.exchange = this.brokerEngineClient.exchange();
 
-  if (this.options.httpServerModule) {
-    var httpServerFactory = require(this.options.httpServerModule);
-    this.httpServer = httpServerFactory.createServer(this.options.protocolOptions);
-  } else {
-    if (this.options.protocol == 'https') {
-      this.httpServer = https.createServer(this.options.protocolOptions);
-    } else {
-      this.httpServer = http.createServer();
-    }
-  }
-  this.httpServer.on('request', this._httpRequestHandler.bind(this));
-  this.httpServer.on('upgrade', this._httpRequestHandler.bind(this));
+  var createHTTPServerResult = this.createHTTPServer();
+  Promise.resolve(createHTTPServerResult)
+  .then(function (httpServer) {
+    self.httpServer = httpServer;
+    self.httpServer.on('request', self._httpRequestHandler.bind(self));
+    self.httpServer.on('upgrade', self._httpRequestHandler.bind(self));
 
-  this.httpServer.exchange = this.httpServer.global = this.exchange;
+    self.httpServer.exchange = self.exchange;
 
-  this.httpServer.on('error', function (err) {
-    var error;
-    if (typeof err == 'string') {
-      error = new HTTPServerError(err);
-    } else {
-      error = err;
-    }
-    self.emitError(error);
-  });
-
-  var secure = this.options.protocol == 'https' ? 1 : 0;
-
-  this.scServer = socketClusterServer.attach(this.httpServer, {
-    brokerEngine: this.brokerEngineClient,
-    wsEngine: this._paths.wsEnginePath,
-    allowClientPublish: this.options.allowClientPublish,
-    handshakeTimeout: this.options.handshakeTimeout,
-    ackTimeout: this.options.ackTimeout,
-    pingTimeout: this.options.pingTimeout,
-    pingInterval: this.options.pingInterval,
-    origins: this.options.origins,
-    appName: this.options.appName,
-    path: this.options.path,
-    authKey: this.options.authKey,
-    authPrivateKey: this.options.authPrivateKey,
-    authPublicKey: this.options.authPublicKey,
-    authAlgorithm: this.options.authAlgorithm,
-    authSignAsync: this.options.authSignAsync,
-    authVerifyAsync: this.options.authVerifyAsync,
-    authDefaultExpiry: this.options.authDefaultExpiry,
-    middlewareEmitWarnings: this.options.middlewareEmitWarnings,
-    socketChannelLimit: this.options.socketChannelLimit,
-    perMessageDeflate: this.options.perMessageDeflate
-  });
-
-  if (this.brokerEngineClient.setSCServer) {
-    this.brokerEngineClient.setSCServer(this.scServer);
-  }
-
-  // Default authentication engine
-  this.setAuthEngine(new AuthEngine());
-  this.codec = this.scServer.codec;
-
-  this._socketPath = this.scServer.getPath();
-  this._socketPathRegex = new RegExp('^' + this._socketPath);
-
-  this.scServer.on('_connection', function (socket) {
-    // The connection event counts as a WS request
-    self._wsRequestCount++;
-    socket.on('message', function () {
-      self._wsRequestCount++;
+    self.httpServer.on('error', function (err) {
+      var error;
+      if (typeof err == 'string') {
+        error = new HTTPServerError(err);
+      } else {
+        error = err;
+      }
+      self.emitError(error);
     });
-    self.emit(self.EVENT_CONNECTION, socket);
-  });
 
-  this.scServer.on('warning', function (warning) {
-    self.emitWarning(warning);
-  });
-  this.scServer.on('error', function (error) {
+    self.scServer = socketClusterServer.attach(self.httpServer, {
+      brokerEngine: self.brokerEngineClient,
+      wsEngine: self._paths.wsEnginePath,
+      allowClientPublish: self.options.allowClientPublish,
+      handshakeTimeout: self.options.handshakeTimeout,
+      ackTimeout: self.options.ackTimeout,
+      pingTimeout: self.options.pingTimeout,
+      pingInterval: self.options.pingInterval,
+      pingTimeoutDisabled: self.options.pingTimeoutDisabled,
+      origins: self.options.origins,
+      appName: self.options.appName,
+      path: self.options.path,
+      authKey: self.options.authKey,
+      authPrivateKey: self.options.authPrivateKey,
+      authPublicKey: self.options.authPublicKey,
+      authAlgorithm: self.options.authAlgorithm,
+      authVerifyAlgorithms: self.options.authVerifyAlgorithms,
+      authSignAsync: self.options.authSignAsync,
+      authVerifyAsync: self.options.authVerifyAsync,
+      authDefaultExpiry: self.options.authDefaultExpiry,
+      middlewareEmitWarnings: self.options.middlewareEmitWarnings,
+      socketChannelLimit: self.options.socketChannelLimit,
+      pubSubBatchDuration: self.options.pubSubBatchDuration,
+      perMessageDeflate: self.options.perMessageDeflate,
+      maxPayload: self.options.maxPayload,
+      wsEngineServerOptions: self.options.wsEngineServerOptions
+    });
+
+    if (self.brokerEngineClient.setSCServer) {
+      self.brokerEngineClient.setSCServer(self.scServer);
+    }
+
+    if (options.authEngine) {
+      self.setAuthEngine(options.authEngine);
+    } else {
+      // Default authentication engine
+      self.setAuthEngine(new AuthEngine());
+    }
+    if (options.codecEngine) {
+      self.setCodecEngine(options.codecEngine);
+    } else {
+      self.codec = self.scServer.codec;
+    }
+
+    self._socketPath = self.scServer.getPath();
+
+    self.scServer.on('_connection', function (socket) {
+      // The connection event counts as a WS request
+      self._wsRequestCount++;
+      socket.on('message', function () {
+        self._wsRequestCount++;
+      });
+      self.emit(self.EVENT_CONNECTION, socket);
+    });
+
+    self.scServer.on('warning', function (warning) {
+      self.emitWarning(warning);
+    });
+    self.scServer.on('error', function (error) {
+      self.emitError(error);
+    });
+    if (self.scServer.isReady) {
+      self.emit(self.EVENT_READY);
+    } else {
+      self.scServer.once('ready', function () {
+        self.emit(self.EVENT_READY);
+      });
+    }
+  })
+  .catch(function (error) {
     self.emitError(error);
-  });
-  this.scServer.on('ready', function () {
-    self.emit(self.EVENT_READY);
   });
 };
 
+SCWorker.prototype.createHTTPServer = function () {
+  var httpServer;
+  if (this.options.protocol == 'https') {
+    httpServer = https.createServer(this.options.protocolOptions);
+  } else {
+    httpServer = http.createServer();
+  }
+  return httpServer;
+};
+
+// To be overriden.
+SCWorker.prototype.run = function () {};
+
 SCWorker.prototype.open = function () {
-  this._startServer();
+  this.startHTTPServer();
 };
 
 SCWorker.prototype.close = function (callback) {
@@ -194,8 +295,7 @@ SCWorker.prototype.close = function (callback) {
   this.httpServer.close(callback);
 };
 
-// getSocketURL is deprecated
-SCWorker.prototype.getSocketPath = SCWorker.prototype.getSocketURL = function () {
+SCWorker.prototype.getSocketPath = function () {
   return this._socketPath;
 };
 
@@ -211,7 +311,7 @@ SCWorker.prototype.removeMiddleware = function (type, middleware) {
   });
 };
 
-SCWorker.prototype._startServer = function () {
+SCWorker.prototype.startHTTPServer = function () {
   var self = this;
 
   var options = this.options;
@@ -248,8 +348,6 @@ SCWorker.prototype._startServer = function () {
 };
 
 SCWorker.prototype.start = function () {
-  var self = this;
-
   this._httpRequestCount = 0;
   this._wsRequestCount = 0;
   this._httpRPM = 0;
@@ -260,24 +358,16 @@ SCWorker.prototype.start = function () {
   }
   this._statusInterval = setInterval(this._calculateStatus.bind(this), this.options.workerStatusInterval);
 
-  // Run the initController to initialize the global context
-  if (this._paths.appInitControllerPath != null) {
-      this._initController = require(this._paths.appInitControllerPath);
-      this._initController.run(this);
-  }
+  var runResult = this.run();
 
-  this._workerController = require(this._paths.appWorkerControllerPath);
-  this._workerController.run(this);
-
-  this._startServer();
+  return Promise.resolve(runResult)
+  .then(this.startHTTPServer.bind(this));
 };
 
 SCWorker.prototype._httpRequestHandler = function (req, res) {
-  var self = this;
-
   this._httpRequestCount++;
 
-  req.exchange = req.global = this.exchange;
+  req.exchange = this.exchange;
 
   var forwardedFor = req.headers['x-forwarded-for'];
 
@@ -412,5 +502,44 @@ SCWorker.prototype.emitError = function (err) {
 SCWorker.prototype.emitWarning = function (warning) {
   this.emit(this.EVENT_WARNING, warning);
 };
+
+var handleWorkerClusterMessage = function (wcMessage) {
+  if (wcMessage.type == 'terminate') {
+    if (scWorker && !wcMessage.data.immediate) {
+      if (!scWorker.isTerminating) {
+        scWorker.isTerminating = true;
+        scWorker.close(function () {
+          process.exit();
+        });
+        setTimeout(function () {
+          process.exit();
+        }, processTermTimeout);
+      }
+    } else {
+      process.exit();
+    }
+  } else {
+    if (!scWorker) {
+      throw new InvalidActionError(`Attempted to send '${wcMessage.type}' to worker ${workerInitOptions.id} before it was instantiated`);
+    }
+    if (wcMessage.type == 'emit') {
+      if (wcMessage.data) {
+        scWorker.handleMasterEvent(wcMessage.event, wcMessage.data);
+      } else {
+        scWorker.handleMasterEvent(wcMessage.event);
+      }
+    } else if (wcMessage.type == 'masterMessage') {
+      scWorker.handleMasterMessage(wcMessage);
+    } else if (wcMessage.type == 'masterResponse') {
+      scWorker.handleMasterResponse(wcMessage);
+    }
+  }
+};
+
+process.on('message', handleWorkerClusterMessage);
+
+process.on('uncaughtException', function (err) {
+  handleError(workerInitOptions.crashWorkerOnError, err);
+});
 
 module.exports = SCWorker;

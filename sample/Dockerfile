@@ -1,6 +1,7 @@
-FROM node:8.1.2-slim
-MAINTAINER Jonathan Gros-Dubois
+FROM node:8-slim
 
+LABEL maintainer="Jonathan Gros-Dubois"
+LABEL version="14.3.2"
 LABEL description="Docker file for SocketCluster with support for clustering."
 
 RUN mkdir -p /usr/src/
@@ -11,4 +12,4 @@ RUN npm install .
 
 EXPOSE 8000
 
-CMD ["npm", "start"]
+CMD ["npm", "run", "start:docker"]
