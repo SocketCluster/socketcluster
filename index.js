@@ -657,7 +657,6 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     } else {
       inspectPort = argv['inspect-workers'];
     }
-    execOptions.execArgv.push('--debug-port=' + inspectPort);
     execOptions.execArgv.push('--inspect=' + inspectPort);
   }
 
