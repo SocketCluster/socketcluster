@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: scc-broker-cluster-ip-service
+  name: scc-broker
 spec:
   type: ClusterIP
   selector:

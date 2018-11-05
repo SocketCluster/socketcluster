@@ -19,7 +19,7 @@ spec:
         - containerPort: 8888
         env:
         - name: SCC_STATE_SERVER_HOST
-          value: scc-state-cluster-ip-service
+          value: scc-state
         - name: SOCKETCLUSTER_WORKERS
           value: "1"
         - name: SOCKETCLUSTER_BROKERS

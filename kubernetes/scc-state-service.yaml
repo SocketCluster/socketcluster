@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: scc-state-cluster-ip-service
+  name: scc-state
 spec:
   type: ClusterIP
   selector:

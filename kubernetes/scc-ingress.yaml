@@ -10,5 +10,5 @@ spec:
   tls:
     - secretName: scc-tls-credentials
   backend:
-    serviceName: socketcluster-cluster-ip-service
+    serviceName: socketcluster
     servicePort: 8000
