@@ -20,7 +20,7 @@ messages between multiple frontend-facing **socketcluster** instances. All the p
 Just like with the **socketcluster** instances above, each **scc-broker** instance needs to point to a state server in order to work.
 
 The **scc-state** service is made up of a single instance - Its job is to dispatch the state of the cluster to all interested services to allow them to reshard themselves. The **scc-state** instance will notify all frontend **socketcluster** instances whenever a new backend **scc-broker** joins the cluster. This allows **socketcluster** instances to rebalance their pub/sub channels evenly across available brokers whenever a new **scc-broker** instance joins the cluster.
-Note that SCC can continue to operate without any disruption of service while the **scc-state** instance is down/unavailable so it is not a single point of failure in the classical sense (see notes at the bottom of this page).
+Note that SCC can continue to operate without any disruption of service while the **scc-state** instance is down/unavailable (see notes at the bottom of this page).
 
 
 An SCC setup across multiple hosts may look like this (though the quantity of each instance type is likely to vary; except for **scc-state** which only ever has one instance per cluster):
@@ -97,13 +97,16 @@ For more info, you can look inside the code in the `server.js` file in each repo
 
 When running multiples instances of any service on the same machine, make sure that the ports don't clash - Modify the `SCC_BROKER_SERVER_PORT` or `SOCKETCLUSTER_PORT` environment variable for each instance to make sure that they are unique.
 
+## CAP theorem
+
+User-facing instances in SCC are highly available (this was done to ensure that SCC is resilient against DDoS attacks).
+Back end instances, on the other hand, are optimized for consistency and efficiency. SCC is designed to quickly recover from failure of back end instances (a few seconds of partial missed messages at worst). Note that it's still possible to implement guaranteed delivery of messages by assigning a unique ID to each published message and resending messages which have not been acknowledged.
+
 ## Notes
 
-You should only ever run a single **scc-state** per cluster - This is currently a single point of 'failure', but not in the classical sense because the cluster can
-continue to operate without any disruption while **scc-state** is unavailable. **scc-state** only needs to be available for a few seconds while SCC is
-in the process of scaling itself up or down. Even if **scc-state** crashes while in the middle of scaling up or down, SCC will wait for **scc-state** to become available again (still without disruptions to the existing service) and will resume the scaling operation as soon as the **scc-state** instance becomes available again.
+You should only ever run a single **scc-state** per cluster - Note that the cluster can continue to operate without any disruption while **scc-state** is down.
+**scc-state** only needs to be available for a few seconds while SCC is in the process of scaling itself up or down. Even if **scc-state** crashes while in the middle of scaling up, SCC will wait for **scc-state** to become available again (still without disruptions to the existing service) and will resume the scaling operation as soon as the **scc-state** instance becomes available again.
 In the event of a crash, K8s will respawn **scc-state** within a few seconds so a failure of **scc-state** will only delay your scale up/down operation at worst.
-
 Nevertheless, it is recommended that you run the **scc-state** instance inside your datacenter/AWS availability zone and do not expose it to the public internet.
 
 The **scc-state** instance does not handle any pub/sub messages and so it is not a bottleneck with regards to the scalability of your cluster (SCC scales linearly).
