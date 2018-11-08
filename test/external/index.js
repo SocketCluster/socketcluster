@@ -44,7 +44,7 @@ scServer.on('message', function (m) {
           pongChannel.unwatch();
           cb(err);
         });
-        socket.emit('ping');
+        socket.transmit('ping');
       },
       function (cb) {
         pongChannel.watch(function (data) {
@@ -88,7 +88,7 @@ scServer.on('message', function (m) {
         }, 1000);
       },
       function (cb) {
-        socket.emit('killWorker');
+        socket.transmit('killWorker');
         socket.once('error', function (err) {
           console.log('Caught:', err);
         });
@@ -113,7 +113,7 @@ scServer.on('message', function (m) {
       },
       function (cb) {
         setTimeout(function () {
-          socket.emit('new');
+          socket.transmit('new');
           var err;
 
           setTimeout(function () {
@@ -265,7 +265,7 @@ scServer.on('message', function (m) {
             authTokenIsSet = true;
           });
 
-          socket.emit('login', {username: 'john123'});
+          socket.transmit('login', {username: 'john123'});
 
           setTimeout(function () {
 

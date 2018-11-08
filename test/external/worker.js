@@ -17,7 +17,7 @@ class Worker extends SCWorker {
         From here onwards is just like Socket.io but with some additional features.
     */
     wsServer.on('connection', (socket) => {
-      socket.emit('first', 'This is the first event');
+      socket.transmit('first', 'This is the first event');
 
       socket.on('ping', () => {
         wsServer.exchange.publish('pong', pongData);

@@ -90,7 +90,7 @@ scServer.on('message', function (m) {
 
             var interval = setInterval(function () {
               if (socket.getState() === socket.OPEN) {
-                socket.emit('test', {id: socket.id});
+                socket.transmit('test', {id: socket.id});
               } else {
                 clearInterval(interval);
               }
