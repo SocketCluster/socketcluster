@@ -60,17 +60,11 @@ function SCWorker(options) {
   options = options || {};
   scWorker = this;
 
-  this.EVENT_ERROR = 'error';
-  this.EVENT_WARNING = 'warning';
-  this.EVENT_EXIT = 'exit';
-  this.EVENT_READY = 'ready';
-  this.EVENT_CONNECTION = 'connection';
-
-  this.MIDDLEWARE_START = 'start';
-
   this.type = 'worker';
   this.isTerminating = false;
   this._pendingResponseHandlers = {};
+
+  this._listenerDemux = new StreamDemux();
 
   if (options.run != null) {
     this.run = options.run;
@@ -88,6 +82,13 @@ SCWorker.create = function (options) {
 };
 
 SCWorker.prototype = Object.create(EventEmitter.prototype);
+
+SCWorker.EVENT_ERROR = SCWorker.prototype.EVENT_ERROR = 'error';
+SCWorker.EVENT_WARNING = SCWorker.prototype.EVENT_WARNING = 'warning';
+SCWorker.EVENT_EXIT = SCWorker.prototype.EVENT_EXIT = 'exit';
+SCWorker.EVENT_READY = SCWorker.prototype.EVENT_READY = 'ready';
+SCWorker.EVENT_CONNECTION = SCWorker.prototype.EVENT_CONNECTION = 'connection';
+SCWorker.MIDDLEWARE_START = SCWorker.prototype.MIDDLEWARE_START = 'start';
 
 SCWorker.prototype.setAuthEngine = function (authEngine) {
   this.auth = authEngine;
@@ -121,18 +122,35 @@ SCWorker.prototype._init = function (options) {
   }
 
   if (this.options.propagateErrors) {
-    this.on('error', handleError.bind(null, this.options.crashWorkerOnError));
+    (async () => {
+      for await (let {error} of this.listener('error')) {
+        handleError(this.options.crashWorkerOnError, error);
+      }
+    })();
     if (this.options.propagateWarnings) {
-      this.on('warning', handleWarning);
+      (async () => {
+        for await (let {warning} of this.listener('warning')) {
+          handleWarning(warning);
+        }
+      })();
     }
-    this.on('exit', handleExit);
+    (async () => {
+      for await (let event of this.listener('exit')) {
+        handleExit();
+      }
+    })();
   }
 
-  this.on(this.EVENT_READY, function () {
-    self.start().then(function () {
-      handleReady();
-    }).catch(this.emitError.bind(this));
-  });
+  (async () => {
+    for await (let event of this.listener(this.EVENT_READY)) {
+      try {
+        await this.start();
+        handleReady();
+      } catch (err) {
+        this.emitError(err);
+      }
+    }
+  })();
 
   this.id = this.options.id;
   this.isLeader = this.id === 0;
@@ -166,21 +184,30 @@ SCWorker.prototype._init = function (options) {
     connectRetryErrorThreshold: this.options.brokerConnectRetryErrorThreshold
   });
 
-  this.brokerEngineClient.on('error', function (err) {
-    var error;
-    if (typeof err === 'string') {
-      error = new BrokerError(err);
-    } else {
-      error = err;
+  (async () => {
+    for await (let {error} of this.brokerEngineClient.listener('error')) {
+      let err;
+      if (typeof error === 'string') {
+        err = new BrokerError(error);
+      } else {
+        err = error;
+      }
+      this.emitError(err);
     }
-    self.emitError(error);
-  });
-  this.brokerEngineClient.on('warning', function (warning) {
-    self.emitWarning(warning);
-  });
+  })();
+
+  (async () => {
+    for await (let {warning} of this.brokerEngineClient.listener('warning')) {
+      this.emitWarning(warning);
+    }
+  })();
+
   this.exchange = this.brokerEngineClient.exchange();
 
   var createHTTPServerResult = this.createHTTPServer();
+  // TODO 2: Use this instead of self
+  // TODO 2: Use let and const instead of var
+  // TODO 2: Use async/await instead of .then() and .catch()
   Promise.resolve(createHTTPServerResult)
   .then(function (httpServer) {
     self.httpServer = httpServer;
@@ -245,32 +272,55 @@ SCWorker.prototype._init = function (options) {
 
     self._socketPath = self.scServer.getPath();
 
-    self.scServer.on('_connection', function (socket) {
-      // The connection event counts as a WS request
-      self._wsRequestCount++;
-      socket.on('message', function () {
+    (async () => {
+      for await (let {socket} of self.scServer.listener('connection')) {
+        // The connection event counts as a WS request
         self._wsRequestCount++;
-      });
-      self.emit(self.EVENT_CONNECTION, socket);
-    });
+        (async () => {
+          for await (let {message} of socket.listener('message')) {
+            self._wsRequestCount++;
+          }
+        })();
+        self.emit(self.EVENT_CONNECTION, socket);
+      }
+    })();
 
-    self.scServer.on('warning', function (warning) {
-      self.emitWarning(warning);
-    });
-    self.scServer.on('error', function (error) {
-      self.emitError(error);
-    });
+    (async () => {
+      for await (let {error} of self.scServer.listener('error')) {
+        self.emitError(error);
+      }
+    })();
+
+    (async () => {
+      for await (let {warning} of self.scServer.listener('warning')) {
+        self.emitWarning(warning);
+      }
+    })();
+
     if (self.scServer.isReady) {
-      self.emit(self.EVENT_READY);
+      self.emit(self.EVENT_READY, {});
     } else {
-      self.scServer.once('ready', function () {
-        self.emit(self.EVENT_READY);
-      });
+      (async () => {
+        await self.scServer.listener('ready').once();
+        self.emit(self.EVENT_READY, {});
+      })();
     }
   })
   .catch(function (error) {
     self.emitError(error);
   });
+};
+
+SCWorker.prototype.listener = function (eventName) {
+  return this._listenerDemux.stream(eventName);
+};
+
+SCWorker.prototype.closeListener = function (eventName) {
+  this._listenerDemux.close(eventName);
+};
+
+SCWorker.prototype.emit = function (eventName, data) {
+  this._listenerDemux.write(eventName, data);
 };
 
 SCWorker.prototype.createHTTPServer = function () {
