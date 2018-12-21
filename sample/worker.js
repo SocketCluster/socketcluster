@@ -32,27 +32,32 @@ class Worker extends SCWorker {
     /*
       In here we handle our incoming realtime connections and listen for events.
     */
-    scServer.on('connection', function (socket) {
+    (async () => {
+      for await (let socket of scServer.listener('connection')) {
 
-      // Some sample logic to show how to handle client events,
-      // replace this with your own logic
+        // Some sample logic to show how to handle client events,
+        // replace this with your own logic
 
-      socket.on('sampleClientEvent', function (data) {
-        count++;
-        console.log('Handled sampleClientEvent', data);
-        scServer.exchange.publish('sample', count);
-      });
+        (async () => {
+          for await (let data of socket.receiver('sampleClientEvent')) {
+            count++;
+            console.log('Handled sampleClientEvent', data);
+            scServer.exchange.publish('sample', count);
+          }
+        })();
 
-      var interval = setInterval(function () {
-        socket.emit('random', {
-          number: Math.floor(Math.random() * 5)
-        });
-      }, 1000);
+        var interval = setInterval(() => {
+          socket.transmit('random', {
+            number: Math.floor(Math.random() * 5)
+          });
+        }, 1000);
 
-      socket.on('disconnect', function () {
-        clearInterval(interval);
-      });
-    });
+        (async () => {
+          await socket.listener('disconnect').once();
+          clearInterval(interval);
+        })();
+      }
+    })();
   }
 }
 
