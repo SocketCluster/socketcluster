@@ -1,6 +1,6 @@
 var path = require('path');
 var crypto = require('crypto');
-var EventEmitter = require('events').EventEmitter;
+var AsyncStreamEmitter = require('async-stream-emitter');
 var uuid = require('uuid');
 var fork = require('child_process').fork;
 var os = require('os');
@@ -21,6 +21,8 @@ var decycle = scErrors.decycle;
 var socketClusterSingleton = null;
 
 function SocketCluster(options) {
+  AsyncStreamEmitter.call(this);
+
   var self = this;
   if (socketClusterSingleton) {
     var errorMessage = 'The SocketCluster master object is a singleton; ' +
@@ -51,12 +53,14 @@ function SocketCluster(options) {
     'EADDRINUSE': 'Failed to bind to a port because it was already used by another process.'
   };
 
-  self.on('error', function (error) {
-    self.emitFail(error, {
-      type: 'Master',
-      pid: process.pid
-    });
-  });
+  (async () => {
+    for await (let {error} of self.listener('error')) {
+      self.emitFail(error, {
+        type: 'Master',
+        pid: process.pid
+      });
+    }
+  })();
 
   // Capture any errors that are thrown during initialization.
   new Promise(function () {
@@ -70,7 +74,7 @@ SocketCluster.create = function (options) {
   return new SocketCluster(options);
 };
 
-SocketCluster.prototype = Object.create(EventEmitter.prototype);
+SocketCluster.prototype = Object.create(AsyncStreamEmitter.prototype);
 
 SocketCluster.prototype._init = function (options) {
   var self = this;
@@ -598,6 +602,7 @@ SocketCluster.prototype._handleWorkerClusterExit = function (errorCode, signal) 
     childProcess: this.workerCluster
   };
 
+  // TODO 2: Check all emit calls
   this.emit(this.EVENT_WORKER_CLUSTER_EXIT, workerClusterInfo);
 
   var message = 'WorkerCluster exited with code ' + errorCode;
@@ -777,11 +782,6 @@ SocketCluster.prototype._start = function () {
 
   var paths = self._getPaths();
 
-  var brokerEngineServerReady = function () {
-    self._brokerEngineServer.removeListener('ready', brokerEngineServerReady);
-    self._launchWorkerCluster();
-  };
-
   var brokerDebugPort = argv['debug-brokers'];
   if (brokerDebugPort === true) {
     brokerDebugPort = self.options.defaultBrokerDebugPort;
@@ -808,31 +808,44 @@ SocketCluster.prototype._start = function () {
     appBrokerControllerPath: paths.appBrokerControllerPath
   });
 
-  self._brokerEngineServer.on('error', function (err) {
-    if (err.brokerPid) {
-      self._brokerErrorHandler(err.brokerPid, err);
-    } else {
-      self._brokerEngineErrorHandler(err.pid, err);
+  (async () => {
+    for await (let {error} of self._brokerEngineServer.listener('error')) {
+      if (error.brokerPid) {
+        self._brokerErrorHandler(error.brokerPid, error);
+      } else {
+        self._brokerEngineErrorHandler(error.pid, error);
+      }
     }
-  });
+  })();
 
-  self._brokerEngineServer.on('ready', brokerEngineServerReady);
+  (async () => {
+    await self._brokerEngineServer.listener('ready').once();
+    self._launchWorkerCluster();
+  })();
 
-  self._brokerEngineServer.on('brokerStart', function (brokerInfo) {
-    self.emit(self.EVENT_BROKER_START, brokerInfo);
-  });
+  (async () => {
+    for await (let brokerInfo of self._brokerEngineServer.listener('brokerStart')) {
+      self.emit(self.EVENT_BROKER_START, brokerInfo);
+    }
+  })();
 
-  self._brokerEngineServer.on('brokerExit', function (brokerInfo) {
-    self.emit(self.EVENT_BROKER_EXIT, brokerInfo);
-  });
+  (async () => {
+    for await (let brokerInfo of self._brokerEngineServer.listener('brokerExit')) {
+      self.emit(self.EVENT_BROKER_EXIT, brokerInfo);
+    }
+  })();
 
-  self._brokerEngineServer.on('brokerMessage', function (brokerId, data) {
-    self.emit('brokerMessage', brokerId, data);
-  });
+  (async () => {
+    for await (let event of self._brokerEngineServer.listener('brokerMessage')) {
+      self.emit('brokerMessage', event);
+    }
+  })();
 
-  self._brokerEngineServer.on('brokerRequest', function (brokerId, data, callback) {
-    self.emit('brokerRequest', brokerId, data, callback);
-  });
+  (async () => {
+    for await (let req of self._brokerEngineServer.listener('brokerRequest')) {
+      self.emit('brokerRequest', req);
+    }
+  })();
 };
 
 SocketCluster.prototype._createIPCResponseHandler = function (callback) {
@@ -977,35 +990,28 @@ SocketCluster.prototype.destroy = function (callback) {
   }
   this._shuttingDown = true;
 
+  // TODO 2: Switch to async/await
   Promise.all([
-    new Promise(function (resolve, reject) {
-      if (!self.workerCluster) {
-        resolve();
-        return;
+    (async () => {
+      if (self.workerCluster) {
+        await self.listener(self.EVENT_WORKER_CLUSTER_EXIT).once();
       }
-      self.once(self.EVENT_WORKER_CLUSTER_EXIT, function () {
-        resolve();
-      });
-    }),
-    new Promise(function (resolve, reject) {
-      if (!self._brokerEngineServer) {
-        resolve();
-        return;
+    })(),
+    (async () => {
+      if (self._brokerEngineServer) {
+        var killedBrokerLookup = {};
+        var killedBrokerCount = 0;
+        for await (let brokerInfo of self.listener(self.EVENT_BROKER_EXIT)) {
+          if (!killedBrokerLookup[brokerInfo.id]) {
+            killedBrokerLookup[brokerInfo.id] = true;
+            killedBrokerCount++;
+          }
+          if (killedBrokerCount >= self.options.brokers) {
+            break;
+          }
+        }
       }
-      var killedBrokerLookup = {};
-      var killedBrokerCount = 0;
-      var handleBrokerExit = function (brokerDetails) {
-        if (!killedBrokerLookup[brokerDetails.id]) {
-          killedBrokerLookup[brokerDetails.id] = true;
-          killedBrokerCount++;
-        }
-        if (killedBrokerCount >= self.options.brokers) {
-          self.removeListener(self.EVENT_BROKER_EXIT, handleBrokerExit);
-          resolve();
-        }
-      };
-      self.on(self.EVENT_BROKER_EXIT, handleBrokerExit);
-    })
+    })()
   ])
   .then(function () {
     return new Promise(function (resolve) {
