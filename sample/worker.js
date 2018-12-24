@@ -7,7 +7,7 @@ const healthChecker = require('sc-framework-health-check');
 
 class Worker extends SCWorker {
   run() {
-    console.log('   >> Worker PID:', process.pid);
+    console.log(`   >> Worker PID: ${process.pid}`);
     let environment = this.options.environment;
 
     let app = express();

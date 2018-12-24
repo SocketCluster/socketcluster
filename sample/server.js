@@ -64,9 +64,11 @@ for (let i in SOCKETCLUSTER_OPTIONS) {
 let start = function () {
   let socketCluster = new SocketCluster(options);
 
-  socketCluster.on(socketCluster.EVENT_WORKER_CLUSTER_START, function (workerClusterInfo) {
-    console.log('   >> WorkerCluster PID:', workerClusterInfo.pid);
-  });
+  (async () => {
+    for await (let event of socketCluster.listener(socketCluster.EVENT_WORKER_CLUSTER_START)) {
+      console.log(`   >> WorkerCluster PID: ${event.pid}`);
+    }
+  })();
 
   if (socketCluster.options.environment === 'dev') {
     // This will cause SC workers to reboot when code changes anywhere in the app directory.
