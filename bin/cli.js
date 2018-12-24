@@ -1,21 +1,21 @@
 #!/usr/bin/env node
 
-var fs = require('fs-extra');
-var path = require('path');
-var argv = require('minimist')(process.argv.slice(2));
-var childProcess = require('child_process');
-var inquirer = require('inquirer');
-var prompt = inquirer.createPromptModule();
-var exec = childProcess.exec;
-var spawn = childProcess.spawn;
-var fork = childProcess.fork;
+const fs = require('fs-extra');
+const path = require('path');
+const argv = require('minimist')(process.argv.slice(2));
+const childProcess = require('child_process');
+const inquirer = require('inquirer');
+const prompt = inquirer.createPromptModule();
+const exec = childProcess.exec;
+const spawn = childProcess.spawn;
+const fork = childProcess.fork;
 
-var command = argv._[0];
-var commandRawArgs = process.argv.slice(3);
-var arg1 = argv._[1];
-var force = argv.force ? true : false;
+let command = argv._[0];
+let commandRawArgs = process.argv.slice(3);
+let arg1 = argv._[1];
+let force = argv.force ? true : false;
 
-var fileExistsSync = function (filePath) {
+let fileExistsSync = function (filePath) {
   try {
     fs.accessSync(filePath, fs.constants.F_OK);
   } catch (err) {
@@ -24,8 +24,8 @@ var fileExistsSync = function (filePath) {
   return true;
 };
 
-var parsePackageFile = function (moduleDir) {
-  var packageFile = moduleDir + '/package.json';
+let parsePackageFile = function (moduleDir) {
+  let packageFile = moduleDir + '/package.json';
   try {
     if (fileExistsSync(packageFile)) {
       return JSON.parse(fs.readFileSync(packageFile, {encoding: 'utf8'}));
@@ -35,19 +35,19 @@ var parsePackageFile = function (moduleDir) {
   return {};
 };
 
-var errorMessage = function (message) {
+let errorMessage = function (message) {
   console.log('\x1b[31m[Error]\x1b[0m ' + message);
 };
 
-var successMessage = function (message) {
+let successMessage = function (message) {
   console.log('\x1b[32m[Success]\x1b[0m ' + message);
 };
 
-var warningMessage = function (message) {
+let warningMessage = function (message) {
   console.log('\x1b[33m[Warning]\x1b[0m ' + message);
 };
 
-var showCorrectUsage = function () {
+let showCorrectUsage = function () {
   console.log('Usage: socketcluster [options] [command]\n');
   console.log('Options:');
   console.log("  -v            Get the version of the current SocketCluster installation");
@@ -58,15 +58,15 @@ var showCorrectUsage = function () {
   console.log('  create <appname>            Create a new boilerplate app in working directory');
 };
 
-var failedToRemoveDirMessage = function (dirPath) {
+let failedToRemoveDirMessage = function (dirPath) {
   errorMessage('Failed to remove existing directory at ' + dirPath + '. This directory may be used by another program or you may not have the permission to remove it.');
 };
 
-var failedToCreateMessage = function () {
+let failedToCreateMessage = function () {
   errorMessage('Failed to create necessary files. Please check your permissions and try again.');
 };
 
-var promptConfirm = function (message, callback) {
+let promptConfirm = function (message, callback) {
   prompt([
     {
       type: 'confirm',
@@ -81,7 +81,7 @@ var promptConfirm = function (message, callback) {
   });
 };
 
-var copyDirRecursive = function (src, dest) {
+let copyDirRecursive = function (src, dest) {
   try {
     fs.copySync(src, dest);
     return true;
@@ -91,7 +91,7 @@ var copyDirRecursive = function (src, dest) {
   return false;
 };
 
-var rmdirRecursive = function (dirname) {
+let rmdirRecursive = function (dirname) {
   try {
     fs.removeSync(dirname);
     return true;
@@ -107,34 +107,34 @@ if (argv.help) {
 };
 
 if (argv.v) {
-  var scDir = __dirname + '/../';
-  var scPkg = parsePackageFile(scDir);
+  let scDir = __dirname + '/../';
+  let scPkg = parsePackageFile(scDir);
   console.log('v' + scPkg.version);
   process.exit();
 };
 
-var wd = process.cwd();
+let wd = process.cwd();
 
-var sampleDir = __dirname + '/../sample';
-var destDir = path.normalize(wd + '/' + arg1);
-var clientFileSourcePath = path.normalize(destDir + '/node_modules/socketcluster-client/socketcluster.js');
-var clientFileDestPath = path.normalize(destDir + '/public/socketcluster.js');
+let sampleDir = __dirname + '/../sample';
+let destDir = path.normalize(wd + '/' + arg1);
+let clientFileSourcePath = path.normalize(destDir + '/node_modules/socketcluster-client/socketcluster.js');
+let clientFileDestPath = path.normalize(destDir + '/public/socketcluster.js');
 
-var createFail = function () {
+let createFail = function () {
   errorMessage("Failed to create SocketCluster sample app.");
   process.exit();
 };
 
-var createSuccess = function () {
+let createSuccess = function () {
   console.log('Installing app dependencies using npm. This could take a while...');
 
-  var npmCommand = (process.platform === "win32" ? "npm.cmd" : "npm");
-  var options = {
+  let npmCommand = (process.platform === "win32" ? "npm.cmd" : "npm");
+  let options = {
     cwd: destDir,
     maxBuffer: Infinity
   };
 
-  var npmProcess = spawn(npmCommand, ['install'], options);
+  let npmProcess = spawn(npmCommand, ['install'], options);
 
   npmProcess.stdout.on('data', function (data) {
     process.stdout.write(data);
@@ -162,11 +162,11 @@ var createSuccess = function () {
   npmProcess.stdin.end();
 };
 
-var setupMessage = function () {
+let setupMessage = function () {
   console.log('Creating app structure...');
 };
 
-var confirmReplaceSetup = function (confirm) {
+let confirmReplaceSetup = function (confirm) {
   if (confirm) {
     setupMessage();
     if (rmdirRecursive(destDir) && copyDirRecursive(sampleDir, destDir)) {
@@ -186,7 +186,7 @@ if (command === 'create') {
       if (force) {
         confirmReplaceSetup(true);
       } else {
-        var message = "There is already a directory at " + destDir + '. Do you want to overwrite it?';
+        let message = "There is already a directory at " + destDir + '. Do you want to overwrite it?';
         promptConfirm(message, confirmReplaceSetup);
       }
     } else {

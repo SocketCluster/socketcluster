@@ -1,5 +1,5 @@
-var SCBroker = require('socketcluster/scbroker');
-var scClusterBrokerClient = require('scc-broker-client');
+const SCBroker = require('socketcluster/scbroker');
+const scClusterBrokerClient = require('scc-broker-client');
 
 class Broker extends SCBroker {
   run() {

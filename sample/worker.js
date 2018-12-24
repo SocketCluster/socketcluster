@@ -1,19 +1,19 @@
-var SCWorker = require('socketcluster/scworker');
-var express = require('express');
-var serveStatic = require('serve-static');
-var path = require('path');
-var morgan = require('morgan');
-var healthChecker = require('sc-framework-health-check');
+const SCWorker = require('socketcluster/scworker');
+const express = require('express');
+const serveStatic = require('serve-static');
+const path = require('path');
+const morgan = require('morgan');
+const healthChecker = require('sc-framework-health-check');
 
 class Worker extends SCWorker {
   run() {
     console.log('   >> Worker PID:', process.pid);
-    var environment = this.options.environment;
+    let environment = this.options.environment;
 
-    var app = express();
+    let app = express();
 
-    var httpServer = this.httpServer;
-    var scServer = this.scServer;
+    let httpServer = this.httpServer;
+    let scServer = this.scServer;
 
     if (environment === 'dev') {
       // Log every HTTP request. See https://github.com/expressjs/morgan for other
@@ -27,7 +27,7 @@ class Worker extends SCWorker {
 
     httpServer.on('request', app);
 
-    var count = 0;
+    let count = 0;
 
     /*
       In here we handle our incoming realtime connections and listen for events.
@@ -46,7 +46,7 @@ class Worker extends SCWorker {
           }
         })();
 
-        var interval = setInterval(() => {
+        let interval = setInterval(() => {
           socket.transmit('random', {
             number: Math.floor(Math.random() * 5)
           });

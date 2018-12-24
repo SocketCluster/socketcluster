@@ -1,2 +1,2 @@
-var SCWorkerCluster = require('./scworkercluster');
+const SCWorkerCluster = require('./scworkercluster');
 new SCWorkerCluster();

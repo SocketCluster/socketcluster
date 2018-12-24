@@ -1,46 +1,34 @@
-var path = require('path');
-var crypto = require('crypto');
-var AsyncStreamEmitter = require('async-stream-emitter');
-var uuid = require('uuid');
-var fork = require('child_process').fork;
-var os = require('os');
-var fs = require('fs-extra');
-var uidNumber = require('uid-number');
-var pkg = require('./package.json');
-var argv = require('minimist')(process.argv.slice(2));
-var cluster = require('cluster');
+const path = require('path');
+const crypto = require('crypto');
+const AsyncStreamEmitter = require('async-stream-emitter');
+const uuid = require('uuid');
+const fork = require('child_process').fork;
+const os = require('os');
+const fs = require('fs-extra');
+const uidNumber = require('uid-number');
+const pkg = require('./package.json');
+const argv = require('minimist')(process.argv.slice(2));
+const cluster = require('cluster');
 
-var scErrors = require('sc-errors');
-var InvalidOptionsError = scErrors.InvalidOptionsError;
-var InvalidActionError = scErrors.InvalidActionError;
-var ProcessExitError = scErrors.ProcessExitError;
-var UnknownError = scErrors.UnknownError;
-var TimeoutError = scErrors.TimeoutError;
-var decycle = scErrors.decycle;
+const scErrors = require('sc-errors');
+const InvalidOptionsError = scErrors.InvalidOptionsError;
+const InvalidActionError = scErrors.InvalidActionError;
+const ProcessExitError = scErrors.ProcessExitError;
+const UnknownError = scErrors.UnknownError;
+const TimeoutError = scErrors.TimeoutError;
+const decycle = scErrors.decycle;
 
-var socketClusterSingleton = null;
+let socketClusterSingleton = null;
 
 function SocketCluster(options) {
   AsyncStreamEmitter.call(this);
 
   if (socketClusterSingleton) {
-    var errorMessage = 'The SocketCluster master object is a singleton; ' +
+    let errorMessage = 'The SocketCluster master object is a singleton; ' +
       'it can only be instantiated once per process';
     throw new InvalidActionError(errorMessage);
   }
   socketClusterSingleton = this;
-
-  this.EVENT_FAIL = 'fail';
-  this.EVENT_WARNING = 'warning';
-  this.EVENT_INFO = 'info';
-  this.EVENT_READY = 'ready';
-  this.EVENT_WORKER_START = 'workerStart';
-  this.EVENT_WORKER_EXIT = 'workerExit';
-  this.EVENT_BROKER_START = 'brokerStart';
-  this.EVENT_BROKER_EXIT = 'brokerExit';
-  this.EVENT_WORKER_CLUSTER_START = 'workerClusterStart';
-  this.EVENT_WORKER_CLUSTER_READY = 'workerClusterReady';
-  this.EVENT_WORKER_CLUSTER_EXIT = 'workerClusterExit';
 
   this._pendingResponseHandlers = {};
   this.workerClusterMessageBuffer = [];
@@ -70,6 +58,18 @@ function SocketCluster(options) {
   })();
 }
 
+SocketCluster.EVENT_FAIL = SocketCluster.prototype.EVENT_FAIL = 'fail';
+SocketCluster.EVENT_WARNING = SocketCluster.prototype.EVENT_WARNING = 'warning';
+SocketCluster.EVENT_INFO = SocketCluster.prototype.EVENT_INFO = 'info';
+SocketCluster.EVENT_READY = SocketCluster.prototype.EVENT_READY = 'ready';
+SocketCluster.EVENT_WORKER_START = SocketCluster.prototype.EVENT_WORKER_START = 'workerStart';
+SocketCluster.EVENT_WORKER_EXIT = SocketCluster.prototype.EVENT_WORKER_EXIT = 'workerExit';
+SocketCluster.EVENT_BROKER_START = SocketCluster.prototype.EVENT_BROKER_START = 'brokerStart';
+SocketCluster.EVENT_BROKER_EXIT = SocketCluster.prototype.EVENT_BROKER_EXIT = 'brokerExit';
+SocketCluster.EVENT_WORKER_CLUSTER_START = SocketCluster.prototype.EVENT_WORKER_CLUSTER_START = 'workerClusterStart';
+SocketCluster.EVENT_WORKER_CLUSTER_READY = SocketCluster.prototype.EVENT_WORKER_CLUSTER_READY = 'workerClusterReady';
+SocketCluster.EVENT_WORKER_CLUSTER_EXIT = SocketCluster.prototype.EVENT_WORKER_CLUSTER_EXIT = 'workerClusterExit';
+
 SocketCluster.create = function (options) {
   return new SocketCluster(options);
 };
@@ -77,7 +77,7 @@ SocketCluster.create = function (options) {
 SocketCluster.prototype = Object.create(AsyncStreamEmitter.prototype);
 
 SocketCluster.prototype._init = async function (options) {
-  var backslashRegex = /\\/g;
+  let backslashRegex = /\\/g;
   this.appDirPath = path.dirname(require.main.filename).replace(backslashRegex, '/');
 
   this.options = {
@@ -149,9 +149,9 @@ SocketCluster.prototype._init = async function (options) {
 
   Object.assign(this.options, options);
 
-  var maxTimeout = Math.pow(2, 31) - 1;
+  let maxTimeout = Math.pow(2, 31) - 1;
 
-  var verifyDuration = (propertyName) => {
+  let verifyDuration = (propertyName) => {
     if (this.options[propertyName] > maxTimeout) {
       throw new InvalidOptionsError('The ' + propertyName +
         ' value provided exceeded the maximum amount allowed');
@@ -180,11 +180,11 @@ SocketCluster.prototype._init = async function (options) {
       "boot controller for each worker in the cluster");
   }
 
-  var pathHasher = crypto.createHash('md5');
+  let pathHasher = crypto.createHash('md5');
   pathHasher.update(this.appDirPath, 'utf8');
-  var pathHash = pathHasher.digest('hex').substr(0, 10);
+  let pathHash = pathHasher.digest('hex').substr(0, 10);
   // Trim it because some OSes (e.g. OSX) do not like long path names for domain sockets.
-  var shortAppName = this.options.appName.substr(0, 13);
+  let shortAppName = this.options.appName.substr(0, 13);
 
   if (process.platform === 'win32') {
     if (this.options.socketRoot) {
@@ -193,7 +193,7 @@ SocketCluster.prototype._init = async function (options) {
       this._socketDirPath = '\\\\.\\pipe\\socketcluster_' + shortAppName + '_' + pathHash + '_';
     }
   } else {
-    var socketDir, socketParentDir;
+    let socketDir, socketParentDir;
     if (this.options.socketRoot) {
       socketDir = this.options.socketRoot.replace(/\/$/, '') + '/';
     } else {
@@ -217,7 +217,7 @@ SocketCluster.prototype._init = async function (options) {
   }
 
   if (this.options.protocolOptions) {
-    var protoOpts = this.options.protocolOptions;
+    let protoOpts = this.options.protocolOptions;
     if (protoOpts.key instanceof Buffer) {
       protoOpts.key = protoOpts.key.toString();
     }
@@ -242,18 +242,18 @@ SocketCluster.prototype._init = async function (options) {
     }
     if (protoOpts.passphrase == null) {
       if (protoOpts.key) {
-        var privKeyEncLine = protoOpts.key.split('\n')[1];
+        let privKeyEncLine = protoOpts.key.split('\n')[1];
         if (privKeyEncLine && privKeyEncLine.toUpperCase().indexOf('ENCRYPTED') > -1) {
-          var message = 'The supplied private key is encrypted and cannot be used without a passphrase - ' +
+          let message = 'The supplied private key is encrypted and cannot be used without a passphrase - ' +
             'Please provide a valid passphrase as a property to protocolOptions';
           throw new InvalidOptionsError(message);
         }
       } else if (protoOpts.pfx) {
-        var message = 'The supplied pfx certificate cannot be used without a passphrase - ' +
+        let message = 'The supplied pfx certificate cannot be used without a passphrase - ' +
           'Please provide a valid passphrase as a property to protocolOptions';
         throw new InvalidOptionsError(message);
       } else {
-        var message = 'The supplied protocolOptions were invalid - ' +
+        let message = 'The supplied protocolOptions were invalid - ' +
           'Please provide either a key and cert pair or a pfx certificate';
         throw new InvalidOptionsError(message);
       }
@@ -351,7 +351,7 @@ SocketCluster.prototype._init = async function (options) {
 };
 
 SocketCluster.prototype._getPaths = function () {
-  var paths = {
+  let paths = {
     appDirPath: this.appDirPath,
     statusURL: '/~status',
     appWorkerControllerPath: path.resolve(this.options.workerController)
@@ -392,8 +392,8 @@ SocketCluster.prototype._getBrokerSocketName = function (brokerId) {
 };
 
 SocketCluster.prototype._getBrokerSocketPaths = function () {
-  var socketPaths = [];
-  for (var i = 0; i < this.options.brokers; i++) {
+  let socketPaths = [];
+  for (let i = 0; i < this.options.brokers; i++) {
     socketPaths.push(this._socketDirPath + this._getBrokerSocketName(i));
   }
   return socketPaths;
@@ -416,9 +416,9 @@ SocketCluster.prototype._logObject = function (obj, objType, time) {
   if (!obj.origin.type) {
     obj.origin.type = 'Undefined';
   }
-  var output = obj.stack || obj.message || obj;
+  let output = obj.stack || obj.message || obj;
 
-  var logMessage;
+  let logMessage;
   if (obj.origin.pid == null) {
     logMessage = 'Origin: ' + this._capitaliseFirstLetter(obj.origin.type) + '\n' +
       '   [' + objType + '] ' + output;
@@ -437,7 +437,7 @@ SocketCluster.prototype._convertValueToUnknownError = function (err, origin) {
       } else {
         // If err has neither a stack nor a message property
         // then the error message will be the JSON stringified object.
-        var errorMessage;
+        let errorMessage;
         try {
           errorMessage = JSON.stringify(err);
         } catch (e1) {
@@ -450,7 +450,7 @@ SocketCluster.prototype._convertValueToUnknownError = function (err, origin) {
         err = new UnknownError(errorMessage);
       }
     } else if (typeof err === 'function') {
-      var errorMessage = '[function ' + (err.name || 'anonymous') + ']';
+      let errorMessage = '[function ' + (err.name || 'anonymous') + ']';
       err = new UnknownError(errorMessage);
     } else if (typeof err === 'undefined') {
       err = new UnknownError('undefined');
@@ -471,7 +471,7 @@ SocketCluster.prototype._convertValueToUnknownError = function (err, origin) {
 SocketCluster.prototype.emitFail = function (err, origin) {
   err = this._convertValueToUnknownError(err, origin);
 
-  var annotation = this._errorAnnotations[err.code];
+  let annotation = this._errorAnnotations[err.code];
   if (annotation && err.stack) {
     err.stack += '\n    ' + this.colorText('!!', 'red') + ' ' + annotation;
   }
@@ -522,7 +522,7 @@ SocketCluster.prototype._brokerErrorHandler = function (brokerPid, error) {
 };
 
 SocketCluster.prototype._workerWarningHandler = function (workerPid, warning) {
-  var origin = {
+  let origin = {
     type: 'Worker',
     pid: workerPid
   };
@@ -533,8 +533,8 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
   if (!this.isActive) {
     if (this.options.rebootOnSignal) {
       this._sigusr2SignalHandler = () => {
-        var warningMessage;
-        var killOptions = {};
+        let warningMessage;
+        let killOptions = {};
         if (this.options.environment === 'dev') {
           warningMessage = 'Master received SIGUSR2 signal - Shutting down all workers immediately';
           killOptions.immediate = true;
@@ -542,7 +542,7 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
           warningMessage = 'Master received SIGUSR2 signal - Shutting down all workers gracefully within processTermTimeout limit';
         }
 
-        var warning = new ProcessExitError(warningMessage, null);
+        let warning = new ProcessExitError(warningMessage, null);
         warning.signal = 'SIGUSR2';
 
         this.emitWarning(warning, {
@@ -568,7 +568,7 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
   this.isWorkerClusterReady = true;
   this._flushWorkerClusterMessageBuffer();
 
-  var workerClusterInfo = {
+  let workerClusterInfo = {
     pid: this.workerCluster.pid,
     childProcess: this.workerCluster
   };
@@ -577,7 +577,7 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
 
 SocketCluster.prototype._workerExitHandler = function (workerInfo) {
   if (this.options.logLevel > 0) {
-    var message = 'Worker ' + workerInfo.id + ' exited - Exit code: ' + workerInfo.code;
+    let message = 'Worker ' + workerInfo.id + ' exited - Exit code: ' + workerInfo.code;
     if (workerInfo.signal) {
       message += ', signal: ' + workerInfo.signal;
     }
@@ -597,9 +597,9 @@ SocketCluster.prototype._handleWorkerClusterExit = function (errorCode, signal) 
   this.isWorkerClusterReady = false;
   this.workerClusterMessageBuffer = [];
 
-  var wcPid = this.workerCluster.pid;
+  let wcPid = this.workerCluster.pid;
 
-  var workerClusterInfo = {
+  let workerClusterInfo = {
     pid: wcPid,
     code: errorCode,
     signal: signal,
@@ -609,14 +609,14 @@ SocketCluster.prototype._handleWorkerClusterExit = function (errorCode, signal) 
   // TODO 2: Check all emit calls
   this.emit(this.EVENT_WORKER_CLUSTER_EXIT, workerClusterInfo);
 
-  var message = 'WorkerCluster exited with code ' + errorCode;
+  let message = 'WorkerCluster exited with code ' + errorCode;
   if (signal != null) {
     message += ' and signal ' + signal;
   }
   if (errorCode === 0) {
     this.log(message);
   } else {
-    var error = new ProcessExitError(message, errorCode);
+    let error = new ProcessExitError(message, errorCode);
     if (signal != null) {
       error.signal = signal;
     }
@@ -634,16 +634,16 @@ SocketCluster.prototype._handleWorkerClusterExit = function (errorCode, signal) 
 };
 
 SocketCluster.prototype._launchWorkerCluster = function () {
-  var debugPort, inspectPort;
+  let debugPort, inspectPort;
 
-  var debugRegex = /^--debug(=[0-9]*)?$/;
-  var debugBrkRegex = /^--debug-brk(=[0-9]*)?$/;
-  var inspectRegex = /^--inspect(=[0-9]*)?$/;
-  var inspectBrkRegex = /^--inspect-brk(=[0-9]*)?$/;
+  let debugRegex = /^--debug(=[0-9]*)?$/;
+  let debugBrkRegex = /^--debug-brk(=[0-9]*)?$/;
+  let inspectRegex = /^--inspect(=[0-9]*)?$/;
+  let inspectBrkRegex = /^--inspect-brk(=[0-9]*)?$/;
 
   // Workers should not inherit the master --debug argument
   // because they have their own --debug-workers option.
-  var execOptions = {
+  let execOptions = {
     execArgv: process.execArgv.filter((arg) => {
       return !debugRegex.test(arg) && !debugBrkRegex.test(arg) && !inspectRegex.test(arg) && !inspectBrkRegex.test(arg);
     })
@@ -668,9 +668,9 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     execOptions.execArgv.push('--inspect=' + inspectPort);
   }
 
-  var paths = this._getPaths();
+  let paths = this._getPaths();
 
-  var workerOpts = this._cloneObject(this.options);
+  let workerOpts = this._cloneObject(this.options);
   workerOpts.paths = paths;
   workerOpts.sourcePort = this.options.port;
   workerOpts.workerCount = this.options.workers;
@@ -714,7 +714,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
         this._workerClusterErrorHandler(message.data.pid, message.data.error);
       }
     } else if (message.type === 'warning') {
-      var warning = scErrors.hydrateError(message.data.error, true);
+      let warning = scErrors.hydrateError(message.data.error, true);
       this._workerWarningHandler(message.data.workerPid, warning);
     } else if (message.type === 'ready') {
       this._workerClusterReadyHandler();
@@ -729,17 +729,17 @@ SocketCluster.prototype._launchWorkerCluster = function () {
         this.respondToWorker(err, data, message.workerId, message.cid);
       });
     } else if (message.type === 'workerResponse' || message.type === 'workerClusterResponse') {
-      var responseHandler = this._pendingResponseHandlers[message.rid];
+      let responseHandler = this._pendingResponseHandlers[message.rid];
       if (responseHandler) {
         clearTimeout(responseHandler.timeout);
         delete this._pendingResponseHandlers[message.rid];
-        var properError = scErrors.hydrateError(message.error, true);
+        let properError = scErrors.hydrateError(message.error, true);
         responseHandler.callback(properError, message.data, message.workerId);
       }
     }
   });
 
-  var workerClusterInfo = {
+  let workerClusterInfo = {
     pid: this.workerCluster.pid,
     childProcess: this.workerCluster
   };
@@ -780,14 +780,14 @@ SocketCluster.prototype._logDeploymentDetails = function () {
 SocketCluster.prototype.run = function () {};
 
 SocketCluster.prototype._start = function () {
-  var paths = this._getPaths();
+  let paths = this._getPaths();
 
-  var brokerDebugPort = argv['debug-brokers'];
+  let brokerDebugPort = argv['debug-brokers'];
   if (brokerDebugPort === true) {
     brokerDebugPort = this.options.defaultBrokerDebugPort;
   }
 
-  var brokerInspectPort = argv['inspect-brokers'];
+  let brokerInspectPort = argv['inspect-brokers'];
   if (brokerInspectPort === true) {
     brokerInspectPort = this.options.defaultBrokerDebugPort;
   }
@@ -849,13 +849,13 @@ SocketCluster.prototype._start = function () {
 };
 
 SocketCluster.prototype._createIPCResponseHandler = function (callback) {
-  var cid = uuid.v4();
+  let cid = uuid.v4();
 
-  var responseTimeout = setTimeout(() => {
-    var responseHandler = this._pendingResponseHandlers[cid];
+  let responseTimeout = setTimeout(() => {
+    let responseHandler = this._pendingResponseHandlers[cid];
     if (responseHandler) {
       delete this._pendingResponseHandlers[cid];
-      var timeoutError = new TimeoutError('IPC response timed out');
+      let timeoutError = new TimeoutError('IPC response timed out');
       responseHandler.callback(timeoutError);
     }
   }, this.options.ipcAckTimeout);
@@ -876,7 +876,7 @@ SocketCluster.prototype._flushWorkerClusterMessageBuffer = function () {
 };
 
 SocketCluster.prototype.sendRequestToWorker = function (workerId, data) {
-  var messagePacket = {
+  let messagePacket = {
     type: 'masterRequest',
     workerId: workerId,
     data: data
@@ -898,7 +898,7 @@ SocketCluster.prototype.sendRequestToWorker = function (workerId, data) {
 };
 
 SocketCluster.prototype.sendMessageToWorker = function (workerId, data) {
-  var messagePacket = {
+  let messagePacket = {
     type: 'masterMessage',
     workerId: workerId,
     data: data
@@ -991,8 +991,8 @@ SocketCluster.prototype.destroy = async function () {
       })(),
       (async () => {
         if (this._brokerEngineServer) {
-          var killedBrokerLookup = {};
-          var killedBrokerCount = 0;
+          let killedBrokerLookup = {};
+          let killedBrokerCount = 0;
           for await (let brokerInfo of this.listener(this.EVENT_BROKER_EXIT)) {
             if (!killedBrokerLookup[brokerInfo.id]) {
               killedBrokerLookup[brokerInfo.id] = true;

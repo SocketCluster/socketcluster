@@ -1,27 +1,27 @@
-var cluster = require('cluster');
-var scErrors = require('sc-errors');
-var InvalidActionError = scErrors.InvalidActionError;
-var ProcessExitError = scErrors.ProcessExitError;
+const cluster = require('cluster');
+const scErrors = require('sc-errors');
+const InvalidActionError = scErrors.InvalidActionError;
+const ProcessExitError = scErrors.ProcessExitError;
 
-var workerInitOptions = JSON.parse(process.env.workerInitOptions);
-var processTermTimeout = 10000;
-var forceKillTimeout = 15000;
-var forceKillSignal = 'SIGHUP';
+const workerInitOptions = JSON.parse(process.env.workerInitOptions);
+let processTermTimeout = 10000;
+let forceKillTimeout = 15000;
+let forceKillSignal = 'SIGHUP';
 
-process.on('disconnect', function () {
+process.on('disconnect', () => {
   process.exit();
 });
 
-var scWorkerCluster;
-var workers;
-var hasExited = false;
-var terminatedCount = 0;
-var childExitLookup = {};
-var isTerminating = false;
-var isForceKillingWorkers = false;
+let scWorkerCluster;
+let workers;
+let hasExited = false;
+let terminatedCount = 0;
+let childExitLookup = {};
+let isTerminating = false;
+let isForceKillingWorkers = false;
 
-var sendErrorToMaster = function (err) {
-  var error = scErrors.dehydrateError(err, true);
+let sendErrorToMaster = function (err) {
+  let error = scErrors.dehydrateError(err, true);
   process.send({
     type: 'error',
     data: {
@@ -31,14 +31,14 @@ var sendErrorToMaster = function (err) {
   });
 };
 
-var terminateNow = function () {
+let terminateNow = function () {
   if (!hasExited) {
     hasExited = true;
     process.exit();
   }
 };
 
-var terminate = function (immediate) {
+let terminate = function (immediate) {
   if (immediate) {
     terminateNow();
     return;
@@ -47,44 +47,44 @@ var terminate = function (immediate) {
     return;
   }
   isTerminating = true;
-  setTimeout(function () {
+  setTimeout(() => {
     terminateNow();
   }, processTermTimeout);
 };
 
-var killUnresponsiveWorkersNow = function () {
-  (workers || []).forEach(function (worker, i) {
+let killUnresponsiveWorkersNow = function () {
+  (workers || []).forEach((worker, i) => {
     if (!childExitLookup[i]) {
       process.kill(worker.process.pid, forceKillSignal);
-      var errorMessage = 'No exit signal was received by worker with id ' + i +
+      let errorMessage = 'No exit signal was received by worker with id ' + i +
       ' (PID: ' + worker.process.pid + ') before forceKillTimeout of ' + forceKillTimeout +
       ' ms was reached - As a result, kill signal ' + forceKillSignal + ' was sent to worker';
 
-      var processExitError = new ProcessExitError(errorMessage);
+      let processExitError = new ProcessExitError(errorMessage);
       sendErrorToMaster(processExitError);
     }
   });
   isForceKillingWorkers = false;
 };
 
-var killUnresponsiveWorkers = function () {
+let killUnresponsiveWorkers = function () {
   childExitLookup = {};
   if (isForceKillingWorkers) {
     return;
   }
   isForceKillingWorkers = true;
-  setTimeout(function () {
+  setTimeout(() => {
     killUnresponsiveWorkersNow();
   }, forceKillTimeout);
 };
 
-process.on('message', function (masterPacket) {
+process.on('message', (masterPacket) => {
   if (
     masterPacket.type === 'masterMessage' ||
     masterPacket.type === 'masterRequest' ||
     masterPacket.type === 'masterResponse'
   ) {
-    var targetWorker = workers[masterPacket.workerId];
+    let targetWorker = workers[masterPacket.workerId];
     if (targetWorker) {
       targetWorker.send(masterPacket);
       if (masterPacket.type === 'masterMessage') {
@@ -97,9 +97,9 @@ process.on('message', function (masterPacket) {
       }
     } else {
       if (masterPacket.type === 'masterMessage') {
-        var errorMessage = 'Cannot send message to worker with id ' + masterPacket.workerId +
+        let errorMessage = 'Cannot send message to worker with id ' + masterPacket.workerId +
         ' because the worker does not exist';
-        var notFoundError = new InvalidActionError(errorMessage);
+        let notFoundError = new InvalidActionError(errorMessage);
         sendErrorToMaster(notFoundError);
 
         process.send({
@@ -109,9 +109,9 @@ process.on('message', function (masterPacket) {
           rid: masterPacket.cid
         });
       } else if (masterPacket.type === 'masterRequest') {
-        var errorMessage = 'Cannot send request to worker with id ' + masterPacket.workerId +
+        let errorMessage = 'Cannot send request to worker with id ' + masterPacket.workerId +
         ' because the worker does not exist';
-        var notFoundError = new InvalidActionError(errorMessage);
+        let notFoundError = new InvalidActionError(errorMessage);
         sendErrorToMaster(notFoundError);
 
         process.send({
@@ -121,10 +121,10 @@ process.on('message', function (masterPacket) {
           rid: masterPacket.cid
         });
       } else {
-        var errorMessage = 'Cannot send response to worker with id ' + masterPacket.workerId +
+        let errorMessage = 'Cannot send response to worker with id ' + masterPacket.workerId +
         ' because the worker does not exist';
 
-        var notFoundError = new InvalidActionError(errorMessage);
+        let notFoundError = new InvalidActionError(errorMessage);
         sendErrorToMaster(notFoundError);
       }
     }
@@ -136,16 +136,17 @@ process.on('message', function (masterPacket) {
         killUnresponsiveWorkers();
       }
     }
-    (workers || []).forEach(function (worker) {
+    (workers || []).forEach((worker) => {
       worker.send(masterPacket);
     });
   }
 });
 
-process.on('uncaughtException', function (err) {
+process.on('uncaughtException', (err) => {
   sendErrorToMaster(err);
   process.exit(1);
 });
+
 
 function SCWorkerCluster(options) {
   if (scWorkerCluster) {
@@ -184,24 +185,24 @@ SCWorkerCluster.prototype._init = function (options) {
     exec: options.paths.appWorkerControllerPath
   });
 
-  var workerCount = options.workerCount;
-  var readyCount = 0;
-  var isReady = false;
+  let workerCount = options.workerCount;
+  let readyCount = 0;
+  let isReady = false;
   workers = [];
   this.workers = workers;
 
-  var launchWorker = function (i, respawn) {
-    var workerInitOptions = options;
-    workerInitOptions.id = i;
+  let launchWorker = (i, respawn) => {
+    let initOptions = options;
+    initOptions.id = i;
 
-    var worker = cluster.fork({
-      workerInitOptions: JSON.stringify(workerInitOptions)
+    let worker = cluster.fork({
+      workerInitOptions: JSON.stringify(initOptions)
     });
     workers[i] = worker;
 
     worker.on('error', sendErrorToMaster);
 
-    worker.on('message', function (workerPacket) {
+    worker.on('message', (workerPacket) => {
       if (workerPacket.type === 'ready') {
         process.send({
           type: 'workerStart',
@@ -223,7 +224,7 @@ SCWorkerCluster.prototype._init = function (options) {
       }
     });
 
-    worker.on('exit', function (code, signal) {
+    worker.on('exit', (code, signal) => {
       childExitLookup[i] = true;
       if (!isTerminating) {
         process.send({
@@ -248,7 +249,7 @@ SCWorkerCluster.prototype._init = function (options) {
     });
   };
 
-  for (var i = 0; i < workerCount; i++) {
+  for (let i = 0; i < workerCount; i++) {
     launchWorker(i);
   }
 

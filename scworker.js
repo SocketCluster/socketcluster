@@ -1,37 +1,37 @@
-var socketClusterServer = require('socketcluster-server');
-var EventEmitter = require('events').EventEmitter;
-var uuid = require('uuid');
-var http = require('http');
-var https = require('https');
-var async = require('async');
-var AuthEngine = require('sc-auth').AuthEngine;
+const socketClusterServer = require('socketcluster-server');
+const EventEmitter = require('events').EventEmitter;
+const uuid = require('uuid');
+const http = require('http');
+const https = require('https');
+const async = require('async');
+const AuthEngine = require('sc-auth').AuthEngine;
 
-var scErrors = require('sc-errors');
-var InvalidActionError = scErrors.InvalidActionError;
-var ResourceLimitError = scErrors.ResourceLimitError;
-var BrokerError = scErrors.BrokerError;
-var HTTPServerError = scErrors.HTTPServerError;
-var TimeoutError = scErrors.TimeoutError;
+const scErrors = require('sc-errors');
+const InvalidActionError = scErrors.InvalidActionError;
+const ResourceLimitError = scErrors.ResourceLimitError;
+const BrokerError = scErrors.BrokerError;
+const HTTPServerError = scErrors.HTTPServerError;
+const TimeoutError = scErrors.TimeoutError;
 
-var processTermTimeout = 10000;
-var workerInitOptions = JSON.parse(process.env.workerInitOptions);
+const workerInitOptions = JSON.parse(process.env.workerInitOptions);
+let processTermTimeout = 10000;
 
-var handleError = function (isFatal, err) {
-  var error = scErrors.dehydrateError(err, true);
+let handleError = function (isFatal, err) {
+  let error = scErrors.dehydrateError(err, true);
   process.send({
     type: 'error',
     data: {
       error: error,
       workerPid: process.pid
     }
-  }, null, function () {
+  }, null, () => {
     if (isFatal) {
       process.exit(1);
     }
   });
 };
 
-var handleWarning = function (warning) {
+let handleWarning = function (warning) {
   warning = scErrors.dehydrateError(warning, true);
   process.send({
     type: 'warning',
@@ -42,15 +42,15 @@ var handleWarning = function (warning) {
   });
 };
 
-var handleReady = function () {
+let handleReady = function () {
   process.send({type: 'ready'});
 };
 
-var handleExit = function () {
+let handleExit = function () {
   process.exit();
 };
 
-var scWorker;
+let scWorker;
 
 function SCWorker(options) {
   if (scWorker) {
@@ -73,7 +73,7 @@ function SCWorker(options) {
     this.createHTTPServer = options.createHTTPServer;
   }
 
-  var workerOptions = Object.assign({}, options, workerInitOptions);
+  let workerOptions = Object.assign({}, options, workerInitOptions);
   this._init(workerOptions);
 }
 
@@ -102,9 +102,7 @@ SCWorker.prototype.setCodecEngine = function (codecEngine) {
   this.scServer.setCodecEngine(this.codec);
 };
 
-SCWorker.prototype._init = function (options) {
-  var self = this;
-
+SCWorker.prototype._init = async function (options) {
   this.options = {};
 
   Object.assign(this.options, options);
@@ -204,111 +202,103 @@ SCWorker.prototype._init = function (options) {
 
   this.exchange = this.brokerEngineClient.exchange();
 
-  var createHTTPServerResult = this.createHTTPServer();
-  // TODO 2: Use this instead of self
-  // TODO 2: Use let and const instead of var
-  // TODO 2: Use async/await instead of .then() and .catch()
-  Promise.resolve(createHTTPServerResult)
-  .then(function (httpServer) {
-    self.httpServer = httpServer;
-    self.httpServer.on('request', self._httpRequestHandler.bind(self));
-    self.httpServer.on('upgrade', self._httpRequestHandler.bind(self));
+  let createHTTPServerResult = this.createHTTPServer();
+  try {
+    this.httpServer = await Promise.resolve(createHTTPServerResult);
+  } catch (err) {
+    this.emitError(err);
+    return;
+  }
+  this.httpServer.on('request', this._httpRequestHandler.bind(this)); // TODO 2: support stream emitter
+  this.httpServer.on('upgrade', this._httpRequestHandler.bind(this));
 
-    self.httpServer.exchange = self.exchange;
+  this.httpServer.exchange = this.exchange;
 
-    self.httpServer.on('error', function (err) {
-      var error;
-      if (typeof err === 'string') {
-        error = new HTTPServerError(err);
-      } else {
-        error = err;
-      }
-      self.emitError(error);
-    });
-
-    self.scServer = socketClusterServer.attach(self.httpServer, {
-      brokerEngine: self.brokerEngineClient,
-      wsEngine: self._paths.wsEnginePath,
-      allowClientPublish: self.options.allowClientPublish,
-      handshakeTimeout: self.options.handshakeTimeout,
-      ackTimeout: self.options.ackTimeout,
-      pingTimeout: self.options.pingTimeout,
-      pingInterval: self.options.pingInterval,
-      pingTimeoutDisabled: self.options.pingTimeoutDisabled,
-      origins: self.options.origins,
-      appName: self.options.appName,
-      path: self.options.path,
-      authKey: self.options.authKey,
-      authPrivateKey: self.options.authPrivateKey,
-      authPublicKey: self.options.authPublicKey,
-      authAlgorithm: self.options.authAlgorithm,
-      authVerifyAlgorithms: self.options.authVerifyAlgorithms,
-      authSignAsync: self.options.authSignAsync,
-      authVerifyAsync: self.options.authVerifyAsync,
-      authDefaultExpiry: self.options.authDefaultExpiry,
-      middlewareEmitWarnings: self.options.middlewareEmitWarnings,
-      socketChannelLimit: self.options.socketChannelLimit,
-      pubSubBatchDuration: self.options.pubSubBatchDuration,
-      perMessageDeflate: self.options.perMessageDeflate,
-      maxPayload: self.options.maxPayload,
-      wsEngineServerOptions: self.options.wsEngineServerOptions
-    });
-
-    if (self.brokerEngineClient.setSCServer) {
-      self.brokerEngineClient.setSCServer(self.scServer);
-    }
-
-    if (options.authEngine) {
-      self.setAuthEngine(options.authEngine);
+  this.httpServer.on('error', (err) => {
+    let error;
+    if (typeof err === 'string') {
+      error = new HTTPServerError(err);
     } else {
-      // Default authentication engine
-      self.setAuthEngine(new AuthEngine());
+      error = err;
     }
-    if (options.codecEngine) {
-      self.setCodecEngine(options.codecEngine);
-    } else {
-      self.codec = self.scServer.codec;
-    }
-
-    self._socketPath = self.scServer.getPath();
-
-    (async () => {
-      for await (let {socket} of self.scServer.listener('connection')) {
-        // The connection event counts as a WS request
-        self._wsRequestCount++;
-        (async () => {
-          for await (let {message} of socket.listener('message')) {
-            self._wsRequestCount++;
-          }
-        })();
-        self.emit(self.EVENT_CONNECTION, socket);
-      }
-    })();
-
-    (async () => {
-      for await (let {error} of self.scServer.listener('error')) {
-        self.emitError(error);
-      }
-    })();
-
-    (async () => {
-      for await (let {warning} of self.scServer.listener('warning')) {
-        self.emitWarning(warning);
-      }
-    })();
-
-    if (self.scServer.isReady) {
-      self.emit(self.EVENT_READY, {});
-    } else {
-      (async () => {
-        await self.scServer.listener('ready').once();
-        self.emit(self.EVENT_READY, {});
-      })();
-    }
-  })
-  .catch(function (error) {
-    self.emitError(error);
+    this.emitError(error);
   });
+
+  this.scServer = socketClusterServer.attach(this.httpServer, {
+    brokerEngine: this.brokerEngineClient,
+    wsEngine: this._paths.wsEnginePath,
+    allowClientPublish: this.options.allowClientPublish,
+    handshakeTimeout: this.options.handshakeTimeout,
+    ackTimeout: this.options.ackTimeout,
+    pingTimeout: this.options.pingTimeout,
+    pingInterval: this.options.pingInterval,
+    pingTimeoutDisabled: this.options.pingTimeoutDisabled,
+    origins: this.options.origins,
+    appName: this.options.appName,
+    path: this.options.path,
+    authKey: this.options.authKey,
+    authPrivateKey: this.options.authPrivateKey,
+    authPublicKey: this.options.authPublicKey,
+    authAlgorithm: this.options.authAlgorithm,
+    authVerifyAlgorithms: this.options.authVerifyAlgorithms,
+    authSignAsync: this.options.authSignAsync,
+    authVerifyAsync: this.options.authVerifyAsync,
+    authDefaultExpiry: this.options.authDefaultExpiry,
+    middlewareEmitWarnings: this.options.middlewareEmitWarnings,
+    socketChannelLimit: this.options.socketChannelLimit,
+    pubSubBatchDuration: this.options.pubSubBatchDuration,
+    perMessageDeflate: this.options.perMessageDeflate,
+    maxPayload: this.options.maxPayload,
+    wsEngineServerOptions: this.options.wsEngineServerOptions
+  });
+
+  if (this.brokerEngineClient.setSCServer) {
+    this.brokerEngineClient.setSCServer(this.scServer);
+  }
+
+  if (options.authEngine) {
+    this.setAuthEngine(options.authEngine);
+  } else {
+    // Default authentication engine
+    this.setAuthEngine(new AuthEngine());
+  }
+  if (options.codecEngine) {
+    this.setCodecEngine(options.codecEngine);
+  } else {
+    this.codec = this.scServer.codec;
+  }
+
+  this._socketPath = this.scServer.getPath();
+
+  (async () => {
+    for await (let {socket} of this.scServer.listener('connection')) {
+      // The connection event counts as a WS request
+      this._wsRequestCount++;
+      (async () => {
+        for await (let {message} of socket.listener('message')) {
+          this._wsRequestCount++;
+        }
+      })();
+      this.emit(this.EVENT_CONNECTION, socket);
+    }
+  })();
+
+  (async () => {
+    for await (let {error} of this.scServer.listener('error')) {
+      this.emitError(error);
+    }
+  })();
+
+  (async () => {
+    for await (let {warning} of this.scServer.listener('warning')) {
+      this.emitWarning(warning);
+    }
+  })();
+
+  if (!this.scServer.isReady) {
+    await this.scServer.listener('ready').once();
+  }
+  this.emit(this.EVENT_READY, {});
 };
 
 SCWorker.prototype.listener = function (eventName) {
@@ -324,7 +314,7 @@ SCWorker.prototype.emit = function (eventName, data) {
 };
 
 SCWorker.prototype.createHTTPServer = function () {
-  var httpServer;
+  let httpServer;
   if (this.options.protocol === 'https') {
     httpServer = https.createServer(this.options.protocolOptions);
   } else {
@@ -354,35 +344,33 @@ SCWorker.prototype.addMiddleware = function (type, middleware) {
 };
 
 SCWorker.prototype.removeMiddleware = function (type, middleware) {
-  var middlewareFunctions = this._middleware[type];
+  let middlewareFunctions = this._middleware[type];
 
-  this._middleware[type] = middlewareFunctions.filter(function (fn) {
+  this._middleware[type] = middlewareFunctions.filter((fn) => {
     return fn !== middleware;
   });
 };
 
 SCWorker.prototype.startHTTPServer = function () {
-  var self = this;
+  let options = this.options;
 
-  var options = this.options;
-
-  var start = function () {
+  let start = () => {
     if (options.tcpSynBacklog != null) {
-      self.httpServer.listen(options.sourcePort, options.host, options.tcpSynBacklog);
+      this.httpServer.listen(options.sourcePort, options.host, options.tcpSynBacklog);
     } else if (options.host != null) {
-      self.httpServer.listen(options.sourcePort, options.host);
+      this.httpServer.listen(options.sourcePort, options.host);
     } else {
-      self.httpServer.listen(options.sourcePort);
+      this.httpServer.listen(options.sourcePort);
     }
   };
 
-  var startMiddleware = this._middleware[this.MIDDLEWARE_START];
+  let startMiddleware = this._middleware[this.MIDDLEWARE_START];
   if (startMiddleware.length) {
-    var callbackInvoked = false;
+    let callbackInvoked = false;
 
-    async.applyEachSeries(startMiddleware, options, function (err) {
+    async.applyEachSeries(startMiddleware, options, (err) => {
       if (callbackInvoked) {
-        self.emit('warning', new InvalidActionError('Callback for ' + self.MIDDLEWARE_START + ' middleware was already invoked'));
+        this.emit('warning', new InvalidActionError('Callback for ' + this.MIDDLEWARE_START + ' middleware was already invoked'));
       } else {
         callbackInvoked = true;
         if (err) {
@@ -397,7 +385,7 @@ SCWorker.prototype.startHTTPServer = function () {
   }
 };
 
-SCWorker.prototype.start = function () {
+SCWorker.prototype.start = async function () {
   this._httpRequestCount = 0;
   this._wsRequestCount = 0;
   this._httpRPM = 0;
@@ -408,10 +396,10 @@ SCWorker.prototype.start = function () {
   }
   this._statusInterval = setInterval(this._calculateStatus.bind(this), this.options.workerStatusInterval);
 
-  var runResult = this.run();
+  let runResult = this.run();
 
-  return Promise.resolve(runResult)
-  .then(this.startHTTPServer.bind(this));
+  await Promise.resolve(runResult);
+  this.startHTTPServer();
 };
 
 SCWorker.prototype._httpRequestHandler = function (req, res) {
@@ -419,10 +407,10 @@ SCWorker.prototype._httpRequestHandler = function (req, res) {
 
   req.exchange = this.exchange;
 
-  var forwardedFor = req.headers['x-forwarded-for'];
+  let forwardedFor = req.headers['x-forwarded-for'];
 
   if (forwardedFor) {
-    var forwardedClientIP;
+    let forwardedClientIP;
     if (forwardedFor.indexOf(',') > -1) {
       forwardedClientIP = forwardedFor.split(',')[0];
     } else {
@@ -450,21 +438,21 @@ SCWorker.prototype.getHTTPServer = function () {
 };
 
 SCWorker.prototype._calculateStatus = function () {
-  var perMinuteFactor = 60000 / this.options.workerStatusInterval;
+  let perMinuteFactor = 60000 / this.options.workerStatusInterval;
   this._httpRPM = this._httpRequestCount * perMinuteFactor;
   this._wsRPM = this._wsRequestCount * perMinuteFactor;
   this._httpRequestCount = 0;
   this._wsRequestCount = 0;
 
-  var memThreshold = this.options.killWorkerMemoryThreshold;
+  let memThreshold = this.options.killWorkerMemoryThreshold;
 
   if (memThreshold != null) {
-    var memoryUsage = process.memoryUsage();
+    let memoryUsage = process.memoryUsage();
     if (memoryUsage.heapUsed > memThreshold) {
-      var message = 'Worker killed itself because its memory ';
+      let message = 'Worker killed itself because its memory ';
       message += 'usage of ' + memoryUsage.heapUsed + ' exceeded ';
       message += 'the killWorkerMemoryThreshold of ' + memThreshold;
-      var warning = new ResourceLimitError(message);
+      let warning = new ResourceLimitError(message);
       this.emitWarning(warning);
       process.exit();
     }
@@ -480,13 +468,12 @@ SCWorker.prototype.getStatus = function () {
 };
 
 SCWorker.prototype._createIPCResponseHandler = function (callback) {
-  var self = this;
-  var cid = uuid.v4();
+  let cid = uuid.v4();
 
-  var responseTimeout = setTimeout(function () {
-    var responseHandler = self._pendingResponseHandlers[cid];
-    delete self._pendingResponseHandlers[cid];
-    var timeoutError = new TimeoutError('IPC response timed out');
+  let responseTimeout = setTimeout(() => {
+    let responseHandler = this._pendingResponseHandlers[cid];
+    delete this._pendingResponseHandlers[cid];
+    let timeoutError = new TimeoutError('IPC response timed out');
     responseHandler.callback(timeoutError);
   }, this.options.ipcAckTimeout);
 
@@ -499,18 +486,18 @@ SCWorker.prototype._createIPCResponseHandler = function (callback) {
 };
 
 SCWorker.prototype.handleMasterResponse = function (message) {
-  var responseHandler = this._pendingResponseHandlers[message.rid];
+  let responseHandler = this._pendingResponseHandlers[message.rid];
   if (responseHandler) {
     clearTimeout(responseHandler.timeout);
     delete this._pendingResponseHandlers[message.rid];
-    var properError = scErrors.hydrateError(message.error, true);
+    let properError = scErrors.hydrateError(message.error, true);
     responseHandler.callback(properError, message.data);
   }
 };
 
 // TODO 2: Test
 SCWorker.prototype.sendRequestToMaster = function (data) {
-  var messagePacket = {
+  let messagePacket = {
     type: 'workerRequest',
     data: data,
     workerId: this.id
@@ -528,7 +515,7 @@ SCWorker.prototype.sendRequestToMaster = function (data) {
 };
 
 SCWorker.prototype.sendMessageToMaster = function (data) {
-  var messagePacket = {
+  let messagePacket = {
     type: 'workerMessage',
     data: data,
     workerId: this.id
@@ -556,30 +543,28 @@ SCWorker.prototype.handleMasterMessage = function (message) {
 };
 
 SCWorker.prototype.handleMasterRequest = function (request) {
-  var self = this
-
-  self.emit('masterRequest', request.data, function (err, data) {
-    self.respondToMaster(err, data, request.cid);
+  this.emit('masterRequest', request.data, (err, data) => { // TODO 2
+    this.respondToMaster(err, data, request.cid);
   });
 };
 
-SCWorker.prototype.emitError = function (err) {
-  this.emit(this.EVENT_ERROR, err);
+SCWorker.prototype.emitError = function (error) {
+  this.emit(this.EVENT_ERROR, {error});
 };
 
 SCWorker.prototype.emitWarning = function (warning) {
-  this.emit(this.EVENT_WARNING, warning);
+  this.emit(this.EVENT_WARNING, {warning});
 };
 
-var handleWorkerClusterMessage = function (wcMessage) {
+let handleWorkerClusterMessage = function (wcMessage) {
   if (wcMessage.type === 'terminate') {
     if (scWorker && !wcMessage.data.immediate) {
       if (!scWorker.isTerminating) {
         scWorker.isTerminating = true;
-        scWorker.close(function () {
+        scWorker.close(() => {
           process.exit();
         });
-        setTimeout(function () {
+        setTimeout(() => {
           process.exit();
         }, processTermTimeout);
       }
@@ -608,7 +593,7 @@ var handleWorkerClusterMessage = function (wcMessage) {
 
 process.on('message', handleWorkerClusterMessage);
 
-process.on('uncaughtException', function (err) {
+process.on('uncaughtException', (err) => {
   handleError(workerInitOptions.crashWorkerOnError, err);
 });
 

@@ -1,28 +1,28 @@
-var fs = require('fs');
-var scErrors = require('sc-errors');
-var TimeoutError = scErrors.TimeoutError;
+const fs = require('fs');
+const scErrors = require('sc-errors');
+const TimeoutError = scErrors.TimeoutError;
 
-var fileExists = function (filePath, callback) {
+let fileExists = function (filePath, callback) {
   fs.access(filePath, fs.constants.F_OK, (err) => {
     callback(!err);
   });
 };
 
-var waitForFile = function (filePath, checkInterval, startTime, maxWaitDuration, timeoutErrorMessage) {
+let waitForFile = function (filePath, checkInterval, startTime, maxWaitDuration, timeoutErrorMessage) {
   return new Promise((resolve, reject) => {
     if (!filePath) {
       resolve();
       return;
     }
-    var checkIsReady = () => {
-      var now = Date.now();
+    let checkIsReady = () => {
+      let now = Date.now();
 
       fileExists(filePath, (exists) => {
         if (exists) {
           resolve();
         } else {
           if (now - startTime >= maxWaitDuration) {
-            var errorMessage;
+            let errorMessage;
 
             if (timeoutErrorMessage != null) {
               errorMessage = timeoutErrorMessage;
@@ -30,7 +30,7 @@ var waitForFile = function (filePath, checkInterval, startTime, maxWaitDuration,
               errorMessage = `Could not find a file at path ${filePath} ` +
               `before the timeout was reached`;
             }
-            var volumeBootTimeoutError = new TimeoutError(errorMessage);
+            let volumeBootTimeoutError = new TimeoutError(errorMessage);
             reject(volumeBootTimeoutError);
           } else {
             setTimeout(checkIsReady, checkInterval);
@@ -43,6 +43,6 @@ var waitForFile = function (filePath, checkInterval, startTime, maxWaitDuration,
 };
 
 module.exports = {
-  fileExists: fileExists,
-  waitForFile: waitForFile
+  fileExists,
+  waitForFile
 };
