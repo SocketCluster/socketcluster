@@ -71,9 +71,6 @@ SocketCluster.create = function (options) {
 };
 
 SocketCluster.prototype._init = async function (options) {
-  let backslashRegex = /\\/g;
-  this.appDirPath = path.dirname(require.main.filename).replace(backslashRegex, '/');
-
   this.options = {
     port: 8000,
     workers: null,
@@ -160,6 +157,8 @@ SocketCluster.prototype._init = async function (options) {
   verifyDuration('workerStatusInterval');
   verifyDuration('processTermTimeout');
   verifyDuration('forceKillTimeout');
+
+  this.appDirPath = path.dirname(require.main.filename).replace(/\\/g, '/');
 
   if (this.options.appName == null) {
     this.options.appName = uuid.v4();
