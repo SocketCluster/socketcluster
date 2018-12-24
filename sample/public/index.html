@@ -74,8 +74,8 @@
       var socket = socketCluster.create();
 
       (async () => {
-        for await (let err of socket.listener('error')) {
-          console.error(err);
+        for await (let {error} of socket.listener('error')) {
+          console.error(error);
         }
       })();
 
@@ -87,21 +87,21 @@
 
       (async () => {
         for await (let data of socket.receiver('random')) {
-          console.log('Received "random" event with data: ' + data.number);
+          console.log(`Received "random" event with data: ${data.number}`);
         }
       })();
 
       var sampleChannel = socket.subscribe('sample');
 
       (async () => {
-        for await (let event of sampleChannel.listener('subscribeFail')) {
-          console.error('Failed to subscribe to the sample channel due to error: ' + event.error);
+        for await (let {error} of sampleChannel.listener('subscribeFail')) {
+          console.error(`Failed to subscribe to the sample channel due to error: ${error}`);
         }
       })();
 
       (async () => {
         for await (let data of sampleChannel) {
-          console.log('Sample channel message:', data);
+          console.log(`Sample channel message: ${data}`);
         }
       })();
     </script>

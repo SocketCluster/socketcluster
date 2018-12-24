@@ -33,7 +33,7 @@ class Worker extends SCWorker {
       In here we handle our incoming realtime connections and listen for events.
     */
     (async () => {
-      for await (let socket of scServer.listener('connection')) {
+      for await (let {socket} of scServer.listener('connection')) {
 
         // Some sample logic to show how to handle client events,
         // replace this with your own logic
