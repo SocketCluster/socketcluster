@@ -39,26 +39,20 @@ function SocketCluster(options) {
     'EADDRINUSE': 'Failed to bind to a port because it was already used by another process.'
   };
 
-  (async () => {
-    for await (let {error} of this.listener('error')) {
-      this.emitFail(error, {
-        type: 'Master',
-        pid: process.pid
-      });
-    }
-  })();
-
   // Capture any errors that are thrown during initialization.
   (async () => {
     try {
       await this._init(options);
     } catch (error) {
-      this.emit('error', {error});
+      this.emitError(error, {
+        type: 'Master',
+        pid: process.pid
+      });
     }
   })();
 }
 
-SocketCluster.EVENT_FAIL = SocketCluster.prototype.EVENT_FAIL = 'fail';
+SocketCluster.EVENT_ERROR = SocketCluster.prototype.EVENT_ERROR = 'error';
 SocketCluster.EVENT_WARNING = SocketCluster.prototype.EVENT_WARNING = 'warning';
 SocketCluster.EVENT_INFO = SocketCluster.prototype.EVENT_INFO = 'info';
 SocketCluster.EVENT_READY = SocketCluster.prototype.EVENT_READY = 'ready';
@@ -153,8 +147,9 @@ SocketCluster.prototype._init = async function (options) {
 
   let verifyDuration = (propertyName) => {
     if (this.options[propertyName] > maxTimeout) {
-      throw new InvalidOptionsError('The ' + propertyName +
-        ' value provided exceeded the maximum amount allowed');
+      throw new InvalidOptionsError(
+        `The ${propertyName} value provided exceeded the maximum amount allowed`
+      );
     }
   };
 
@@ -175,9 +170,11 @@ SocketCluster.prototype._init = async function (options) {
   }
 
   if (this.options.workerController == null) {
-    throw new InvalidOptionsError("Compulsory option 'workerController' was not specified " +
-      "- It needs to be a path to a JavaScript file which will act as the " +
-      "boot controller for each worker in the cluster");
+    throw new InvalidOptionsError(
+      'Compulsory option "workerController" was not specified ' +
+      '- It needs to be a path to a JavaScript file which will act as the ' +
+      'boot controller for each worker in the cluster'
+    );
   }
 
   let pathHasher = crypto.createHash('md5');
@@ -188,23 +185,25 @@ SocketCluster.prototype._init = async function (options) {
 
   if (process.platform === 'win32') {
     if (this.options.socketRoot) {
-      this._socketDirPath = this.options.socketRoot + '_';
+      this._socketDirPath = `${this.options.socketRoot}_`;
     } else {
-      this._socketDirPath = '\\\\.\\pipe\\socketcluster_' + shortAppName + '_' + pathHash + '_';
+      this._socketDirPath = `\\\\.\\pipe\\socketcluster_${shortAppName}_${pathHash}_`;
     }
   } else {
     let socketDir, socketParentDir;
     if (this.options.socketRoot) {
       socketDir = this.options.socketRoot.replace(/\/$/, '') + '/';
     } else {
-      socketParentDir = os.tmpdir() + '/socketcluster/';
-      socketDir = socketParentDir + shortAppName + '_' + pathHash + '/';
+      socketParentDir = path.join(os.tmpdir(), '/socketcluster/');
+      socketDir = path.join(socketParentDir, `${shortAppName}_${pathHash}/`);
     }
     if (this._fileExistsSync(socketDir)) {
       try {
         fs.removeSync(socketDir);
       } catch (err) {
-        throw new InvalidActionError('Failed to remove old socket directory ' + socketDir + ' - Try removing it manually');
+        throw new InvalidActionError(
+          `Failed to remove old socket directory ${socketDir} - Try removing it manually`
+        );
       }
     }
     fs.mkdirsSync(socketDir);
@@ -337,7 +336,9 @@ SocketCluster.prototype._init = async function (options) {
           });
         });
       } catch (err) {
-        throw new InvalidActionError('Failed to downgrade to user "' + this.options.downgradeToUser + '" - ' + err);
+        throw new InvalidActionError(
+          `Failed to downgrade to user "${this.options.downgradeToUser}" - ${err}`
+        );
       }
       if (this.isShuttingDown) {
         return;
@@ -420,11 +421,11 @@ SocketCluster.prototype._logObject = function (obj, objType, time) {
 
   let logMessage;
   if (obj.origin.pid == null) {
-    logMessage = 'Origin: ' + this._capitaliseFirstLetter(obj.origin.type) + '\n' +
-      '   [' + objType + '] ' + output;
+    logMessage = `Origin: ${this._capitaliseFirstLetter(obj.origin.type)}\n` +
+      `   [${objType}] ${output}`;
   } else {
-    logMessage = 'Origin: ' + this._capitaliseFirstLetter(obj.origin.type) + ' (PID ' + obj.origin.pid + ')\n' +
-      '   [' + objType + '] ' + output;
+    logMessage = `Origin: ${this._capitaliseFirstLetter(obj.origin.type)} (PID ${obj.origin.pid})\n` +
+      `   [${objType}] ${output}`;
   }
   this.log(logMessage, time);
 };
@@ -450,7 +451,7 @@ SocketCluster.prototype._convertValueToUnknownError = function (err, origin) {
         err = new UnknownError(errorMessage);
       }
     } else if (typeof err === 'function') {
-      let errorMessage = '[function ' + (err.name || 'anonymous') + ']';
+      let errorMessage = `[function ${err.name || 'anonymous'}]`;
       err = new UnknownError(errorMessage);
     } else if (typeof err === 'undefined') {
       err = new UnknownError('undefined');
@@ -468,25 +469,25 @@ SocketCluster.prototype._convertValueToUnknownError = function (err, origin) {
   return err;
 };
 
-SocketCluster.prototype.emitFail = function (err, origin) {
-  err = this._convertValueToUnknownError(err, origin);
+SocketCluster.prototype.emitError = function (error, origin) {
+  error = this._convertValueToUnknownError(error, origin);
 
-  let annotation = this._errorAnnotations[err.code];
-  if (annotation && err.stack) {
-    err.stack += '\n    ' + this.colorText('!!', 'red') + ' ' + annotation;
+  let annotation = this._errorAnnotations[error.code];
+  if (annotation && error.stack) {
+    error.stack += `\n    ${this.colorText('!!', 'red')} ${annotation}`;
   }
 
-  this.emit(this.EVENT_FAIL, err);
+  this.emit(this.EVENT_ERROR, {error});
 
   if (this.options.logLevel > 0 && !this.isShuttingDown) {
-    this._logObject(err, 'Error');
+    this._logObject(error, 'Error');
   }
 };
 
 SocketCluster.prototype.emitWarning = function (warning, origin) {
   warning = this._convertValueToUnknownError(warning, origin);
 
-  this.emit(this.EVENT_WARNING, warning);
+  this.emit(this.EVENT_WARNING, {warning});
 
   if (this.options.logLevel > 1 && !this.isShuttingDown) {
     this._logObject(warning, 'Warning');
@@ -494,28 +495,28 @@ SocketCluster.prototype.emitWarning = function (warning, origin) {
 };
 
 SocketCluster.prototype._workerClusterErrorHandler = function (pid, error) {
-  this.emitFail(error, {
+  this.emitError(error, {
     type: 'WorkerCluster',
     pid: pid
   });
 };
 
 SocketCluster.prototype._workerErrorHandler = function (workerPid, error) {
-  this.emitFail(error, {
+  this.emitError(error, {
     type: 'Worker',
     pid: workerPid
   });
 };
 
 SocketCluster.prototype._brokerEngineErrorHandler = function (pid, error) {
-  this.emitFail(error, {
+  this.emitError(error, {
     type: 'BrokerEngine',
     pid: pid
   });
 };
 
 SocketCluster.prototype._brokerErrorHandler = function (brokerPid, error) {
-  this.emitFail(error, {
+  this.emitError(error, {
     type: 'Broker',
     pid: brokerPid
   });
@@ -561,7 +562,7 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
     this.isActive = true;
     this._logDeploymentDetails();
 
-    this.emit(this.EVENT_READY);
+    this.emit(this.EVENT_READY, {});
     this.run();
   }
 
@@ -577,9 +578,9 @@ SocketCluster.prototype._workerClusterReadyHandler = function () {
 
 SocketCluster.prototype._workerExitHandler = function (workerInfo) {
   if (this.options.logLevel > 0) {
-    let message = 'Worker ' + workerInfo.id + ' exited - Exit code: ' + workerInfo.code;
+    let message = `Worker ${workerInfo.id} exited - Exit code: ${workerInfo.code}`;
     if (workerInfo.signal) {
-      message += ', signal: ' + workerInfo.signal;
+      message += `, signal: ${workerInfo.signal}`;
     }
     this.log(message);
   }
@@ -588,7 +589,7 @@ SocketCluster.prototype._workerExitHandler = function (workerInfo) {
 
 SocketCluster.prototype._workerStartHandler = function (workerInfo, signal) {
   if (this.isActive && this.options.logLevel > 0 && workerInfo.respawn) {
-    this.log('Worker ' + workerInfo.id + ' was respawned');
+    this.log(`Worker ${workerInfo.id} was respawned`);
   }
   this.emit(this.EVENT_WORKER_START, workerInfo);
 };
@@ -606,12 +607,11 @@ SocketCluster.prototype._handleWorkerClusterExit = function (errorCode, signal) 
     childProcess: this.workerCluster
   };
 
-  // TODO 2: Check all emit calls
   this.emit(this.EVENT_WORKER_CLUSTER_EXIT, workerClusterInfo);
 
-  let message = 'WorkerCluster exited with code ' + errorCode;
+  let message = `WorkerCluster exited with code ${errorCode}`;
   if (signal != null) {
-    message += ' and signal ' + signal;
+    message += ` and signal ${signal}`;
   }
   if (errorCode === 0) {
     this.log(message);
@@ -620,7 +620,7 @@ SocketCluster.prototype._handleWorkerClusterExit = function (errorCode, signal) 
     if (signal != null) {
       error.signal = signal;
     }
-    this.emitFail(error, {
+    this.emitError(error, {
       type: 'WorkerCluster',
       pid: wcPid
     });
@@ -723,10 +723,17 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     } else if (message.type === 'workerExit') {
       this._workerExitHandler(message.data);
     } else if (message.type === 'workerMessage') {
-      this.emit('workerMessage', message.workerId, message.data);
+      this.emit('workerMessage', {workerId: message.workerId, data: message.data});
     } else if (message.type === 'workerRequest') {
-      this.emit('workerRequest', message.workerId, message.data, (err, data) => {
-        this.respondToWorker(err, data, message.workerId, message.cid);
+      this.emit('workerRequest', {
+        workerId: message.workerId,
+        data: message.data,
+        end: (data) => {
+          this.respondToWorker(null, data, message.workerId, message.cid);
+        },
+        error: (err) => {
+          this.respondToWorker(err, null, message.workerId, message.cid);
+        }
       });
     } else if (message.type === 'workerResponse' || message.type === 'workerClusterResponse') {
       let responseHandler = this._pendingResponseHandlers[message.rid];
@@ -755,23 +762,23 @@ SocketCluster.prototype._launchWorkerCluster = function () {
 SocketCluster.prototype.respondToWorker = function (err, data, workerId, rid) {
   this.workerCluster.send({
     type: 'masterResponse',
-    workerId: workerId,
+    workerId,
     error: scErrors.dehydrateError(err, true),
-    data: data,
-    rid: rid
+    data,
+    rid
   });
 };
 
 SocketCluster.prototype._logDeploymentDetails = function () {
   if (this.options.logLevel > 0) {
-    console.log('   ' + this.colorText('[Active]', 'green') + ' SocketCluster started');
-    console.log('            Version: ' + pkg.version);
-    console.log('            Environment: ' + this.options.environment);
-    console.log('            WebSocket engine: ' + this.options.wsEngine);
-    console.log('            Port: ' + this.options.port);
-    console.log('            Master PID: ' + process.pid);
-    console.log('            Worker count: ' + this.options.workers);
-    console.log('            Broker count: ' + this.options.brokers);
+    console.log(`   ${this.colorText('[Active]', 'green')} SocketCluster started`);
+    console.log(`            Version: ${pkg.version}`);
+    console.log(`            Environment: ${this.options.environment}`);
+    console.log(`            WebSocket engine: ${this.options.wsEngine}`);
+    console.log(`            Port: ${this.options.port}`);
+    console.log(`            Master PID: ${process.pid}`);
+    console.log(`            Worker count: ${this.options.workers}`);
+    console.log(`            Broker count: ${this.options.brokers}`);
     console.log();
   }
 };
@@ -968,9 +975,9 @@ SocketCluster.prototype._cloneObject = function (object) {
 
 SocketCluster.prototype.colorText = function (message, color) {
   if (this._colorCodes[color]) {
-    return '\x1b[0;' + this._colorCodes[color] + 'm' + message + '\x1b[0m';
+    return `\x1b[0;${this._colorCodes[color]}m${message}\x1b[0m`;
   } else if (color) {
-    return '\x1b[' + color + 'm' + message + '\x1b[0m';
+    return `\x1b[${color}m${message}\x1b[0m`;
   }
   return message;
 };

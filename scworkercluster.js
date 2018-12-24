@@ -56,11 +56,12 @@ let killUnresponsiveWorkersNow = function () {
   (workers || []).forEach((worker, i) => {
     if (!childExitLookup[i]) {
       process.kill(worker.process.pid, forceKillSignal);
-      let errorMessage = 'No exit signal was received by worker with id ' + i +
-      ' (PID: ' + worker.process.pid + ') before forceKillTimeout of ' + forceKillTimeout +
-      ' ms was reached - As a result, kill signal ' + forceKillSignal + ' was sent to worker';
 
-      let processExitError = new ProcessExitError(errorMessage);
+      let processExitError = new ProcessExitError(
+        `No exit signal was received by worker with id ${i} ` +
+        `(PID: ${worker.process.pid}) before forceKillTimeout of ${forceKillTimeout} ` +
+        `ms was reached - As a result, kill signal ${forceKillSignal} was sent to worker`
+      );
       sendErrorToMaster(processExitError);
     }
   });
@@ -97,9 +98,10 @@ process.on('message', (masterPacket) => {
       }
     } else {
       if (masterPacket.type === 'masterMessage') {
-        let errorMessage = 'Cannot send message to worker with id ' + masterPacket.workerId +
-        ' because the worker does not exist';
-        let notFoundError = new InvalidActionError(errorMessage);
+        let notFoundError = new InvalidActionError(
+          `Cannot send message to worker with id ${masterPacket.workerId} ` +
+          `because the worker does not exist`
+        );
         sendErrorToMaster(notFoundError);
 
         process.send({
@@ -109,9 +111,10 @@ process.on('message', (masterPacket) => {
           rid: masterPacket.cid
         });
       } else if (masterPacket.type === 'masterRequest') {
-        let errorMessage = 'Cannot send request to worker with id ' + masterPacket.workerId +
-        ' because the worker does not exist';
-        let notFoundError = new InvalidActionError(errorMessage);
+        let notFoundError = new InvalidActionError(
+          `Cannot send request to worker with id ${masterPacket.workerId} ` +
+          `because the worker does not exist`
+        );
         sendErrorToMaster(notFoundError);
 
         process.send({
@@ -121,10 +124,10 @@ process.on('message', (masterPacket) => {
           rid: masterPacket.cid
         });
       } else {
-        let errorMessage = 'Cannot send response to worker with id ' + masterPacket.workerId +
-        ' because the worker does not exist';
-
-        let notFoundError = new InvalidActionError(errorMessage);
+        let notFoundError = new InvalidActionError(
+          `Cannot send response to worker with id ${masterPacket.workerId} ` +
+          `because the worker does not exist`
+        );
         sendErrorToMaster(notFoundError);
       }
     }

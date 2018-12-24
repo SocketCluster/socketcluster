@@ -1,5 +1,5 @@
 const socketClusterServer = require('socketcluster-server');
-const EventEmitter = require('events').EventEmitter;
+const AsyncStreamEmitter = require('async-stream-emitter');
 const uuid = require('uuid');
 const http = require('http');
 const https = require('https');
@@ -53,6 +53,8 @@ let handleExit = function () {
 let scWorker;
 
 function SCWorker(options) {
+  AsyncStreamEmitter.call(this);
+
   if (scWorker) {
     // SCWorker is a singleton; it can only be instantiated once per process.
     throw new InvalidActionError('Attempted to instantiate a worker which has already been instantiated');
@@ -63,8 +65,6 @@ function SCWorker(options) {
   this.type = 'worker';
   this.isTerminating = false;
   this._pendingResponseHandlers = {};
-
-  this._listenerDemux = new StreamDemux();
 
   if (options.run != null) {
     this.run = options.run;
@@ -77,11 +77,11 @@ function SCWorker(options) {
   this._init(workerOptions);
 }
 
+SCWorker.prototype = Object.create(AsyncStreamEmitter.prototype);
+
 SCWorker.create = function (options) {
   return new SCWorker(options);
 };
-
-SCWorker.prototype = Object.create(EventEmitter.prototype);
 
 SCWorker.EVENT_ERROR = SCWorker.prototype.EVENT_ERROR = 'error';
 SCWorker.EVENT_WARNING = SCWorker.prototype.EVENT_WARNING = 'warning';
@@ -160,9 +160,11 @@ SCWorker.prototype._init = async function (options) {
     try {
       process.setuid(this.options.downgradeToUser);
     } catch (err) {
-      throw new InvalidActionError('Could not downgrade to user "' + this.options.downgradeToUser +
-        '" - Either this user does not exist or the current process does not have the permission' +
-        ' to switch to it');
+      throw new InvalidActionError(
+        `Could not downgrade to user "${this.options.downgradeToUser}"` +
+        ` - Either this user does not exist or the current process does not have the permission` +
+        ` to switch to it`
+      );
     }
   }
 
@@ -279,7 +281,7 @@ SCWorker.prototype._init = async function (options) {
           this._wsRequestCount++;
         }
       })();
-      this.emit(this.EVENT_CONNECTION, socket);
+      this.emit(this.EVENT_CONNECTION, {socket});
     }
   })();
 
@@ -299,18 +301,6 @@ SCWorker.prototype._init = async function (options) {
     await this.scServer.listener('ready').once();
   }
   this.emit(this.EVENT_READY, {});
-};
-
-SCWorker.prototype.listener = function (eventName) {
-  return this._listenerDemux.stream(eventName);
-};
-
-SCWorker.prototype.closeListener = function (eventName) {
-  this._listenerDemux.close(eventName);
-};
-
-SCWorker.prototype.emit = function (eventName, data) {
-  this._listenerDemux.write(eventName, data);
 };
 
 SCWorker.prototype.createHTTPServer = function () {
@@ -370,7 +360,9 @@ SCWorker.prototype.startHTTPServer = function () {
 
     async.applyEachSeries(startMiddleware, options, (err) => {
       if (callbackInvoked) {
-        this.emit('warning', new InvalidActionError('Callback for ' + this.MIDDLEWARE_START + ' middleware was already invoked'));
+        this.emitWarning(
+          new InvalidActionError(`Callback for ${this.MIDDLEWARE_START} middleware was already invoked`)
+        );
       } else {
         callbackInvoked = true;
         if (err) {
@@ -449,9 +441,9 @@ SCWorker.prototype._calculateStatus = function () {
   if (memThreshold != null) {
     let memoryUsage = process.memoryUsage();
     if (memoryUsage.heapUsed > memThreshold) {
-      let message = 'Worker killed itself because its memory ';
-      message += 'usage of ' + memoryUsage.heapUsed + ' exceeded ';
-      message += 'the killWorkerMemoryThreshold of ' + memThreshold;
+      let message = `Worker killed itself because its memory `;
+      message += `usage of ${memoryUsage.heapUsed} exceeded `;
+      message += `the killWorkerMemoryThreshold of ${memThreshold}`;
       let warning = new ResourceLimitError(message);
       this.emitWarning(warning);
       process.exit();
@@ -539,12 +531,18 @@ SCWorker.prototype.handleMasterEvent = function () {
 };
 
 SCWorker.prototype.handleMasterMessage = function (message) {
-  this.emit('masterMessage', message.data);
+  this.emit('masterMessage', {data: message.data});
 };
 
 SCWorker.prototype.handleMasterRequest = function (request) {
-  this.emit('masterRequest', request.data, (err, data) => { // TODO 2
-    this.respondToMaster(err, data, request.cid);
+  this.emit('masterRequest', {
+    data: request.data,
+    end: (data) => {
+      this.respondToMaster(null, data, request.cid);
+    },
+    error: (err) => {
+      this.respondToMaster(err, null, request.cid);
+    }
   });
 };
 
@@ -573,7 +571,7 @@ let handleWorkerClusterMessage = function (wcMessage) {
     }
   } else {
     if (!scWorker) {
-      throw new InvalidActionError(`Attempted to send '${wcMessage.type}' to worker ${workerInitOptions.id} before it was instantiated`);
+      throw new InvalidActionError(`Attempted to send ${wcMessage.type} to worker ${workerInitOptions.id} before it was instantiated`);
     }
     if (wcMessage.type === 'emit') {
       if (wcMessage.data) {
