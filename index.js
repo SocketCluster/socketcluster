@@ -324,9 +324,9 @@ SocketCluster.prototype._init = async function (options) {
       fs.chownSync(this._socketDirPath, this.options.downgradeToUser, 0);
       this._start();
     } else {
-      let uid, gid;
+      let uidInfo;
       try {
-        {uid, gid} = await new Promise((resolve, reject) => {
+        uidInfo = await new Promise((resolve, reject) => {
           uidNumber(this.options.downgradeToUser, (err, uid, gid) => {
             if (err) {
               reject(err);
@@ -343,7 +343,7 @@ SocketCluster.prototype._init = async function (options) {
       if (this.isShuttingDown) {
         return;
       }
-      fs.chownSync(this._socketDirPath, uid, gid);
+      fs.chownSync(this._socketDirPath, uidInfo.uid, uidInfo.gid);
       this._start();
     }
   } else {
