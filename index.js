@@ -52,6 +52,8 @@ function SocketCluster(options) {
   })();
 }
 
+SocketCluster.prototype = Object.create(AsyncStreamEmitter.prototype);
+
 SocketCluster.EVENT_ERROR = SocketCluster.prototype.EVENT_ERROR = 'error';
 SocketCluster.EVENT_WARNING = SocketCluster.prototype.EVENT_WARNING = 'warning';
 SocketCluster.EVENT_INFO = SocketCluster.prototype.EVENT_INFO = 'info';
@@ -67,8 +69,6 @@ SocketCluster.EVENT_WORKER_CLUSTER_EXIT = SocketCluster.prototype.EVENT_WORKER_C
 SocketCluster.create = function (options) {
   return new SocketCluster(options);
 };
-
-SocketCluster.prototype = Object.create(AsyncStreamEmitter.prototype);
 
 SocketCluster.prototype._init = async function (options) {
   let backslashRegex = /\\/g;
@@ -750,6 +750,7 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     pid: this.workerCluster.pid,
     childProcess: this.workerCluster
   };
+
   this.emit(this.EVENT_WORKER_CLUSTER_START, workerClusterInfo);
 
   this.workerCluster.on('exit', this._handleWorkerClusterExit.bind(this));
