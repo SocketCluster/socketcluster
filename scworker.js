@@ -487,7 +487,6 @@ SCWorker.prototype.handleMasterResponse = function (message) {
   }
 };
 
-// TODO 2: Test
 SCWorker.prototype.sendRequestToMaster = function (data) {
   let messagePacket = {
     type: 'workerRequest',
@@ -531,7 +530,7 @@ SCWorker.prototype.handleMasterEvent = function () {
 };
 
 SCWorker.prototype.handleMasterMessage = function (message) {
-  this.emit('masterMessage', {data: message.data});
+  this.emit('masterMessage', message.data);
 };
 
 SCWorker.prototype.handleMasterRequest = function (request) {

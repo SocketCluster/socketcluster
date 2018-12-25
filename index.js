@@ -60,8 +60,12 @@ SocketCluster.EVENT_INFO = SocketCluster.prototype.EVENT_INFO = 'info';
 SocketCluster.EVENT_READY = SocketCluster.prototype.EVENT_READY = 'ready';
 SocketCluster.EVENT_WORKER_START = SocketCluster.prototype.EVENT_WORKER_START = 'workerStart';
 SocketCluster.EVENT_WORKER_EXIT = SocketCluster.prototype.EVENT_WORKER_EXIT = 'workerExit';
+SocketCluster.EVENT_WORKER_MESSAGE = SocketCluster.prototype.EVENT_WORKER_MESSAGE = 'workerMessage';
+SocketCluster.EVENT_WORKER_REQUEST = SocketCluster.prototype.EVENT_WORKER_REQUEST = 'workerRequest';
 SocketCluster.EVENT_BROKER_START = SocketCluster.prototype.EVENT_BROKER_START = 'brokerStart';
 SocketCluster.EVENT_BROKER_EXIT = SocketCluster.prototype.EVENT_BROKER_EXIT = 'brokerExit';
+SocketCluster.EVENT_BROKER_MESSAGE = SocketCluster.prototype.EVENT_BROKER_MESSAGE = 'brokerMessage';
+SocketCluster.EVENT_BROKER_REQUEST = SocketCluster.prototype.EVENT_BROKER_REQUEST = 'brokerRequest';
 SocketCluster.EVENT_WORKER_CLUSTER_START = SocketCluster.prototype.EVENT_WORKER_CLUSTER_START = 'workerClusterStart';
 SocketCluster.EVENT_WORKER_CLUSTER_READY = SocketCluster.prototype.EVENT_WORKER_CLUSTER_READY = 'workerClusterReady';
 SocketCluster.EVENT_WORKER_CLUSTER_EXIT = SocketCluster.prototype.EVENT_WORKER_CLUSTER_EXIT = 'workerClusterExit';
@@ -735,9 +739,12 @@ SocketCluster.prototype._launchWorkerCluster = function () {
     } else if (message.type === 'workerExit') {
       this._workerExitHandler(message.data);
     } else if (message.type === 'workerMessage') {
-      this.emit('workerMessage', {workerId: message.workerId, data: message.data});
+      this.emit(this.EVENT_WORKER_MESSAGE, {
+        workerId: message.workerId,
+        data: message.data
+      });
     } else if (message.type === 'workerRequest') {
-      this.emit('workerRequest', {
+      this.emit(this.EVENT_WORKER_REQUEST, {
         workerId: message.workerId,
         data: message.data,
         end: (data) => {
@@ -857,13 +864,13 @@ SocketCluster.prototype._start = function () {
 
   (async () => {
     for await (let event of this._brokerEngineServer.listener('brokerMessage')) {
-      this.emit('brokerMessage', event);
+      this.emit(this.EVENT_BROKER_MESSAGE, event);
     }
   })();
 
   (async () => {
     for await (let req of this._brokerEngineServer.listener('brokerRequest')) {
-      this.emit('brokerRequest', req);
+      this.emit(this.EVENT_BROKER_REQUEST, req);
     }
   })();
 };
@@ -1013,9 +1020,9 @@ SocketCluster.prototype.destroy = async function () {
         if (this._brokerEngineServer) {
           let killedBrokerLookup = {};
           let killedBrokerCount = 0;
-          for await (let brokerInfo of this.listener(this.EVENT_BROKER_EXIT)) {
-            if (!killedBrokerLookup[brokerInfo.id]) {
-              killedBrokerLookup[brokerInfo.id] = true;
+          for await (let event of this.listener(this.EVENT_BROKER_EXIT)) {
+            if (!killedBrokerLookup[event.brokerId]) {
+              killedBrokerLookup[event.brokerId] = true;
               killedBrokerCount++;
             }
             if (killedBrokerCount >= this.options.brokers) {
