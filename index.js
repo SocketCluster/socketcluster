@@ -493,6 +493,18 @@ SocketCluster.prototype.emitWarning = function (warning, origin) {
   }
 };
 
+SocketCluster.prototype.emitInfo = function (message, origin) {
+  let info = {
+    message,
+    origin
+  };
+  this.emit(this.EVENT_INFO, info);
+
+  if (this.options.logLevel > 2 && !this.isShuttingDown) {
+    this._logObject(info, 'Info');
+  }
+};
+
 SocketCluster.prototype._workerClusterErrorHandler = function (pid, error) {
   this.emitError(error, {
     type: 'WorkerCluster',
@@ -613,7 +625,10 @@ SocketCluster.prototype._handleWorkerClusterExit = function (errorCode, signal) 
     message += ` and signal ${signal}`;
   }
   if (errorCode === 0) {
-    this.log(message);
+    this.emitInfo(message, {
+      type: 'WorkerCluster',
+      pid: wcPid
+    });
   } else {
     let error = new ProcessExitError(message, errorCode);
     if (signal != null) {
