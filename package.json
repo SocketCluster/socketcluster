@@ -29,6 +29,9 @@
   "bin": {
     "socketcluster": "bin/cli.js"
   },
+  "scripts": {
+    "test": "mocha --reporter spec --timeout 3000 --slow 3000"
+  },
   "keywords": [
     "websocket",
     "server",

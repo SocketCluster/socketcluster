@@ -87,7 +87,7 @@ SocketCluster.prototype._init = async function (options) {
     authSignAsync: false,
     authVerifyAsync: true,
     crashWorkerOnError: true,
-    rebootWorkerOnCrash: true,
+    respawnWorkerOnCrash: true,
     killWorkerMemoryThreshold: null,
     protocol: 'http',
     protocolOptions: null,
@@ -625,11 +625,9 @@ SocketCluster.prototype._handleWorkerClusterExit = function (errorCode, signal) 
     });
   }
 
-  if (this.isShuttingDown) {
-    return;
+  if (!this.isShuttingDown) {
+    this._launchWorkerCluster();
   }
-
-  this._launchWorkerCluster();
 };
 
 SocketCluster.prototype._launchWorkerCluster = function () {
@@ -1021,7 +1019,6 @@ SocketCluster.prototype.destroy = async function () {
 
     socketClusterSingleton = null;
     this.isShuttingDown = false;
-    this.closeAllListeners();
     if (this._stdinErrorHandler) {
       process.stdin.removeListener('error', this._stdinErrorHandler);
     }
@@ -1029,6 +1026,7 @@ SocketCluster.prototype.destroy = async function () {
       process.removeListener('SIGUSR2', this._sigusr2SignalHandler);
     }
     this.emit('destroy', {});
+    this.closeAllListeners();
   })();
 
   if (this.workerCluster) {

@@ -240,7 +240,7 @@ SCWorkerCluster.prototype._init = function (options) {
           }
         });
 
-        if (options.rebootWorkerOnCrash) {
+        if (options.respawnWorkerOnCrash) {
           launchWorker(i, true);
         }
       } else if (++terminatedCount >= workers.length) {
