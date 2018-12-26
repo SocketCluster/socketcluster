@@ -8,7 +8,7 @@ class Worker extends SCWorker {
     let scServer = this.scServer;
 
     (async () => {
-      for await (let data of this.listener('masterMessage')) {
+      for await (let {data} of this.listener('masterMessage')) {
         if (data.sendGoodRequestToMaster) {
           let result = await this.sendRequestToMaster({value: 123});
           this.sendMessageToMaster({success: result.value === 12300});

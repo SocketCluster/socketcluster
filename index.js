@@ -908,7 +908,7 @@ SocketCluster.prototype.sendRequestToWorker = function (workerId, data) {
   let messagePacket = {
     type: 'masterRequest',
     workerId: workerId,
-    data: data
+    data
   };
   return new Promise((resolve, reject) => {
     messagePacket.cid = this._createIPCResponseHandler((err, data) => {
@@ -930,7 +930,7 @@ SocketCluster.prototype.sendMessageToWorker = function (workerId, data) {
   let messagePacket = {
     type: 'masterMessage',
     workerId: workerId,
-    data: data
+    data
   };
   return new Promise((resolve, reject) => {
     messagePacket.cid = this._createIPCResponseHandler((err, data) => {

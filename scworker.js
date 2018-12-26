@@ -492,7 +492,7 @@ SCWorker.prototype.handleMasterResponse = function (message) {
 SCWorker.prototype.sendRequestToMaster = function (data) {
   let messagePacket = {
     type: 'workerRequest',
-    data: data,
+    data,
     workerId: this.id
   };
   return new Promise((resolve, reject) => {
@@ -510,7 +510,7 @@ SCWorker.prototype.sendRequestToMaster = function (data) {
 SCWorker.prototype.sendMessageToMaster = function (data) {
   let messagePacket = {
     type: 'workerMessage',
-    data: data,
+    data,
     workerId: this.id
   };
   process.send(messagePacket);
@@ -521,9 +521,9 @@ SCWorker.prototype.respondToMaster = function (err, data, rid) {
   process.send({
     type: 'workerResponse',
     error: scErrors.dehydrateError(err, true),
-    data: data,
+    data,
     workerId: this.id,
-    rid: rid
+    rid
   });
 };
 
@@ -532,7 +532,7 @@ SCWorker.prototype.handleMasterEvent = function () {
 };
 
 SCWorker.prototype.handleMasterMessage = function (message) {
-  this.emit('masterMessage', message.data);
+  this.emit('masterMessage', {data: message.data});
 };
 
 SCWorker.prototype.handleMasterRequest = function (request) {

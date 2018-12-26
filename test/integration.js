@@ -314,10 +314,10 @@ describe('Integration tests', function () {
         failedResponseError.name = 'MasterFailedToRespondError';
         req.error(failedResponseError);
 
-        result = await socketCluster.listener('workerMessage').once();
-        assert.equal(result.workerId, 2);
-        assert.notEqual(result.data, null);
-        assert.equal(result.data.success, true);
+        let brokerResultMessage = await socketCluster.listener('workerMessage').once();
+        assert.equal(brokerResultMessage.workerId, 2);
+        assert.notEqual(brokerResultMessage.data, null);
+        assert.equal(brokerResultMessage.data.success, true);
       });
 
       it('Should support sending a request from the master process to a broker and back', async function () {
@@ -354,10 +354,10 @@ describe('Integration tests', function () {
         failedResponseError.name = 'MasterFailedToRespondError';
         req.error(failedResponseError);
 
-        result = await socketCluster.listener('brokerMessage').once();
-        assert.equal(result.brokerId, 2);
-        assert.notEqual(result.data, null);
-        assert.equal(result.data.success, true);
+        let brokerResultMessage = await socketCluster.listener('brokerMessage').once();
+        assert.equal(brokerResultMessage.brokerId, 2);
+        assert.notEqual(brokerResultMessage.data, null);
+        assert.equal(brokerResultMessage.data.success, true);
       });
     });
   });

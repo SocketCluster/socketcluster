@@ -5,7 +5,7 @@ class Broker extends SCBroker {
     console.log(`   >> Broker PID: ${process.pid}`);
 
     (async () => {
-      for await (let data of this.listener('masterMessage')) {
+      for await (let {data} of this.listener('masterMessage')) {
         if (data.sendGoodRequestToMaster) {
           let result = await this.sendRequestToMaster({value: 456});
           this.sendMessageToMaster({success: result.value === 45600});
