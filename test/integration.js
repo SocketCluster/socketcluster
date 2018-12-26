@@ -52,7 +52,14 @@ describe('Integration tests', function () {
         clients.push(
           socketClusterClient.create({
             hostname: '127.0.0.1',
-            port: PORT
+            port: PORT,
+            autoReconnect: true,
+            autoReconnectOptions: {
+              initialDelay: 50,
+              randomness: 0,
+              multiplier: 1,
+              maxDelay: 50
+            }
           })
         );
       }
@@ -70,67 +77,117 @@ describe('Integration tests', function () {
       });
     });
 
-    it('Should publish data to and receive data from subscribed channel', async function () {
-      let channel = clients[0].subscribe('foo');
-      await channel.listener('subscribe').once();
-
-      (async () => {
-        await wait(10);
-        clients[1].publish('foo', 'This is a test');
-        await wait(10);
-        clients[2].publish('foo', 'One');
-        await wait(20);
-        clients[5].publish('foo', 'Two');
-      })();
-
-      let data = await channel.once();
-      assert.equal(data, 'This is a test');
-      data = await channel.once();
-      assert.equal(data, 'One');
-      data = await channel.once();
-      assert.equal(data, 'Two');
-    });
-
-    it('Should handle multiple subscribe and unsubscribe calls in quick succession', async function () {
-      let channel = clients[0].channel('foo');
-
-      (async () => {
-        await wait(10);
-        channel.subscribe();
+    describe('Pub/sub', function () {
+      it('Should publish data to and receive data from subscribed channel', async function () {
+        let channel = clients[0].subscribe('foo');
         await channel.listener('subscribe').once();
-        channel.unsubscribe();
-        channel.subscribe();
-        channel.unsubscribe();
-        channel.subscribe();
-        channel.unsubscribe();
-        await wait(100);
-        channel.closeAllListeners();
-      })();
 
-      let stateChanges = [];
-      for await (let stateChangeData of channel.listener('subscribeStateChange')) {
-        stateChanges.push(stateChangeData);
-      }
-      let expectedStateChanes = [
-        {oldChannelState: 'pending', newChannelState: 'subscribed', subscriptionOptions: {}},
-        {oldChannelState: 'subscribed', newChannelState: 'unsubscribed'}
-      ];
-      assert.equal(JSON.stringify(stateChanges), JSON.stringify(expectedStateChanes));
-    });
+        (async () => {
+          await wait(10);
+          clients[1].publish('foo', 'This is a test');
+          await wait(10);
+          clients[2].publish('foo', 'One');
+          await wait(20);
+          clients[5].publish('foo', 'Two');
+        })();
 
-    it('Should clear all subscriptions after all sockets have been disconnected', async function () {
+        let data = await channel.once();
+        assert.equal(data, 'This is a test');
+        data = await channel.once();
+        assert.equal(data, 'One');
+        data = await channel.once();
+        assert.equal(data, 'Two');
+      });
 
-    });
+      it('Should handle multiple subscribe and unsubscribe calls in quick succession', async function () {
+        let channel = clients[0].channel('foo');
 
-    describe('Worker restart', function () {
-      it('Pub/sub should work after worker restart', async function () {
+        (async () => {
+          await wait(10);
+          channel.subscribe();
+          await channel.listener('subscribe').once();
+          channel.unsubscribe();
+          channel.subscribe();
+          channel.unsubscribe();
+          channel.subscribe();
+          channel.unsubscribe();
+          await wait(100);
+          channel.closeAllListeners();
+        })();
+
+        let stateChanges = [];
+        for await (let stateChangeData of channel.listener('subscribeStateChange')) {
+          stateChanges.push(stateChangeData);
+        }
+        let expectedStateChanes = [
+          {oldChannelState: 'pending', newChannelState: 'subscribed', subscriptionOptions: {}},
+          {oldChannelState: 'subscribed', newChannelState: 'unsubscribed'}
+        ];
+        assert.equal(JSON.stringify(stateChanges), JSON.stringify(expectedStateChanes));
+      });
+
+      it('Should clear all subscriptions after all sockets have been disconnected', async function () {
 
       });
     });
 
-    describe('Broker restart', function () {
-      it('Pub/sub should work after broker restart', async function () {
+    describe('During worker restart', function () {
+      it('Pub/sub should work after worker restart', async function () {
+        socketCluster.killWorkers();
+        await socketCluster.listener(socketCluster.EVENT_WORKER_EXIT).once();
+        let channel = clients[0].subscribe('foo');
+        await channel.listener('subscribe').once();
 
+        (async () => {
+          await wait(10);
+          clients[1].publish('foo', 'This is a test');
+          await wait(10);
+          clients[2].publish('foo', 'One');
+          await wait(20);
+          clients[5].publish('foo', 'Two');
+          await wait(20);
+          channel.close();
+        })();
+
+        let receivedList = [];
+        for await (let data of channel) {
+          receivedList.push(data);
+        }
+
+        assert.equal(receivedList[0], 'This is a test');
+        assert.equal(receivedList[1], 'One');
+        assert.equal(receivedList[2], 'Two');
+      });
+    });
+
+    describe('During broker restart', function () {
+      it('Pub/sub should work after broker restart', async function () {
+        socketCluster.killBrokers();
+        await socketCluster.listener(socketCluster.EVENT_BROKER_EXIT).once();
+        let channel = clients[7].subscribe('foo');
+        console.log('---- BEFORE', channel.state); // TODO 2
+        await channel.listener('subscribe').once();
+        console.log('---- AFTER');
+
+        (async () => {
+          await wait(10);
+          clients[1].publish('foo', 'This is a test');
+          await wait(10);
+          clients[2].publish('foo', 'One');
+          await wait(20);
+          clients[5].publish('foo', 'Two');
+          await wait(20);
+          channel.close();
+        })();
+
+        let receivedList = [];
+        for await (let data of channel) {
+          receivedList.push(data);
+        }
+
+        assert.equal(receivedList[0], 'This is a test');
+        assert.equal(receivedList[1], 'One');
+        assert.equal(receivedList[2], 'Two');
       });
     });
   });
@@ -180,6 +237,29 @@ describe('Integration tests', function () {
     afterEach(async function () {
       clients.forEach((client) => {
         client.disconnect();
+      });
+    });
+
+    describe('Pub/sub', function () {
+      it('Should publish data to and receive data from subscribed channel', async function () {
+        let channel = clients[0].subscribe('foo');
+        await channel.listener('subscribe').once();
+
+        (async () => {
+          await wait(10);
+          clients[1].publish('foo', 'This is a test');
+          await wait(10);
+          clients[2].publish('foo', 'One');
+          await wait(20);
+          clients[5].publish('foo', 'Two');
+        })();
+
+        let data = await channel.once();
+        assert.equal(data, 'This is a test');
+        data = await channel.once();
+        assert.equal(data, 'One');
+        data = await channel.once();
+        assert.equal(data, 'Two');
       });
     });
 

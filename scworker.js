@@ -181,7 +181,9 @@ SCWorker.prototype._init = async function (options) {
     brokers: this.options.brokers,
     secretKey: this.options.secretKey,
     pubSubBatchDuration: this.options.pubSubBatchDuration,
-    connectRetryErrorThreshold: this.options.brokerConnectRetryErrorThreshold
+    connectRetryErrorThreshold: this.options.brokerConnectRetryErrorThreshold,
+    ackTimeout: this.options.brokerAckTimeout,
+    autoReconnectOptions: this.options.brokerAutoReconnectOptions
   });
 
   (async () => {

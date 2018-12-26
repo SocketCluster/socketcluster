@@ -116,6 +116,8 @@ SocketCluster.prototype._init = async function (options) {
     workerController: null,
     brokerController: null,
     brokerConnectRetryErrorThreshold: null,
+    brokerAckTimeout: null,
+    brokerAutoReconnectOptions: null,
     workerClusterController: null,
     rebootOnSignal: true,
     downgradeToUser: false,
