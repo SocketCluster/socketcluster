@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agc-state
+spec:
+  replicas: 1 # Leave this as 1 - This service is a singleton.
+  selector:
+    matchLabels:
+      component: agc-state
+  template:
+    metadata:
+      labels:
+        component: agc-state
+    spec:
+      containers:
+      - name: agc-state
+        image: socketcluster/agc-state:v1.0.0
+        ports:
+        - containerPort: 7777
+        livenessProbe:
+          httpGet:
+            path: /health-check
+            port: 7777
+          initialDelaySeconds: 15
+          timeoutSeconds: 5

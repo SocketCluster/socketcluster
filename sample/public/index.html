@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Asyngular</title>
+    <link href="//fonts.googleapis.com/css?family=Roboto:100,300" rel="stylesheet" type="text/css">
+    <link rel="icon" type="image/png" href="/favicon.ico">
+    <script type="text/javascript" src="/asyngular-client.js"></script>
+    <style>
+      html {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        color: #666666;
+        display: table;
+        font-weight: 100;
+        font-family: 'Roboto', Helvetica, sans-serif;
+      }
+      a {
+        font-weight: 300;
+        color: #72B963;
+      }
+      .container {
+        display: table-cell;
+        text-align: center;
+        vertical-align: middle;
+      }
+      .content {
+        text-align: center;
+        display: inline-block;
+      }
+      .title {
+        font-size: 96px;
+        margin-bottom: 20px;
+      }
+      .text {
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+      .small {
+        font-size: 18px;
+      }
+      .github-button {
+        padding-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="content">
+        <div class="title">
+          Asyngular
+        </div>
+        <div class="text">
+          Design is not just what it looks like and feels like. Design is how it works. &mdash; Steve Jobs
+        </div>
+        <div class="small">
+          <a href="http://socketcluster.io/#!/docs/getting-started">Getting Started</a> <strong>&middot;</strong>
+          <a href="http://socketcluster.io/#!/docs">Documentation</a>
+        </div>
+        <p class="github-button">
+          <iframe src="https://ghbtns.com/github-btn.html?user=socketcluster&repo=asyngular&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
+        </p>
+      </div>
+    </div>
+    <script type="text/javascript">
+      // Initiate the connection to the server
+      var socket = asyngularClient.create();
+
+      (async () => {
+        for await (let {error} of socket.listener('error')) {
+          console.error(error);
+        }
+      })();
+
+      (async () => {
+        for await (let event of socket.listener('connect')) {
+          console.log('Socket is connected');
+        }
+      })();
+    </script>
+  </body>
+</html>

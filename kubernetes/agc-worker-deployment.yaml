@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agc-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: agc-worker
+  template:
+    metadata:
+      labels:
+        component: agc-worker
+    spec:
+      containers:
+      - name: agc-worker
+        image: socketcluster/asyngular:v1.0.0
+        ports:
+        - containerPort: 8000
+        env:
+        - name: AGC_STATE_SERVER_HOST
+          value: agc-state
+        - name: AGC_INSTANCE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: ENV
+          value: prod
+        livenessProbe:
+          httpGet:
+            path: /health-check
+            port: 8000
+          initialDelaySeconds: 30
+          timeoutSeconds: 5

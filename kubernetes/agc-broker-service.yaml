@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: agc-broker
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8888
+    targetPort: 8888
+  selector:
+    component: agc-broker

@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agc-broker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: agc-broker
+  template:
+    metadata:
+      labels:
+        component: agc-broker
+    spec:
+      containers:
+      - name: agc-broker
+        image: socketcluster/agc-broker:v1.0.0
+        ports:
+        - containerPort: 8888
+        env:
+        - name: AGC_STATE_SERVER_HOST
+          value: agc-state
+        - name: AGC_INSTANCE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        # Set to 3 for the highest log level - This will log every subscription
+        # and message which is shared across multiple socketcluster pods.
+        - name: AGC_BROKER_SERVER_LOG_LEVEL
+          value: "2"
+        livenessProbe:
+          httpGet:
+            path: /health-check
+            port: 8888
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
