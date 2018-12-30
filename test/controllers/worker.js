@@ -41,13 +41,6 @@ class Worker extends SCWorker {
         }
       }
     })();
-
-    // TODO 2
-    // (async () => {
-    //   for await (let {socket} of scServer.listener('connection')) {
-    //
-    //   }
-    // })();
   }
 }
 

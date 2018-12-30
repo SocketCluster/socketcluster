@@ -150,6 +150,10 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
+process.on('unhandledRejection', (err) => {
+  sendErrorToMaster(err);
+  process.exit(1);
+});
 
 function SCWorkerCluster(options) {
   if (scWorkerCluster) {

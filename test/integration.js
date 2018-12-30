@@ -4,8 +4,6 @@ const socketClusterClient = require('socketcluster-client');
 const path = require('path');
 
 const PORT = 8088;
-// TODO 2: Remove uws from distribution.
-// TODO 2: Handle uncaught promise rejection in SocketCluster master/worker...
 const WS_ENGINE = 'ws';
 const ENVIRONMENT = 'dev';
 const CLIENT_COUNT = 10;
@@ -36,6 +34,7 @@ describe('Integration tests', function () {
         killMasterOnSignal: false,
         processTermTimeout: 500,
         forceKillTimeout: 1000,
+        brokerCommandAckTimeout: 1112,
         environment: ENVIRONMENT
       };
       socketCluster = new SocketCluster(options);
@@ -126,7 +125,7 @@ describe('Integration tests', function () {
         assert.equal(JSON.stringify(stateChanges), JSON.stringify(expectedStateChanes));
       });
 
-      it('Should clear all subscriptions after all sockets have been disconnected', async function () {
+      it.skip('Should clear all subscriptions after all sockets have been disconnected', async function () {
 
       });
     });
@@ -165,9 +164,7 @@ describe('Integration tests', function () {
         socketCluster.killBrokers();
         await socketCluster.listener(socketCluster.EVENT_BROKER_EXIT).once();
         let channel = clients[7].subscribe('foo');
-        console.log('---- BEFORE', channel.state); // TODO 2
         await channel.listener('subscribe').once();
-        console.log('---- AFTER');
 
         (async () => {
           await wait(10);

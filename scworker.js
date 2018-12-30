@@ -182,7 +182,8 @@ SCWorker.prototype._init = async function (options) {
     secretKey: this.options.secretKey,
     pubSubBatchDuration: this.options.pubSubBatchDuration,
     connectRetryErrorThreshold: this.options.brokerConnectRetryErrorThreshold,
-    ackTimeout: this.options.brokerAckTimeout,
+    commandAckTimeout: this.options.brokerCommandAckTimeout,
+    pubSubAckTimeout: this.options.brokerPubSubAckTimeout,
     autoReconnectOptions: this.options.brokerAutoReconnectOptions
   });
 
@@ -593,6 +594,10 @@ let handleWorkerClusterMessage = function (wcMessage) {
 process.on('message', handleWorkerClusterMessage);
 
 process.on('uncaughtException', (err) => {
+  handleError(workerInitOptions.crashWorkerOnError, err);
+});
+
+process.on('unhandledRejection', (err) => {
   handleError(workerInitOptions.crashWorkerOnError, err);
 });
 
