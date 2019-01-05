@@ -287,7 +287,7 @@ SocketCluster.prototype._init = function (options) {
 
   self._brokerEngine = require(self.options.brokerEngine);
 
-  if (self.options.logLevel > 0) {
+  if (self.options.logLevel > 1) {
     console.log('   ' + self.colorText('[Busy]', 'yellow') + ' Launching SocketCluster');
   }
 
@@ -755,7 +755,7 @@ SocketCluster.prototype.respondToWorker = function (err, data, workerId, rid) {
 };
 
 SocketCluster.prototype._logDeploymentDetails = function () {
-  if (this.options.logLevel > 0) {
+  if (this.options.logLevel > 1) {
     console.log('   ' + this.colorText('[Active]', 'green') + ' SocketCluster started');
     console.log('            Version: ' + pkg.version);
     console.log('            Environment: ' + this.options.environment);
