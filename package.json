@@ -1,6 +1,6 @@
 {
   "name": "asyngular",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Highly scalable realtime framework with support for async/await",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
