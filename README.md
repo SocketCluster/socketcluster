@@ -1,6 +1,6 @@
 # Asyngular
 
-Toolset and boilerplate for quickly creatings systems using Asyngular.
+Toolset and boilerplate for quickly creating systems using Asyngular.
 See the client and server repos for documentation:
 
 - https://github.com/SocketCluster/asyngular-client
