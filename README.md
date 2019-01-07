@@ -14,13 +14,13 @@ Setup the `asyngular` command:
 npm install -g asyngular
 ```
 
-OR
+or:
 
 ```bash
 sudo npm install -g asyngular
 ```
 
-... then
+then:
 
 ```bash
 asyngular create myapp
