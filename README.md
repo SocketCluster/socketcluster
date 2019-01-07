@@ -6,6 +6,34 @@ See the client and server repos for documentation:
 - https://github.com/SocketCluster/asyngular-client
 - https://github.com/SocketCluster/asyngular-server
 
+## Installation
+
+Setup the `asyngular` command:
+
+```bash
+npm install -g asyngular
+```
+
+OR
+
+```bash
+sudo npm install -g asyngular
+```
+
+... then
+
+```bash
+asyngular create myapp
+```
+
+Once it's installed, go to your new myapp/ directory and launch with:
+
+```bash
+node server
+```
+
+Access at URL http://localhost:8000/
+
 ## Change log
 
 See the 'releases' section for changes: https://github.com/SocketCluster/asyngular/releases
