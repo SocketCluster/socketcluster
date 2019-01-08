@@ -31,6 +31,7 @@
   "readmeFilename": "README.md",
   "scripts": {
     "start": "node server.js",
-    "start:watch": "./node_modules/chokidar-cli/index.js '**/*.js' -i '/^public//' -c 'npm run start'"
+    "start:watch": "./node_modules/chokidar-cli/index.js '**/*.js' -i '/^public//' -c 'npm run start'",
+    "start:docker": "SHELL=/bin/bash npm run start:watch"
   }
 }

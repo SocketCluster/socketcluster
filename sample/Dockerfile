@@ -1,7 +1,7 @@
 FROM node:10-slim
 
 LABEL maintainer="Jonathan Gros-Dubois"
-LABEL version="1.0.7"
+LABEL version="1.0.8"
 LABEL description="Docker file for Asyngular with support for clustering."
 
 RUN mkdir -p /usr/src/
@@ -12,4 +12,4 @@ RUN npm install .
 
 EXPOSE 8000
 
-CMD ["npm", "run", "start:watch"]
+CMD ["npm", "run", "start:docker"]
