@@ -34,6 +34,8 @@ node server
 
 Access at URL http://localhost:8000/
 
+Node.js `v10.0.0` or above is recommended but you can also use Asyngular with older Node.js versions if you use `while` loops instead of `for-await-of` loops.
+
 ## Change log
 
 See the 'releases' section for changes: https://github.com/SocketCluster/asyngular/releases
