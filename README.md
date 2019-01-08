@@ -6,6 +6,8 @@ See the client and server repos for documentation:
 - https://github.com/SocketCluster/asyngular-client
 - https://github.com/SocketCluster/asyngular-server
 
+Documentation for AGC (horizontally scalable cluster) is available at https://github.com/SocketCluster/asyngular/blob/master/agc-guide.md
+
 ## Installation
 
 Setup the `asyngular` command:
