@@ -7,6 +7,7 @@ const childProcess = require('child_process');
 const inquirer = require('inquirer');
 const prompt = inquirer.createPromptModule();
 const exec = childProcess.exec;
+const execSync = childProcess.execSync;
 const spawn = childProcess.spawn;
 const fork = childProcess.fork;
 
@@ -24,15 +25,19 @@ let fileExistsSync = function (filePath) {
   return true;
 };
 
-let parsePackageFile = function (moduleDir) {
-  let packageFile = moduleDir + '/package.json';
+let parseJSONFile = function (filePath) {
   try {
-    if (fileExistsSync(packageFile)) {
-      return JSON.parse(fs.readFileSync(packageFile, {encoding: 'utf8'}));
+    if (fileExistsSync(filePath)) {
+      return JSON.parse(fs.readFileSync(filePath, {encoding: 'utf8'}));
     }
   } catch (e) {}
 
   return {};
+};
+
+let parsePackageFile = function (moduleDir) {
+  let packageFile = path.join(moduleDir, 'package.json');
+  return parseJSONFile(packageFile);
 };
 
 let errorMessage = function (message) {
@@ -56,6 +61,19 @@ let showCorrectUsage = function () {
   console.log();
   console.log('Commands:');
   console.log('  create <appname>            Create a new boilerplate app in working directory');
+  console.log('  run <path>                  Run app at path inside container on your local machine');
+  console.log('  restart <app-path-or-name>  Restart an app with the specified name');
+  console.log('  stop <app-path-or-name>     Stop an app with the specified name');
+  console.log('  list                        List all running Docker containers on your local machine');
+  console.log('  logs <app-path-or-name>     Get logs for the app with the specified name');
+  console.log('    -f                        Follow the logs');
+  console.log('  deploy <app-path>           Deploy app at path to your Baasil.io cluster');
+  console.log('  deploy-update <app-path>    Deploy update to app which was previously deployed');
+  console.log('  undeploy <app-path>         Shutdown all core app services running on your cluster');
+  console.log('');
+  let extraMessage = 'Note that the app-name/app-path in the commands above is optional (except for create) - If not provided, ' +
+    'asyngular will use the current working directory as the app path.';
+  console.log(extraMessage);
 };
 
 let failedToRemoveDirMessage = function (dirPath) {
@@ -66,6 +84,22 @@ let failedToRemoveDirMessage = function (dirPath) {
 
 let failedToCreateMessage = function () {
   errorMessage('Failed to create necessary files. Please check your permissions and try again.');
+};
+
+let promptInput = function (message, callback, secret) {
+  prompt([
+    {
+      type: secret ? 'password' : 'input',
+      message: message,
+      name: 'result',
+      default: null
+    }
+  ]).then((answers) => {
+    callback(answers.result);
+  }).catch((err) => {
+    errorMessage(err.message);
+    process.exit();
+  });
 };
 
 let promptConfirm = function (message, callback) {
@@ -109,7 +143,7 @@ if (argv.help) {
 };
 
 if (argv.v) {
-  let scDir = __dirname + '/../';
+  let scDir = `${__dirname}/../`;
   let scPkg = parsePackageFile(scDir);
   console.log('v' + scPkg.version);
   process.exit();
@@ -205,6 +239,43 @@ if (command === 'create') {
     showCorrectUsage();
     process.exit();
   }
+} else if (command === 'run') {
+  let appPath = arg1 || '.';
+  let absoluteAppPath = path.resolve(appPath);
+  let pkg = parsePackageFile(appPath);
+  let appName = pkg.name;
+
+  let portNumber = Number(argv.p) || 8000;
+  let envVarList;
+  if (argv.e === undefined) {
+    envVarList = [];
+  } else if (!Array.isArray(argv.e)) {
+    envVarList = [argv.e];
+  } else {
+    envVarList = argv.e;
+  }
+  let envFlagList = envVarList.map((value) => {
+    return `-e "${value}"`;
+  });
+  let envFlagString = envFlagList.join(' ');
+  if (envFlagList.length > 0) {
+    envFlagString += ' ';
+  }
+
+  try {
+    execSync(`docker stop ${appName}`, {stdio: 'ignore'});
+    execSync(`docker rm ${appName}`, {stdio: 'ignore'});
+  } catch (e) {}
+
+  let dockerCommand = `docker run -d -p ${portNumber}:8000 -v ${absoluteAppPath}:/usr/src/app/ ` +
+    `${envFlagString}--name ${appName} socketcluster/asyngular:v1.0.8`;
+  try {
+    execSync(dockerCommand, {stdio: 'inherit'});
+    successMessage(`App "${appName}" is running at http://localhost:${portNumber}`);
+  } catch (e) {
+    errorMessage(`Failed to start app "${appName}".`);
+  }
+  process.exit();
 } else {
   errorMessage(`"${command}" is not a valid Asyngular command.`);
   showCorrectUsage();
