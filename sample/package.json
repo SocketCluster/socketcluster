@@ -31,7 +31,7 @@
   "readmeFilename": "README.md",
   "scripts": {
     "start": "node server.js",
-    "start:watch": "./node_modules/nodemon/bin/nodemon.js node server.js",
-    "start:docker": "SHELL=/bin/bash npm run start:watch"
+    "start:watch": "./node_modules/nodemon/bin/nodemon.js server.js",
+    "start:docker": "./node_modules/nodemon/bin/nodemon.js /usr/src/app/server.js"
   }
 }
