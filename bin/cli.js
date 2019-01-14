@@ -61,13 +61,13 @@ let showCorrectUsage = function () {
   console.log();
   console.log('Commands:');
   console.log('  create <appname>            Create a new boilerplate app in working directory');
+  console.log('  run <path>                  Run app at path inside container on your local machine');
+  console.log('  restart <app-path-or-name>  Restart an app with the specified name');
+  console.log('  stop <app-path-or-name>     Stop an app with the specified name');
+  console.log('  list                        List all running Docker containers on your local machine');
+  console.log('  logs <app-path-or-name>     Get logs for the app with the specified name');
+  console.log('    -f                        Follow the logs');
   // TODO: Implement
-  // console.log('  run <path>                  Run app at path inside container on your local machine');
-  // console.log('  restart <app-path-or-name>  Restart an app with the specified name');
-  // console.log('  stop <app-path-or-name>     Stop an app with the specified name');
-  // console.log('  list                        List all running Docker containers on your local machine');
-  // console.log('  logs <app-path-or-name>     Get logs for the app with the specified name');
-  // console.log('    -f                        Follow the logs');
   // console.log('  deploy <app-path>           Deploy app at path to your Baasil.io cluster');
   // console.log('  deploy-update <app-path>    Deploy update to app which was previously deployed');
   // console.log('  undeploy <app-path>         Shutdown all core app services running on your cluster');
@@ -277,6 +277,66 @@ if (command === 'create') {
     errorMessage(`Failed to start app "${appName}".`);
   }
   process.exit();
+} else if (command === 'restart') {
+  let appName = arg1;
+  if (!appName) {
+    let appPath = '.';
+    let absoluteAppPath = path.resolve(appPath);
+    let pkg = parsePackageFile(appPath);
+    appName = pkg.name;
+  }
+  try {
+    execSync(`docker stop ${appName}`, {stdio: 'ignore'});
+    successMessage(`App '${appName}' was stopped.`);
+  } catch (e) {}
+  try {
+    execSync(`docker start ${appName}`);
+    successMessage(`App '${appName}' is running.`);
+  } catch (e) {
+    errorMessage(`Failed to start app '${appName}'.`);
+  }
+  process.exit();
+} else if (command === 'stop') {
+  let appName = arg1;
+  if (!appName) {
+    let appPath = '.';
+    let absoluteAppPath = path.resolve(appPath);
+    let pkg = parsePackageFile(appPath);
+    appName = pkg.name;
+  }
+  try {
+    execSync(`docker stop ${appName}`);
+    execSync(`docker rm ${appName}`);
+    successMessage(`App '${appName}' was stopped.`);
+  } catch (e) {
+    errorMessage(`Failed to stop app '${appName}'.`);
+  }
+  process.exit();
+} else if (command === 'list') {
+  let command = exec(`docker ps${commandRawArgsString}`, function (err) {
+    if (err) {
+      errorMessage(`Failed to list active containers. ` + err);
+    }
+    process.exit();
+  });
+  command.stdout.pipe(process.stdout);
+  command.stderr.pipe(process.stderr);
+} else if (command === 'logs') {
+  let appName = arg1;
+  if (!appName) {
+    let appPath = '.';
+    let absoluteAppPath = path.resolve(appPath);
+    let pkg = parsePackageFile(appPath);
+    appName = pkg.name;
+  }
+  let command = exec(`docker logs ${appName}${commandRawArgsString}`, function (err) {
+    if (err) {
+      errorMessage(`Failed to get logs for '${appName}' app. ` + err);
+    }
+    process.exit();
+  });
+  command.stdout.pipe(process.stdout);
+  command.stderr.pipe(process.stderr);
 } else {
   errorMessage(`"${command}" is not a valid Asyngular command.`);
   showCorrectUsage();
