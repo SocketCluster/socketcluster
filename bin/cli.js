@@ -13,6 +13,11 @@ const fork = childProcess.fork;
 
 let command = argv._[0];
 let commandRawArgs = process.argv.slice(3);
+var commandRawArgsString = commandRawArgs.join(' ');
+if (commandRawArgsString.length) {
+  commandRawArgsString = ' ' + commandRawArgsString;
+}
+
 let arg1 = argv._[1];
 let force = argv.force ? true : false;
 
