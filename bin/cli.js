@@ -274,7 +274,7 @@ if (command === 'create') {
   } catch (e) {}
 
   let dockerCommand = `docker run -d -p ${portNumber}:8000 -v ${absoluteAppPath}:/usr/src/app/ ` +
-    `${envFlagString}--name ${appName} socketcluster/asyngular:v1.0.10`;
+    `${envFlagString}--name ${appName} socketcluster/asyngular:v3.1.3`;
   try {
     execSync(dockerCommand, {stdio: 'inherit'});
     successMessage(`App "${appName}" is running at http://localhost:${portNumber}`);
