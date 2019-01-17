@@ -66,16 +66,16 @@ let showCorrectUsage = function () {
   console.log();
   console.log('Commands:');
   console.log('  create <appname>            Create a new boilerplate app in working directory');
-  console.log('  run <path>                  Run app at path inside container on your local machine');
-  console.log('  restart <app-path-or-name>  Restart an app with the specified name');
-  console.log('  stop <app-path-or-name>     Stop an app with the specified name');
-  console.log('  list                        List all running Docker containers on your local machine');
-  console.log('  logs <app-path-or-name>     Get logs for the app with the specified name');
+  console.log('  run <path>                  [requires docker] Run app at path inside container on your local machine');
+  console.log('  restart <app-path-or-name>  [requires docker] Restart an app with the specified name');
+  console.log('  stop <app-path-or-name>     [requires docker] Stop an app with the specified name');
+  console.log('  list                        [requires docker] List all running Docker containers on your local machine');
+  console.log('  logs <app-path-or-name>     [requires docker] Get logs for the app with the specified name');
   console.log('    -f                        Follow the logs');
   // TODO: Implement
-  // console.log('  deploy <app-path>           Deploy app at path to your Baasil.io cluster');
-  // console.log('  deploy-update <app-path>    Deploy update to app which was previously deployed');
-  // console.log('  undeploy <app-path>         Shutdown all core app services running on your cluster');
+  // console.log('  deploy <app-path>           [requires kubectl] Deploy app at path to your Baasil.io cluster');
+  // console.log('  deploy-update <app-path>    [requires kubectl] Deploy update to app which was previously deployed');
+  // console.log('  undeploy <app-path>         [requires kubectl] Shutdown all core app services running on your cluster');
   console.log('');
   let extraMessage = 'Note that the app-name/app-path in the commands above is optional (except for create) - If not provided, ' +
     'asyngular will use the current working directory as the app path.';
