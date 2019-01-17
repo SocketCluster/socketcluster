@@ -10,14 +10,14 @@
   ],
   "dependencies": {
     "agc-broker-client": "^1.0.8",
-    "asyngular-client": "^3.0.2",
-    "asyngular-server": "^3.0.2",
+    "asyngular-client": "^3.1.1",
+    "asyngular-server": "^3.2.0",
     "connect": "^3.6.6",
-    "eetase": "^1.0.4",
+    "eetase": "^2.0.0",
     "express": "^4.16.3",
     "morgan": "^1.7.0",
     "nodemon": "^1.18.9",
-    "sc-errors": "^1.4.1",
+    "sc-errors": "^2.0.0",
     "serve-static": "^1.13.2",
     "uuid": "^3.3.2"
   },
