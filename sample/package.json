@@ -9,7 +9,7 @@
     }
   ],
   "dependencies": {
-    "agc-broker-client": "^3.0.0",
+    "agc-broker-client": "^3.0.1",
     "asyngular-client": "^3.1.2",
     "asyngular-server": "^3.2.0",
     "connect": "^3.6.6",
