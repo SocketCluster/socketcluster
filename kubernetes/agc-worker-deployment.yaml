@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: agc-worker
-        image: socketcluster/asyngular:v3.2.2
+        image: socketcluster/asyngular:v3.2.3
         ports:
         - containerPort: 8000
         env:

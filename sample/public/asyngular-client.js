@@ -1,14 +1,73 @@
 /**
- * Asyngular JavaScript client v3.1.2
+ * Asyngular JavaScript client v3.1.3
  */
  (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.asyngularClient = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+(function (global){
+function AuthEngine() {
+  this._internalStorage = {};
+  this.isLocalStorageEnabled = this._checkLocalStorageEnabled();
+}
+
+AuthEngine.prototype._checkLocalStorageEnabled = function () {
+  let err;
+  try {
+    // Some browsers will throw an error here if localStorage is disabled.
+    global.localStorage;
+
+    // Safari, in Private Browsing Mode, looks like it supports localStorage but all calls to setItem
+    // throw QuotaExceededError. We're going to detect this and avoid hard to debug edge cases.
+    global.localStorage.setItem('__scLocalStorageTest', 1);
+    global.localStorage.removeItem('__scLocalStorageTest');
+  } catch (e) {
+    err = e;
+  }
+  return !err;
+};
+
+AuthEngine.prototype.saveToken = function (name, token, options) {
+  if (this.isLocalStorageEnabled && global.localStorage) {
+    global.localStorage.setItem(name, token);
+  } else {
+    this._internalStorage[name] = token;
+  }
+  return Promise.resolve(token);
+};
+
+AuthEngine.prototype.removeToken = function (name) {
+  let loadPromise = this.loadToken(name);
+
+  if (this.isLocalStorageEnabled && global.localStorage) {
+    global.localStorage.removeItem(name);
+  } else {
+    delete this._internalStorage[name];
+  }
+
+  return loadPromise;
+};
+
+AuthEngine.prototype.loadToken = function (name) {
+  let token;
+
+  if (this.isLocalStorageEnabled && global.localStorage) {
+    token = global.localStorage.getItem(name);
+  } else {
+    token = this._internalStorage[name] || null;
+  }
+
+  return Promise.resolve(token);
+};
+
+module.exports = AuthEngine;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],2:[function(require,module,exports){
 (function (global,Buffer){
 const StreamDemux = require('stream-demux');
 const AsyncStreamEmitter = require('async-stream-emitter');
 const AGChannel = require('ag-channel');
 const AuthEngine = require('./auth');
 const formatter = require('sc-formatter');
-const AGTransport = require('./agtransport');
+const AGTransport = require('./transport');
 const querystring = require('querystring');
 const LinkedList = require('linked-list');
 const base64 = require('base-64');
@@ -592,7 +651,7 @@ AGClientSocket.prototype._onOpen = function (status) {
       this._changeToUnauthenticatedStateAndClearTokens();
     }
   } else {
-    // This can happen if auth.loadToken (in agtransport.js) fails with
+    // This can happen if auth.loadToken (in transport.js) fails with
     // an error - This means that the signedAuthToken cannot be loaded by
     // the auth engine and therefore, we need to unauthenticate the client.
     this._changeToUnauthenticatedStateAndClearTokens();
@@ -1164,9 +1223,70 @@ AGClientSocket.prototype.processPendingSubscriptions = function () {
 module.exports = AGClientSocket;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"./agtransport":2,"./auth":3,"./wait":6,"ag-channel":8,"async-stream-emitter":10,"base-64":11,"buffer":13,"clone":14,"linked-list":17,"querystring":20,"sc-errors":22,"sc-formatter":23,"stream-demux":25}],2:[function(require,module,exports){
+},{"./auth":1,"./transport":4,"./wait":5,"ag-channel":7,"async-stream-emitter":10,"base-64":11,"buffer":13,"clone":14,"linked-list":17,"querystring":20,"sc-errors":22,"sc-formatter":23,"stream-demux":25}],3:[function(require,module,exports){
 (function (global){
-const Request = require('./request');
+const AGClientSocket = require('./clientsocket');
+const uuid = require('uuid');
+const scErrors = require('sc-errors');
+const InvalidArgumentsError = scErrors.InvalidArgumentsError;
+
+function isUrlSecure() {
+  return global.location && location.protocol === 'https:';
+}
+
+function getPort(options, isSecureDefault) {
+  let isSecure = options.secure == null ? isSecureDefault : options.secure;
+  return options.port || (global.location && location.port ? location.port : isSecure ? 443 : 80);
+}
+
+function create(options) {
+  options = options || {};
+
+  if (options.host && !options.host.match(/[^:]+:\d{2,5}/)) {
+    throw new InvalidArgumentsError(
+      'The host option should include both' +
+      ' the hostname and the port number in the format "hostname:port"'
+    );
+  }
+
+  if (options.host && options.hostname) {
+    throw new InvalidArgumentsError(
+      'The host option should already include' +
+      ' the hostname and the port number in the format "hostname:port"' +
+      ' - Because of this, you should never use host and hostname options together'
+    );
+  }
+
+  if (options.host && options.port) {
+    throw new InvalidArgumentsError(
+      'The host option should already include' +
+      ' the hostname and the port number in the format "hostname:port"' +
+      ' - Because of this, you should never use host and port options together'
+    );
+  }
+
+  let isSecureDefault = isUrlSecure();
+
+  let opts = {
+    clientId: uuid.v4(),
+    port: getPort(options, isSecureDefault),
+    hostname: global.location && location.hostname || 'localhost',
+    secure: isSecureDefault
+  };
+
+  Object.assign(opts, options);
+
+  return new AGClientSocket(opts);
+}
+
+module.exports = {
+  create
+};
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./clientsocket":2,"sc-errors":22,"uuid":26}],4:[function(require,module,exports){
+(function (global){
+const AGRequest = require('ag-request');
 const querystring = require('querystring');
 const AsyncStreamEmitter = require('async-stream-emitter');
 
@@ -1386,7 +1506,7 @@ AGTransport.prototype._processInboundPacket = function (packet, message) {
     if (packet.cid == null) {
       this.emit('inboundTransmit', {...packet});
     } else {
-      let request = new Request(this, packet.cid, packet.event, packet.data);
+      let request = new AGRequest(this, packet.cid, packet.event, packet.data);
       this.emit('inboundInvoke', request);
     }
   } else if (packet && packet.rid != null) {
@@ -1601,167 +1721,7 @@ AGTransport.prototype.sendObject = function (object, options) {
 module.exports = AGTransport;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./request":5,"async-stream-emitter":10,"querystring":20,"sc-errors":22,"ws":7}],3:[function(require,module,exports){
-(function (global){
-function AuthEngine() {
-  this._internalStorage = {};
-  this.isLocalStorageEnabled = this._checkLocalStorageEnabled();
-}
-
-AuthEngine.prototype._checkLocalStorageEnabled = function () {
-  let err;
-  try {
-    // Some browsers will throw an error here if localStorage is disabled.
-    global.localStorage;
-
-    // Safari, in Private Browsing Mode, looks like it supports localStorage but all calls to setItem
-    // throw QuotaExceededError. We're going to detect this and avoid hard to debug edge cases.
-    global.localStorage.setItem('__scLocalStorageTest', 1);
-    global.localStorage.removeItem('__scLocalStorageTest');
-  } catch (e) {
-    err = e;
-  }
-  return !err;
-};
-
-AuthEngine.prototype.saveToken = function (name, token, options) {
-  if (this.isLocalStorageEnabled && global.localStorage) {
-    global.localStorage.setItem(name, token);
-  } else {
-    this._internalStorage[name] = token;
-  }
-  return Promise.resolve(token);
-};
-
-AuthEngine.prototype.removeToken = function (name) {
-  let loadPromise = this.loadToken(name);
-
-  if (this.isLocalStorageEnabled && global.localStorage) {
-    global.localStorage.removeItem(name);
-  } else {
-    delete this._internalStorage[name];
-  }
-
-  return loadPromise;
-};
-
-AuthEngine.prototype.loadToken = function (name) {
-  let token;
-
-  if (this.isLocalStorageEnabled && global.localStorage) {
-    token = global.localStorage.getItem(name);
-  } else {
-    token = this._internalStorage[name] || null;
-  }
-
-  return Promise.resolve(token);
-};
-
-module.exports = AuthEngine;
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],4:[function(require,module,exports){
-(function (global){
-const AGClientSocket = require('./agclientsocket');
-const uuid = require('uuid');
-const scErrors = require('sc-errors');
-const InvalidArgumentsError = scErrors.InvalidArgumentsError;
-
-function isUrlSecure() {
-  return global.location && location.protocol === 'https:';
-}
-
-function getPort(options, isSecureDefault) {
-  let isSecure = options.secure == null ? isSecureDefault : options.secure;
-  return options.port || (global.location && location.port ? location.port : isSecure ? 443 : 80);
-}
-
-function create(options) {
-  options = options || {};
-
-  if (options.host && !options.host.match(/[^:]+:\d{2,5}/)) {
-    throw new InvalidArgumentsError(
-      'The host option should include both' +
-      ' the hostname and the port number in the format "hostname:port"'
-    );
-  }
-
-  if (options.host && options.hostname) {
-    throw new InvalidArgumentsError(
-      'The host option should already include' +
-      ' the hostname and the port number in the format "hostname:port"' +
-      ' - Because of this, you should never use host and hostname options together'
-    );
-  }
-
-  if (options.host && options.port) {
-    throw new InvalidArgumentsError(
-      'The host option should already include' +
-      ' the hostname and the port number in the format "hostname:port"' +
-      ' - Because of this, you should never use host and port options together'
-    );
-  }
-
-  let isSecureDefault = isUrlSecure();
-
-  let opts = {
-    clientId: uuid.v4(),
-    port: getPort(options, isSecureDefault),
-    hostname: global.location && location.hostname || 'localhost',
-    secure: isSecureDefault
-  };
-
-  Object.assign(opts, options);
-
-  return new AGClientSocket(opts);
-}
-
-module.exports = {
-  create
-};
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./agclientsocket":1,"sc-errors":22,"uuid":26}],5:[function(require,module,exports){
-const scErrors = require('sc-errors');
-const InvalidActionError = scErrors.InvalidActionError;
-
-function Request(socket, id, procedureName, data) {
-  this.socket = socket;
-  this.id = id;
-  this.procedure = procedureName;
-  this.data = data;
-  this.sent = false;
-
-  this._respond = (responseData, options) => {
-    if (this.sent) {
-      throw new InvalidActionError(`Response to request ${this.id} has already been sent`);
-    }
-    this.sent = true;
-    this.socket.sendObject(responseData, options);
-  };
-
-  this.end = (data, options) => {
-    let responseData = {
-      rid: this.id
-    };
-    if (data !== undefined) {
-      responseData.data = data;
-    }
-    this._respond(responseData, options);
-  };
-
-  this.error = (error, options) => {
-    let responseData = {
-      rid: this.id,
-      error: scErrors.dehydrateError(error)
-    };
-    this._respond(responseData, options);
-  };
-}
-
-module.exports = Request;
-
-},{"sc-errors":22}],6:[function(require,module,exports){
+},{"ag-request":8,"async-stream-emitter":10,"querystring":20,"sc-errors":22,"ws":6}],5:[function(require,module,exports){
 function wait(duration) {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -1772,7 +1732,7 @@ function wait(duration) {
 
 module.exports = wait;
 
-},{}],7:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 let global;
 if (typeof WorkerGlobalScope !== 'undefined') {
   global = self;
@@ -1809,7 +1769,7 @@ if (WebSocket) ws.prototype = WebSocket.prototype;
 
 module.exports = WebSocket ? ws : null;
 
-},{}],8:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 const AsyncIterableStream = require('async-iterable-stream');
 
 class AGChannel extends AsyncIterableStream {
@@ -1889,7 +1849,47 @@ AGChannel.UNSUBSCRIBED = 'unsubscribed';
 
 module.exports = AGChannel;
 
-},{"async-iterable-stream":9}],9:[function(require,module,exports){
+},{"async-iterable-stream":9}],8:[function(require,module,exports){
+const scErrors = require('sc-errors');
+const InvalidActionError = scErrors.InvalidActionError;
+
+function AGRequest(socket, id, procedureName, data) {
+  this.socket = socket;
+  this.id = id;
+  this.procedure = procedureName;
+  this.data = data;
+  this.sent = false;
+
+  this._respond = (responseData, options) => {
+    if (this.sent) {
+      throw new InvalidActionError(`Response to request ${this.id} has already been sent`);
+    }
+    this.sent = true;
+    this.socket.sendObject(responseData, options);
+  };
+
+  this.end = (data, options) => {
+    let responseData = {
+      rid: this.id
+    };
+    if (data !== undefined) {
+      responseData.data = data;
+    }
+    this._respond(responseData, options);
+  };
+
+  this.error = (error, options) => {
+    let responseData = {
+      rid: this.id,
+      error: scErrors.dehydrateError(error)
+    };
+    this._respond(responseData, options);
+  };
+}
+
+module.exports = AGRequest;
+
+},{"sc-errors":22}],9:[function(require,module,exports){
 class AsyncIterableStream {
   next(timeout) {
     return this.createAsyncIterator(timeout).next();
@@ -5848,9 +5848,9 @@ function wait(timeout) {
 module.exports = WritableAsyncIterableStream;
 
 },{"async-iterable-stream":9}],"asyngular-client":[function(require,module,exports){
-const AGClientSocket = require('./lib/agclientsocket');
+const AGClientSocket = require('./lib/clientsocket');
 const factory = require('./lib/factory');
-const version = '3.1.2';
+const version = '3.1.3';
 
 module.exports.factory = factory;
 module.exports.AGClientSocket = AGClientSocket;
@@ -5861,5 +5861,5 @@ module.exports.create = function (options) {
 
 module.exports.version = version;
 
-},{"./lib/agclientsocket":1,"./lib/factory":4}]},{},["asyngular-client"])("asyngular-client")
+},{"./lib/clientsocket":2,"./lib/factory":3}]},{},["asyngular-client"])("asyngular-client")
 });
