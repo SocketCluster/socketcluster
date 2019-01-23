@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: agc-state
-        image: socketcluster/agc-state:v1.0.0
+        image: socketcluster/agc-state:v4.0.0
         ports:
         - containerPort: 7777
         livenessProbe:

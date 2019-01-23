@@ -16,7 +16,8 @@ spec:
       - name: agc-worker
         image: socketcluster/asyngular:v4.0.1
         ports:
-        - containerPort: 8000
+        - name: agc-worker
+          containerPort: 8000
         env:
         - name: AGC_STATE_SERVER_HOST
           value: agc-state
@@ -31,4 +32,4 @@ spec:
             path: /health-check
             port: 8000
           initialDelaySeconds: 30
-          timeoutSeconds: 5
+          timeoutSeconds: 15
