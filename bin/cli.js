@@ -157,13 +157,13 @@ if (argv.v) {
 
 let wd = process.cwd();
 
-let sampleDir = `${__dirname}/../sample`;
+let appDir = `${__dirname}/../app`;
 let destDir = path.normalize(`${wd}/${arg1}`);
 let clientFileSourcePath = path.normalize(`${destDir}/node_modules/asyngular-client/asyngular-client.js`);
 let clientFileDestPath = path.normalize(`${destDir}/public/asyngular-client.js`);
 
 let createFail = function () {
-  errorMessage('Failed to create Asyngular sample app.');
+  errorMessage('Failed to create Asyngular app.');
   process.exit();
 };
 
@@ -192,7 +192,7 @@ let createSuccess = function () {
     } else {
       try {
         fs.writeFileSync(clientFileDestPath, fs.readFileSync(clientFileSourcePath));
-        successMessage(`Asyngular sample "${destDir}" was setup successfully.`);
+        successMessage(`Asyngular app "${destDir}" was setup successfully.`);
       } catch (err) {
         warningMessage(
           `Failed to copy file from "${clientFileSourcePath}" to "${clientFileDestPath}" - Try copying it manually.`
@@ -212,7 +212,7 @@ let setupMessage = function () {
 let confirmReplaceSetup = function (confirm) {
   if (confirm) {
     setupMessage();
-    if (rmdirRecursive(destDir) && copyDirRecursive(sampleDir, destDir)) {
+    if (rmdirRecursive(destDir) && copyDirRecursive(appDir, destDir)) {
       createSuccess();
     } else {
       createFail();
@@ -234,7 +234,7 @@ if (command === 'create') {
       }
     } else {
       setupMessage();
-      if (copyDirRecursive(sampleDir, destDir)) {
+      if (copyDirRecursive(appDir, destDir)) {
         createSuccess();
       } else {
         createFail();
