@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: agc-state
 spec:
-  replicas: 1 # Leave this as 1 - This service is a singleton.
+  replicas: 1
   selector:
     matchLabels:
       component: agc-state
@@ -13,13 +13,22 @@ spec:
         component: agc-state
     spec:
       containers:
-      - name: agc-state
-        image: socketcluster/agc-state:v4.0.0
-        ports:
-        - containerPort: 7777
-        livenessProbe:
-          httpGet:
-            path: /health-check
-            port: 7777
-          initialDelaySeconds: 15
-          timeoutSeconds: 5
+        -
+          name: agc-state
+          image: 'socketcluster/agc-state:v4.0.0'
+          ports:
+            -
+              name: agc-state
+              containerPort: 7777
+          readinessProbe:
+            httpGet:
+              path: /health-check
+              port: agc-state
+            initialDelaySeconds: 5
+            timeoutSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health-check
+              port: agc-state
+            initialDelaySeconds: 15
+            timeoutSeconds: 20

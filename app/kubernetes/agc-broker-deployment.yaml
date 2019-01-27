@@ -13,24 +13,34 @@ spec:
         component: agc-broker
     spec:
       containers:
-      - name: agc-broker
-        image: socketcluster/agc-broker:v4.0.0
-        ports:
-        - containerPort: 8888
-        env:
-        - name: AGC_STATE_SERVER_HOST
-          value: agc-state
-        - name: AGC_INSTANCE_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        # Set to 3 for the highest log level - This will log every subscription
-        # and message which is shared across multiple socketcluster pods.
-        - name: AGC_BROKER_SERVER_LOG_LEVEL
-          value: "2"
-        livenessProbe:
-          httpGet:
-            path: /health-check
-            port: 8888
-          initialDelaySeconds: 30
-          timeoutSeconds: 5
+        -
+          name: agc-broker
+          image: 'socketcluster/agc-broker:v4.0.0'
+          ports:
+            -
+              name: agc-broker
+              containerPort: 8888
+          env:
+            -
+              name: AGC_STATE_SERVER_HOST
+              value: agc-state
+            -
+              name: AGC_INSTANCE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            -
+              name: AGC_BROKER_SERVER_LOG_LEVEL
+              value: '2'
+          readinessProbe:
+            httpGet:
+              path: /health-check
+              port: agc-broker
+            initialDelaySeconds: 5
+            timeoutSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health-check
+              port: agc-broker
+            initialDelaySeconds: 15
+            timeoutSeconds: 20

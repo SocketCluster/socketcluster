@@ -5,7 +5,8 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 8888
-    targetPort: 8888
+    -
+      port: 8888
+      targetPort: 8888
   selector:
     component: agc-broker

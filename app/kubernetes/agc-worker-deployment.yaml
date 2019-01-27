@@ -13,23 +13,34 @@ spec:
         component: agc-worker
     spec:
       containers:
-      - name: agc-worker
-        image: socketcluster/asyngular:v4.0.1
-        ports:
-        - name: agc-worker
-          containerPort: 8000
-        env:
-        - name: AGC_STATE_SERVER_HOST
-          value: agc-state
-        - name: AGC_INSTANCE_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        - name: ENV
-          value: prod
-        livenessProbe:
-          httpGet:
-            path: /health-check
-            port: 8000
-          initialDelaySeconds: 30
-          timeoutSeconds: 15
+        -
+          name: agc-worker
+          image: 'socketcluster/asyngular:v4.0.1'
+          ports:
+            -
+              name: agc-worker
+              containerPort: 8000
+          env:
+            -
+              name: AGC_STATE_SERVER_HOST
+              value: agc-state
+            -
+              name: AGC_INSTANCE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            -
+              name: ENV
+              value: prod
+          readinessProbe:
+            httpGet:
+              path: /health-check
+              port: agc-worker
+            initialDelaySeconds: 5
+            timeoutSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health-check
+              port: agc-worker
+            initialDelaySeconds: 15
+            timeoutSeconds: 20

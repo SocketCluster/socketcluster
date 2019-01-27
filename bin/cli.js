@@ -10,10 +10,11 @@ const exec = childProcess.exec;
 const execSync = childProcess.execSync;
 const spawn = childProcess.spawn;
 const fork = childProcess.fork;
+const YAML = require('yamljs');
 
 let command = argv._[0];
 let commandRawArgs = process.argv.slice(3);
-var commandRawArgsString = commandRawArgs.join(' ');
+let commandRawArgsString = commandRawArgs.join(' ');
 if (commandRawArgsString.length) {
   commandRawArgsString = ' ' + commandRawArgsString;
 }
@@ -72,10 +73,9 @@ let showCorrectUsage = function () {
   console.log('  list                        [requires docker] List all running Docker containers on your local machine');
   console.log('  logs <app-path-or-name>     [requires docker] Get logs for the app with the specified name');
   console.log('    -f                        Follow the logs');
-  // TODO: Implement
-  // console.log('  deploy <app-path>           [requires kubectl] Deploy app at path to your Baasil.io cluster');
-  // console.log('  deploy-update <app-path>    [requires kubectl] Deploy update to app which was previously deployed');
-  // console.log('  undeploy <app-path>         [requires kubectl] Shutdown all core app services running on your cluster');
+  console.log('  deploy <app-path>           [requires kubectl] Deploy app at path to your Kubernetes cluster');
+  console.log('  deploy-update <app-path>    [requires kubectl] Deploy update to app which was previously deployed');
+  console.log('  undeploy <app-path>         [requires kubectl] Shutdown all core app services running on your cluster');
   console.log('');
   let extraMessage = 'Note that the app-name/app-path in the commands above is optional (except for create) - If not provided, ' +
     'asyngular will use the current working directory as the app path.';
@@ -108,13 +108,17 @@ let promptInput = function (message, callback, secret) {
   });
 };
 
-let promptConfirm = function (message, callback) {
+var promptConfirm = function (message, options, callback) {
+  var promptOptions = {
+    type: 'confirm',
+    message: message,
+    name: 'result'
+  };
+  if (options && options.default) {
+    promptOptions.default = options.default;
+  }
   prompt([
-    {
-      type: 'confirm',
-      message: message,
-      name: 'result'
-    }
+    promptOptions
   ]).then((answers) => {
     callback(answers.result);
   }).catch((err) => {
@@ -143,15 +147,19 @@ let rmdirRecursive = function (dirname) {
   return false;
 };
 
+var sanitizeYAML = function (yamlString) {
+  return yamlString.replace(/emptyDir: ?(null)?\n/g, 'emptyDir: {}\n');
+};
+
 if (argv.help) {
   showCorrectUsage();
   process.exit();
 };
 
 if (argv.v) {
-  let scDir = `${__dirname}/../`;
-  let scPkg = parsePackageFile(scDir);
-  console.log('v' + scPkg.version);
+  let agDir = `${__dirname}/../`;
+  let agPkg = parsePackageFile(agDir);
+  console.log('v' + agPkg.version);
   process.exit();
 };
 
@@ -161,9 +169,14 @@ let appDir = `${__dirname}/../app`;
 let destDir = path.normalize(`${wd}/${arg1}`);
 let clientFileSourcePath = path.normalize(`${destDir}/node_modules/asyngular-client/asyngular-client.js`);
 let clientFileDestPath = path.normalize(`${destDir}/public/asyngular-client.js`);
+let deploymentYAMLRegex = /-deployment\.yaml$/;
 
-let createFail = function () {
-  errorMessage('Failed to create Asyngular app.');
+let createFail = function (error) {
+  if (error) {
+    errorMessage(`Failed to create Asyngular app. ${error}`);
+  } else {
+    errorMessage('Failed to create Asyngular app.');
+  }
   process.exit();
 };
 
@@ -178,15 +191,15 @@ let createSuccess = function () {
 
   let npmProcess = spawn(npmCommand, ['install'], options);
 
-  npmProcess.stdout.on('data', function (data) {
+  npmProcess.stdout.on('data', (data) => {
     process.stdout.write(data);
   });
 
-  npmProcess.stderr.on('data', function (data) {
+  npmProcess.stderr.on('data', (data) => {
     process.stderr.write(data);
   });
 
-  npmProcess.on('close', function (code) {
+  npmProcess.on('close', (code) => {
     if (code) {
       errorMessage(`Failed to install npm dependencies. Exited with code ${code}.`);
     } else {
@@ -223,19 +236,82 @@ let confirmReplaceSetup = function (confirm) {
   }
 };
 
+let getAGCWorkerDeploymentDefPath = function (kubernetesTargetDir) {
+  return `${kubernetesTargetDir}/agc-worker-deployment.yaml`;
+};
+
+var getAGCBrokerDeploymentDefPath = function (kubernetesTargetDir) {
+  return `${kubernetesTargetDir}/agc-broker-deployment.yaml`;
+};
+
 if (command === 'create') {
+  let transformK8sConfigs = function (callback) {
+    let kubernetesTargetDir = destDir + '/kubernetes';
+    let kubeConfAGCWorker = getAGCWorkerDeploymentDefPath(kubernetesTargetDir);
+    try {
+      let kubeConfContentAGCWorker = fs.readFileSync(kubeConfAGCWorker, {encoding: 'utf8'});
+      let deploymentConfAGCWorker = YAML.parse(kubeConfContentAGCWorker);
+
+      deploymentConfAGCWorker.spec.template.spec.volumes = [{
+        name: 'app-src-volume',
+        emptyDir: {}
+      }];
+      let containers = deploymentConfAGCWorker.spec.template.spec.containers;
+      let templateSpec = deploymentConfAGCWorker.spec.template.spec;
+      if (!templateSpec.initContainers) {
+        templateSpec.initContainers = [];
+      }
+      let initContainers = templateSpec.initContainers;
+      let appSrcContainerIndex;
+      containers.forEach((value, index) => {
+        if (value && value.name == 'agc-worker') {
+          appSrcContainerIndex = index;
+          return;
+        }
+      });
+      if (!containers[appSrcContainerIndex].volumeMounts) {
+        containers[appSrcContainerIndex].volumeMounts = [];
+      }
+      containers[appSrcContainerIndex].volumeMounts.push({
+        mountPath: '/usr/src/app',
+        name: 'app-src-volume'
+      });
+      initContainers.push({
+        name: 'app-src-container',
+        image: '', // image name will be generated during deployment
+        volumeMounts: [{
+          mountPath: '/usr/dest',
+          name: 'app-src-volume'
+        }],
+        command: ['cp', '-a', '/usr/src/.', '/usr/dest/']
+      });
+      let formattedYAMLString = sanitizeYAML(YAML.stringify(deploymentConfAGCWorker, Infinity, 2));
+      fs.writeFileSync(kubeConfAGCWorker, formattedYAMLString);
+    } catch (err) {
+      callback(err);
+      return;
+    }
+    callback();
+  };
+
   if (arg1) {
     if (fileExistsSync(destDir)) {
       if (force) {
         confirmReplaceSetup(true);
       } else {
         let message = `There is already a directory at ${destDir}. Do you want to overwrite it?`;
-        promptConfirm(message, confirmReplaceSetup);
+        promptConfirm(message, {default: true}, confirmReplaceSetup);
       }
     } else {
       setupMessage();
       if (copyDirRecursive(appDir, destDir)) {
-        createSuccess();
+        transformK8sConfigs((err) => {
+          if (err) {
+            createFail(`Failed to format Kubernetes configs. ${err}`);
+          } else {
+            createSuccess();
+          }
+        });
       } else {
         createFail();
       }
@@ -318,7 +394,7 @@ if (command === 'create') {
   }
   process.exit();
 } else if (command === 'list') {
-  let command = exec(`docker ps${commandRawArgsString}`, function (err) {
+  let command = exec(`docker ps${commandRawArgsString}`, (err) => {
     if (err) {
       errorMessage(`Failed to list active containers. ` + err);
     }
@@ -334,7 +410,7 @@ if (command === 'create') {
     let pkg = parsePackageFile(appPath);
     appName = pkg.name;
   }
-  let command = exec(`docker logs ${appName}${commandRawArgsString}`, function (err) {
+  let command = exec(`docker logs ${appName}${commandRawArgsString}`, (err) => {
     if (err) {
       errorMessage(`Failed to get logs for '${appName}' app. ` + err);
     }
@@ -342,6 +418,330 @@ if (command === 'create') {
   });
   command.stdout.pipe(process.stdout);
   command.stderr.pipe(process.stderr);
+} else if (command === 'deploy' || command === 'deploy-update') {
+  let appPath = arg1 || '.';
+  let absoluteAppPath = path.resolve(appPath);
+  let pkg = parsePackageFile(appPath);
+  let appName = pkg.name;
+
+  let dockerUsername, dockerPassword;
+  let saveDockerAuthDetails = null;
+
+  let tlsSecretName = null;
+  let tlsKeyPath = null;
+  let tlsCertPath = null;
+
+  let isUpdate = (command === 'deploy-update');
+
+  let targetCPUUtilization = 50;
+  let maxPodsPerService = 10;
+
+  let failedToDeploy = function (err) {
+    errorMessage(`Failed to deploy the '${appName}' app. ${err.message}`);
+    process.exit();
+  };
+
+  let asyngularK8sConfigFilePath = appPath + '/asyngular-k8s.json';
+  let asyngularK8sConfig = parseJSONFile(asyngularK8sConfigFilePath);
+
+  let addAuthDetailsToAsyngularK8s = function (asyngularK8sConfigJSON, username, password) {
+    if (!asyngularK8sConfigJSON.docker) {
+      asyngularK8sConfigJSON.docker = {};
+    }
+    asyngularK8sConfigJSON.docker.auth = Buffer.from(`${username}:${password}`, 'utf8').toString('base64');
+  };
+
+  let saveAsyngularK8sConfigFile = function (asyngularK8sConfigJSON) {
+    fs.writeFileSync(asyngularK8sConfigFilePath, JSON.stringify(asyngularK8sConfigJSON, null, 2));
+  };
+
+  let parseVersionTag = function (fullImageName) {
+    let matches = fullImageName.match(/:[^:]*$/);
+    if (!matches) {
+      return '';
+    }
+    return matches[0] || '';
+  };
+
+  let setImageVersionTag = function (imageName, versionTag) {
+    if (versionTag.indexOf(':') != 0) {
+      versionTag = ':' + versionTag;
+    }
+    return imageName.replace(/(\/[^\/:]*)(:[^:]*)?$/g, `$1${versionTag}`);
+  };
+
+  let promptDockerAuthDetails = function (callback) {
+    let handleSaveDockerAuthDetails = function (saveAuthDetails) {
+      saveDockerAuthDetails = saveAuthDetails;
+      callback(dockerUsername, dockerPassword, saveDockerAuthDetails);
+    };
+
+    let promptSaveAuthDetails = function () {
+      promptConfirm(`Would you like to save your DockerHub username and password as Base64 to ${asyngularK8sConfigFilePath}?`, {default: true}, handleSaveDockerAuthDetails);
+    };
+
+    let handlePassword = function (password) {
+      dockerPassword = password;
+      if (saveDockerAuthDetails != null) {
+        handleSaveDockerAuthDetails(saveDockerAuthDetails);
+        return;
+      }
+      promptSaveAuthDetails();
+    };
+
+    let handleUsername = function (username) {
+      dockerUsername = username;
+      if (dockerPassword != null) {
+        handlePassword(dockerPassword);
+        return;
+      }
+      promptInput('Enter your DockerHub password:', handlePassword, true);
+    };
+
+    let promptUsername = function () {
+      if (dockerUsername != null) {
+        handleUsername(dockerUsername);
+        return;
+      }
+      promptInput('Enter your DockerHub username:', handleUsername);
+    };
+
+    promptUsername();
+  };
+
+  let promptDockerTLSCredentials = function (callback) {
+    promptConfirm('Would you like to upload a TLS private key and certificate to your cluster? (both must be unencrypted)', {default: true}, (provideKeyAndCert) => {
+      if (provideKeyAndCert) {
+        promptInput('Insert a TLS secretName for Kubernetes (or press enter to leave it as "agc-tls-credentials" - Recommended):', (secretName) => {
+          secretName = secretName || 'agc-tls-credentials';
+          promptInput('Insert the path to a private key file to upload to K8s (or press enter to cancel):', (privateKeyPath) => {
+            if (!privateKeyPath) {
+              callback();
+              return;
+            }
+            promptInput('Insert the path to a certificate file to upload to K8s (or press enter to cancel):', (certFilePath) => {
+              if (!certFilePath) {
+                callback();
+                return;
+              }
+              tlsSecretName = secretName;
+              tlsKeyPath = privateKeyPath;
+              tlsCertPath = certFilePath;
+              callback();
+            });
+          });
+        });
+      } else {
+        callback();
+      }
+    });
+  };
+
+  let uploadTLSSecret = function (secretName, privateKeyPath, certFilePath) {
+    try {
+      execSync(`kubectl create secret tls ${secretName} --key ${privateKeyPath} --cert ${certFilePath}`, {stdio: 'inherit'});
+    } catch (err) {
+      warningMessage(
+        'Failed to upload TLS key and certificate pair to Kubernetes. ' +
+        'You can try using the following command to upload them manually (replace the key and cert paths with your own): ' +
+        'kubectl create secret tls agc-tls-credentials --key ./mykey.key --cert ./mycert.crt'
+      );
+    }
+  };
+
+  let performDeployment = function (dockerConfig, versionTag, username, password) {
+    let dockerLoginCommand = `docker login -u ${username} -p ${password}`;
+
+    let fullVersionTag;
+    if (versionTag) {
+      fullVersionTag = `:${versionTag}`;
+    } else {
+      fullVersionTag = parseVersionTag(dockerConfig.imageName);
+    }
+    dockerConfig.imageName = setImageVersionTag(dockerConfig.imageName, fullVersionTag);
+    if (saveDockerAuthDetails) {
+      addAuthDetailsToAsyngularK8s(asyngularK8sConfig, username, password);
+    }
+    try {
+      saveAsyngularK8sConfigFile(asyngularK8sConfig);
+
+      execSync(`docker build -t ${dockerConfig.imageName} .`, {stdio: 'inherit'});
+      execSync(`${dockerLoginCommand}; docker push ${dockerConfig.imageName}`, {stdio: 'inherit'});
+
+      if (tlsSecretName && tlsKeyPath && tlsCertPath) {
+        uploadTLSSecret(tlsSecretName, tlsKeyPath, tlsCertPath);
+      }
+
+      let kubernetesDirPath = appPath + '/kubernetes';
+
+      let kubeConfAGCWorker = getAGCWorkerDeploymentDefPath(kubernetesDirPath);
+      let kubeConfContentAGCWorker = fs.readFileSync(kubeConfAGCWorker, {encoding: 'utf8'});
+
+      let deploymentConfAGCWorker = YAML.parse(kubeConfContentAGCWorker);
+
+      let initContainersAGCWorker = deploymentConfAGCWorker.spec.template.spec.initContainers;
+      initContainersAGCWorker.forEach((value, index) => {
+        if (value) {
+          if (value.name === 'app-src-container') {
+            initContainersAGCWorker[index].image = dockerConfig.imageName;
+          }
+        }
+      });
+
+      let formattedYAMLStringAGCWorker = sanitizeYAML(YAML.stringify(deploymentConfAGCWorker, Infinity, 2));
+      fs.writeFileSync(kubeConfAGCWorker, formattedYAMLStringAGCWorker);
+
+      let kubeConfAGCBroker = getAGCBrokerDeploymentDefPath(kubernetesDirPath);
+      let kubeConfContentAGCBroker = fs.readFileSync(kubeConfAGCBroker, {encoding: 'utf8'});
+
+      let deploymentConfAGCBroker = YAML.parse(kubeConfContentAGCBroker);
+
+      let formattedYAMLStringAGCBroker = sanitizeYAML(YAML.stringify(deploymentConfAGCBroker, Infinity, 2));
+      fs.writeFileSync(kubeConfAGCBroker, formattedYAMLStringAGCBroker);
+
+      let ingressKubeFileName = 'agc-ingress.yaml';
+      let agcWorkerDeploymentFileName = 'agc-worker-deployment.yaml';
+
+      let deploySuccess = () => {
+        successMessage(
+          `The '${appName}' app was deployed successfully - You should be able to access it online ` +
+          `once it has finished booting up. This can take a while depending on your platform.`
+        );
+        process.exit();
+      };
+
+      if (isUpdate) {
+        try {
+          execSync(`kubectl replace -f ${kubernetesDirPath}/${agcWorkerDeploymentFileName}`, {stdio: 'inherit'});
+        } catch (err) {}
+
+        deploySuccess();
+      } else {
+        let kubeFiles = fs.readdirSync(kubernetesDirPath);
+        let serviceAndDeploymentKubeFiles = kubeFiles.filter((configFilePath) => {
+          return configFilePath != ingressKubeFileName;
+        });
+        let deploymentRegex = /\-deployment\.yaml/;
+        let scalableDeploymentsKubeFiles = kubeFiles.filter((configFilePath) => {
+          return deploymentRegex.test(configFilePath) && configFilePath != 'agc-state-deployment.yaml';
+        });
+        serviceAndDeploymentKubeFiles.forEach((configFilePath) => {
+          let absolutePath = path.resolve(kubernetesDirPath, configFilePath);
+          execSync(`kubectl create -f ${absolutePath}`, {stdio: 'inherit'});
+        });
+
+        // Wait a few seconds before deploying ingress (due to a bug in some environments).
+        setTimeout(() => {
+          try {
+            execSync(`kubectl create -f ${kubernetesDirPath}/${ingressKubeFileName}`, {stdio: 'inherit'});
+            deploySuccess();
+          } catch (err) {
+            failedToDeploy(err);
+          }
+        }, 7000);
+      }
+    } catch (err) {
+      failedToDeploy(err);
+    }
+  };
+
+  let handleDockerVersionTagAndPushToDockerImageRepo = function (versionTag) {
+    let dockerConfig = asyngularK8sConfig.docker;
+
+    if (dockerConfig.auth) {
+      let authParts = Buffer.from(dockerConfig.auth, 'base64').toString('utf8').split(':');
+      dockerUsername = authParts[0];
+      dockerPassword = authParts[1];
+      performDeployment(dockerConfig, versionTag, dockerUsername, dockerPassword);
+    } else {
+      promptDockerAuthDetails((username, password) => {
+        performDeployment(dockerConfig, versionTag, username, password);
+      });
+    }
+  };
+
+  let incrementVersion = function (versionString) {
+    return versionString.replace(/[^.]$/, (match) => {
+      return parseInt(match) + 1;
+    });
+  };
+
+  let pushToDockerImageRepo = function () {
+    let versionTagString = parseVersionTag(asyngularK8sConfig.docker.imageName).replace(/^:/, '');
+    let nextVersionTag;
+    if (versionTagString) {
+      if (isUpdate) {
+        nextVersionTag = incrementVersion(versionTagString);
+        asyngularK8sConfig.docker.imageName = setImageVersionTag(asyngularK8sConfig.docker.imageName, nextVersionTag);
+      } else {
+        nextVersionTag = versionTagString;
+      }
+    } else {
+      nextVersionTag = '""';
+    }
+
+    promptInput(`Enter the Docker version tag for this deployment (Default: ${nextVersionTag}):`, handleDockerVersionTagAndPushToDockerImageRepo);
+  };
+
+  if (asyngularK8sConfig.docker && asyngularK8sConfig.docker.imageRepo) {
+    pushToDockerImageRepo();
+  } else {
+    let dockerImageName, dockerDefaultImageName, dockerDefaultImageVersionTag;
+
+    let saveAsyngularK8sConfigs = function () {
+      asyngularK8sConfig.docker = {
+        imageRepo: 'https://index.docker.io/v1/',
+        imageName: dockerImageName
+      };
+      if (saveDockerAuthDetails) {
+        addAuthDetailsToAsyngularK8s(asyngularK8sConfig, dockerUsername, dockerPassword);
+      }
+      try {
+        saveAsyngularK8sConfigFile(asyngularK8sConfig);
+      } catch (err) {
+        failedToDeploy(err);
+      }
+      pushToDockerImageRepo();
+    };
+
+    let handleDockerImageName = function (imageName) {
+      if (imageName) {
+        dockerImageName = imageName;
+      } else {
+        dockerImageName = setImageVersionTag(dockerDefaultImageName, dockerDefaultImageVersionTag);
+      }
+      saveAsyngularK8sConfigs();
+    };
+
+    let promptDockerImageName = function () {
+      dockerDefaultImageName = `${dockerUsername}/${appName}`;
+      dockerDefaultImageVersionTag = 'v1.0.0';
+
+      promptInput(`Enter the Docker image name without the version tag (Or press enter for default: ${dockerDefaultImageName}):`, handleDockerImageName);
+    };
+
+    promptDockerTLSCredentials(() => {
+      promptDockerAuthDetails(promptDockerImageName);
+    });
+  }
+} else if (command === 'undeploy') {
+  let appPath = arg1 || '.';
+
+  let pkg = parsePackageFile(appPath);
+  let appName = pkg.name;
+
+  let kubernetesDirPath = appPath + '/kubernetes';
+  let kubeFiles = fs.readdirSync(kubernetesDirPath);
+  kubeFiles.forEach((configFilePath) => {
+    let absolutePath = path.resolve(kubernetesDirPath, configFilePath);
+    try {
+      execSync(`kubectl delete -f ${absolutePath}`, {stdio: 'inherit'});
+    } catch (err) {}
+  });
+
+  successMessage(`The '${appName}' app was undeployed successfully.`);
+
+  process.exit();
 } else {
   errorMessage(`"${command}" is not a valid Asyngular command.`);
   showCorrectUsage();
