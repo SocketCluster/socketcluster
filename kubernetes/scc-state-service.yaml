@@ -7,5 +7,6 @@ spec:
   selector:
     component: scc-state
   ports:
-    - port: 7777
+    -
+      port: 7777
       targetPort: 7777

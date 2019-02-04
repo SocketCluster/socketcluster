@@ -8,7 +8,8 @@ spec:
   # Note that raw (unencrypted) WebSockets may not work if you are behind a corporate proxy so
   # it is advised that you provide a cert for production and access the SCC service via https:// and wss://
   tls:
-    - secretName: scc-tls-credentials
+    -
+      secretName: scc-tls-credentials
   backend:
     serviceName: socketcluster
     servicePort: 8000

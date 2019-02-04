@@ -3,9 +3,10 @@ kind: Service
 metadata:
   name: socketcluster
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     component: socketcluster
   ports:
-    - port: 8000
+    -
+      port: 8000
       targetPort: 8000

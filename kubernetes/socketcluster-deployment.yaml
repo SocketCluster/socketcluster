@@ -13,36 +13,51 @@ spec:
         component: socketcluster
     spec:
       containers:
-      - name: socketcluster
-        image: socketcluster/socketcluster:v14.3.2
-        ports:
-        - containerPort: 8000
-        env:
-        - name: SCC_STATE_SERVER_HOST
-          value: scc-state
-        - name: SOCKETCLUSTER_WORKERS
-          value: "1"
-        - name: SOCKETCLUSTER_BROKERS
-          value: "1"
-        - name: SCC_INSTANCE_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        - name: ENV
-          value: prod
-        livenessProbe:
-          httpGet:
-            path: /health-check
-            port: 8000
-          initialDelaySeconds: 30
-          timeoutSeconds: 5
+        -
+          name: socketcluster
+          image: 'socketcluster/socketcluster:v14.3.2'
+          ports:
+            -
+              containerPort: 8000
+          env:
+            -
+              name: SCC_STATE_SERVER_HOST
+              value: scc-state
+            -
+              name: SOCKETCLUSTER_WORKERS
+              value: '1'
+            -
+              name: SOCKETCLUSTER_BROKERS
+              value: '1'
+            -
+              name: SCC_INSTANCE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            -
+              name: ENV
+              value: prod
+          readinessProbe:
+            httpGet:
+              path: /health-check
+              port: 8000
+            initialDelaySeconds: 5
+            timeoutSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health-check
+              port: 8000
+            initialDelaySeconds: 15
+            timeoutSeconds: 20
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - socketcluster
-            topologyKey: "kubernetes.io/hostname"
+            -
+              labelSelector:
+                matchExpressions:
+                  -
+                    key: app
+                    operator: In
+                    values:
+                      - socketcluster
+              topologyKey: kubernetes.io/hostname
