@@ -9,7 +9,7 @@ spec:
   # If you do not want to serve AGC over TLS, you can remove or comment out the
   # kubernetes.io/ingress.allow-http annotation above and the tls section below.
   # Note that raw (unencrypted) WebSockets may not work if you are behind a corporate proxy so
-  # it is advised that you provide a cert for production and access the SCC service via https:// and wss://
+  # it is advised that you provide a cert for production and access the AGC service via https:// and wss://
   tls:
     -
       secretName: agc-tls-credentials
