@@ -1,13 +1,16 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: scc-broker
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      component: scc-broker
   template:
     metadata:
       labels:
-        app: scc-broker
+        component: scc-broker
     spec:
       containers:
       - name: scc-broker

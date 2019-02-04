@@ -1,13 +1,16 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: socketcluster
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      component: socketcluster
   template:
     metadata:
       labels:
-        app: socketcluster
+        component: socketcluster
     spec:
       containers:
       - name: socketcluster
