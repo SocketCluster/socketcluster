@@ -12,6 +12,8 @@ const spawn = childProcess.spawn;
 const fork = childProcess.fork;
 const YAML = require('yamljs');
 
+const DEFAULT_TLS_SECRET_NAME = 'agc-tls-credentials';
+
 let command = argv._[0];
 let commandRawArgs = process.argv.slice(3);
 let commandRawArgsString = commandRawArgs.join(' ');
@@ -76,6 +78,10 @@ let showCorrectUsage = function () {
   console.log('  deploy <app-path>           [requires kubectl] Deploy app at path to your Kubernetes cluster');
   console.log('  deploy-update <app-path>    [requires kubectl] Deploy update to app which was previously deployed');
   console.log('  undeploy <app-path>         [requires kubectl] Shutdown all core app services running on your cluster');
+  console.log('  upload-secret               [requires kubectl] Upload a TLS key and cert pair to your cluster');
+  console.log(`    -n                        Optional secret name; defaults to "${DEFAULT_TLS_SECRET_NAME}"`);
+  console.log('    -k                        Path to a key file');
+  console.log('    -c                        Path to a certificate file');
   console.log('');
   let extraMessage = 'Note that the app-name/app-path in the commands above is optional (except for create) - If not provided, ' +
     'asyngular will use the current working directory as the app path.';
@@ -242,6 +248,50 @@ let getAGCWorkerDeploymentDefPath = function (kubernetesTargetDir) {
 
 var getAGCBrokerDeploymentDefPath = function (kubernetesTargetDir) {
   return `${kubernetesTargetDir}/agc-broker-deployment.yaml`;
+};
+
+let promptSecret = function (callback) {
+  promptInput(`Insert a TLS secretName for Kubernetes (or press enter to leave it as "${DEFAULT_TLS_SECRET_NAME}" - Recommended):`, (secretName) => {
+    secretName = secretName || DEFAULT_TLS_SECRET_NAME;
+    promptInput('Insert the path to a private key file to upload to K8s (or press enter to cancel):', (privateKeyPath) => {
+      if (!privateKeyPath) {
+        callback();
+        return;
+      }
+      promptInput('Insert the path to a certificate file to upload to K8s (or press enter to cancel):', (certFilePath) => {
+        if (!certFilePath) {
+          callback();
+          return;
+        }
+        tlsSecretName = secretName;
+        tlsKeyPath = privateKeyPath;
+        tlsCertPath = certFilePath;
+        callback(secretName, privateKeyPath, certFilePath);
+      });
+    });
+  });
+};
+
+let promptK8sTLSCredentials = function (callback) {
+  promptConfirm('Would you like to upload a TLS private key and certificate to your cluster? (both must be unencrypted)', {default: true}, (provideKeyAndCert) => {
+    if (provideKeyAndCert) {
+      promptSecret(callback);
+    } else {
+      callback();
+    }
+  });
+};
+
+let uploadTLSSecret = function (secretName, privateKeyPath, certFilePath) {
+  try {
+    execSync(`kubectl create secret tls ${secretName} --key ${privateKeyPath} --cert ${certFilePath}`, {stdio: 'inherit'});
+  } catch (err) {
+    warningMessage(
+      'Failed to upload TLS key and certificate pair to Kubernetes. ' +
+      'You can try using the following command to upload them manually (replace the key and cert paths with your own): ' +
+      `kubectl create secret tls ${secretName} --key ./mykey.key --cert ./mycert.crt`
+    );
+  }
 };
 
 if (command === 'create') {
@@ -509,46 +559,6 @@ if (command === 'create') {
     promptUsername();
   };
 
-  let promptDockerTLSCredentials = function (callback) {
-    promptConfirm('Would you like to upload a TLS private key and certificate to your cluster? (both must be unencrypted)', {default: true}, (provideKeyAndCert) => {
-      if (provideKeyAndCert) {
-        promptInput('Insert a TLS secretName for Kubernetes (or press enter to leave it as "agc-tls-credentials" - Recommended):', (secretName) => {
-          secretName = secretName || 'agc-tls-credentials';
-          promptInput('Insert the path to a private key file to upload to K8s (or press enter to cancel):', (privateKeyPath) => {
-            if (!privateKeyPath) {
-              callback();
-              return;
-            }
-            promptInput('Insert the path to a certificate file to upload to K8s (or press enter to cancel):', (certFilePath) => {
-              if (!certFilePath) {
-                callback();
-                return;
-              }
-              tlsSecretName = secretName;
-              tlsKeyPath = privateKeyPath;
-              tlsCertPath = certFilePath;
-              callback();
-            });
-          });
-        });
-      } else {
-        callback();
-      }
-    });
-  };
-
-  let uploadTLSSecret = function (secretName, privateKeyPath, certFilePath) {
-    try {
-      execSync(`kubectl create secret tls ${secretName} --key ${privateKeyPath} --cert ${certFilePath}`, {stdio: 'inherit'});
-    } catch (err) {
-      warningMessage(
-        'Failed to upload TLS key and certificate pair to Kubernetes. ' +
-        'You can try using the following command to upload them manually (replace the key and cert paths with your own): ' +
-        'kubectl create secret tls agc-tls-credentials --key ./mykey.key --cert ./mycert.crt'
-      );
-    }
-  };
-
   let performDeployment = function (dockerConfig, versionTag, username, password) {
     let dockerLoginCommand = `docker login -u ${username} -p ${password}`;
 
@@ -720,7 +730,7 @@ if (command === 'create') {
       promptInput(`Enter the Docker image name without the version tag (Or press enter for default: ${dockerDefaultImageName}):`, handleDockerImageName);
     };
 
-    promptDockerTLSCredentials(() => {
+    promptK8sTLSCredentials(() => {
       promptDockerAuthDetails(promptDockerImageName);
     });
   }
@@ -742,6 +752,18 @@ if (command === 'create') {
   successMessage(`The '${appName}' app was undeployed successfully.`);
 
   process.exit();
+} else if (command === 'upload-secret') {
+  let secretName = argv.n || DEFAULT_TLS_SECRET_NAME;
+  let privateKeyPath = argv.k;
+  let certFilePath = argv.c;
+
+  if (privateKeyPath == null || certFilePath == null) {
+    errorMessage(`Failed to upload secret. Both a key file path (-k) and a certificate file path (-c) must be provided.`);
+    process.exit();
+  } else {
+    uploadTLSSecret(secretName, privateKeyPath, certFilePath);
+    successMessage(`The specified private key and cert pair were uploaded successfully under the secret name "${secretName}".`);
+  }
 } else {
   errorMessage(`"${command}" is not a valid Asyngular command.`);
   showCorrectUsage();
