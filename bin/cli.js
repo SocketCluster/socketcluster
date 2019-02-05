@@ -69,7 +69,7 @@ let showCorrectUsage = function () {
   console.log();
   console.log('Commands:');
   console.log('  create <appname>            Create a new boilerplate app in your working directory');
-  console.log('  run <path>                  [requires docker] Run the app at path inside container on your local machine');
+  console.log('  run <path>                  [requires docker] Run the app at path inside a container on your local machine');
   console.log('  restart <app-path-or-name>  [requires docker] Restart the app at path');
   console.log('  stop <app-path-or-name>     [requires docker] Stop the app');
   console.log('  list                        [requires docker] List all running Docker containers on your local machine');
