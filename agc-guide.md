@@ -12,13 +12,13 @@ AGC is made up of the following services:
 
 ## How it works
 
-The **asyngular** service can be made up of any number of regular Asyngular instances - The main difference between running **asyngular** as a single instance vs running it as a cluster is that in cluster mode, you need to point each **asyngular** instance to a working `agc-state` (state server) instance.
+The **agc-worker** service can be made up of any number of regular Asyngular instances - The main difference between running Asyngular as a single instance vs running it as a cluster is that in cluster mode, you need to point each **agc-worker** instance to a working `agc-state` (state server) instance.
 
 The **agc-broker** service can be made up of any number of **agc-broker** instances - This is a special backend-only service which is designed to broker
-messages between multiple frontend-facing **asyngular** instances. All the pub/sub channels in your entire system will be sharded evenly across available **agc-broker** instances.
-Just like with the **asyngular** instances above, each **agc-broker** instance needs to point to a state server in order to work.
+messages between multiple frontend-facing **agc-worker** instances. All the pub/sub channels in your entire system will be sharded evenly across available **agc-broker** instances.
+Just like with the **agc-worker** instances above, each **agc-broker** instance needs to point to a state server in order to work.
 
-The **agc-state** service is made up of a single instance - Its job is to dispatch the state of the cluster to all interested services to allow them to reshard themselves. The **agc-state** instance will notify all frontend **asyngular** instances whenever a new backend **agc-broker** joins the cluster. This allows **asyngular** instances to rebalance their pub/sub channels evenly across available brokers whenever a new **agc-broker** instance joins the cluster.
+The **agc-state** service is made up of a single instance - Its job is to dispatch the state of the cluster to all interested services to allow them to reshard themselves. The **agc-state** instance will notify all frontend **agc-worker** instances whenever a new backend **agc-broker** joins the cluster. This allows **agc-worker** instances to rebalance their pub/sub channels evenly across available brokers whenever a new **agc-broker** instance joins the cluster.
 Note that AGC can continue to operate without any disruption of service while the **agc-state** instance is down/unavailable (see notes at the bottom of this page).
 
 ## Running on Kubernetes (recommended)
@@ -77,7 +77,7 @@ You can add a second frontend-facing server by running (this time running on por
 ```
 AGC_STATE_SERVER_HOST='127.0.0.1' ASYNGULAR_PORT='8001' node server
 ```
-Now if you navigate to either `localhost:8000` or `localhost:8001` in your browser, you should see that your pub/sub channels are shared between the two **asyngular** instances.
+Now if you navigate to either `localhost:8000` or `localhost:8001` in your browser, you should see that your pub/sub channels are shared between the two **agc-worker** instances.
 
 Note that you can provide additional environment variables to various instances to set custom port numbers, passwords etc...
 For more info, you can look inside the code in the `server.js` file in each repo and see what `process.env` vars are used.
@@ -99,5 +99,3 @@ Nevertheless, it is recommended that you run the **agc-state** instance inside y
 The **agc-state** instance does not handle any pub/sub messages and so it is not a bottleneck with regards to the scalability of your cluster (AGC scales linearly).
 
 Note that you can launch the services in any order you like but if your state server is not available, you may get harmless `Socket hung up` warnings on other instances (while they keep trying to reconnect) until **agc-state** becomes available again.
-
-The **asyngular** deployment in https://github.com/SocketCluster/asyngular/tree/master/kubernetes uses podAntiAffinity rule to ensure only one asyngular instance is scheduled for any given kubernetes node. This may be preferred, since we want to run on as many cores as possible.
