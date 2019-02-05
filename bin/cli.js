@@ -78,10 +78,12 @@ let showCorrectUsage = function () {
   console.log('  deploy <app-path>           [requires kubectl] Deploy app at path to your Kubernetes cluster');
   console.log('  deploy-update <app-path>    [requires kubectl] Deploy update to app which was previously deployed');
   console.log('  undeploy <app-path>         [requires kubectl] Shutdown all core app services running on your cluster');
-  console.log('  upload-secret               [requires kubectl] Upload a TLS key and cert pair to your cluster');
-  console.log(`    -n                        Optional secret name; defaults to "${DEFAULT_TLS_SECRET_NAME}"`);
+  console.log('  add-secret                  [requires kubectl] Upload a TLS key and cert pair to your cluster');
+  console.log(`    -s                        Optional secret name; defaults to "${DEFAULT_TLS_SECRET_NAME}"`);
   console.log('    -k                        Path to a key file');
   console.log('    -c                        Path to a certificate file');
+  console.log('  remove-secret               [requires kubectl] Remove a TLS key and cert pair from your cluster');
+  console.log(`    -s                        Optional secret name; defaults to "${DEFAULT_TLS_SECRET_NAME}"`);
   console.log('');
   let extraMessage = 'Note that the app-name/app-path in the commands above is optional (except for create) - If not provided, ' +
     'asyngular will use the current working directory as the app path.';
@@ -282,16 +284,32 @@ let promptK8sTLSCredentials = function (callback) {
   });
 };
 
-let uploadTLSSecret = function (secretName, privateKeyPath, certFilePath) {
+let uploadTLSSecret = function (secretName, privateKeyPath, certFilePath, errorLogger) {
   try {
     execSync(`kubectl create secret tls ${secretName} --key ${privateKeyPath} --cert ${certFilePath}`, {stdio: 'inherit'});
   } catch (err) {
-    warningMessage(
+    errorLogger(
       'Failed to upload TLS key and certificate pair to Kubernetes. ' +
-      'You can try using the following command to upload them manually (replace the key and cert paths with your own): ' +
-      `kubectl create secret tls ${secretName} --key ./mykey.key --cert ./mycert.crt`
+      'You can try using the following command to upload them manually: ' +
+      `kubectl create secret tls ${secretName} --key ${privateKeyPath} --cert ${certFilePath}`
     );
+    return false;
   }
+  return true;
+};
+
+let removeTLSSecret = function (secretName, errorLogger) {
+  try {
+    execSync(`kubectl delete secret ${secretName}`, {stdio: 'inherit'});
+  } catch (err) {
+    errorLogger(
+      `Failed to remove TLS key and certificate pair "${secretName}" from Kubernetes. ` +
+      'You can try using the following command to remove them manually: ' +
+      `kubectl delete secret ${secretName}`
+    );
+    return false;
+  }
+  return true;
 };
 
 if (command === 'create') {
@@ -579,7 +597,7 @@ if (command === 'create') {
       execSync(`${dockerLoginCommand}; docker push ${dockerConfig.imageName}`, {stdio: 'inherit'});
 
       if (tlsSecretName && tlsKeyPath && tlsCertPath) {
-        uploadTLSSecret(tlsSecretName, tlsKeyPath, tlsCertPath);
+        uploadTLSSecret(tlsSecretName, tlsKeyPath, tlsCertPath, warningMessage);
       }
 
       let kubernetesDirPath = appPath + '/kubernetes';
@@ -752,18 +770,27 @@ if (command === 'create') {
   successMessage(`The '${appName}' app was undeployed successfully.`);
 
   process.exit();
-} else if (command === 'upload-secret') {
-  let secretName = argv.n || DEFAULT_TLS_SECRET_NAME;
+} else if (command === 'add-secret') {
+  let secretName = argv.s || DEFAULT_TLS_SECRET_NAME;
   let privateKeyPath = argv.k;
   let certFilePath = argv.c;
 
   if (privateKeyPath == null || certFilePath == null) {
     errorMessage(`Failed to upload secret. Both a key file path (-k) and a certificate file path (-c) must be provided.`);
-    process.exit();
   } else {
-    uploadTLSSecret(secretName, privateKeyPath, certFilePath);
-    successMessage(`The specified private key and cert pair were uploaded successfully under the secret name "${secretName}".`);
+    let success = uploadTLSSecret(secretName, privateKeyPath, certFilePath, errorMessage);
+    if (success) {
+      successMessage(`The private key and cert pair were added to your cluster under the secret name "${secretName}".`);
+    }
   }
+  process.exit();
+} else if (command === 'remove-secret') {
+  let secretName = argv.s || DEFAULT_TLS_SECRET_NAME;
+  let success = removeTLSSecret(secretName, errorMessage);
+  if (success) {
+    successMessage(`The private key and cert pair under the secret name "${secretName}" were removed from your cluster.`);
+  }
+  process.exit();
 } else {
   errorMessage(`"${command}" is not a valid Asyngular command.`);
   showCorrectUsage();
