@@ -24,6 +24,13 @@ if (commandRawArgsString.length) {
 let arg1 = argv._[1];
 let force = argv.force ? true : false;
 
+let dockerUsername, dockerPassword;
+let saveDockerAuthDetails = null;
+
+let tlsSecretName = null;
+let tlsKeyPath = null;
+let tlsCertPath = null;
+
 let fileExistsSync = function (filePath) {
   try {
     fs.accessSync(filePath, fs.constants.F_OK);
@@ -491,13 +498,6 @@ if (command === 'create') {
   let absoluteAppPath = path.resolve(appPath);
   let pkg = parsePackageFile(appPath);
   let appName = pkg.name;
-
-  let dockerUsername, dockerPassword;
-  let saveDockerAuthDetails = null;
-
-  let tlsSecretName = null;
-  let tlsKeyPath = null;
-  let tlsCertPath = null;
 
   let isUpdate = (command === 'deploy-update');
 
