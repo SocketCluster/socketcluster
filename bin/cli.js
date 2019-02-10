@@ -123,8 +123,8 @@ let promptInput = function (message, callback, secret) {
   });
 };
 
-var promptConfirm = function (message, options, callback) {
-  var promptOptions = {
+let promptConfirm = function (message, options, callback) {
+  let promptOptions = {
     type: 'confirm',
     message: message,
     name: 'result'
@@ -162,7 +162,7 @@ let rmdirRecursive = function (dirname) {
   return false;
 };
 
-var sanitizeYAML = function (yamlString) {
+let sanitizeYAML = function (yamlString) {
   return yamlString.replace(/emptyDir: ?(null)?\n/g, 'emptyDir: {}\n');
 };
 
@@ -255,7 +255,7 @@ let getAGCWorkerDeploymentDefPath = function (kubernetesTargetDir) {
   return `${kubernetesTargetDir}/agc-worker-deployment.yaml`;
 };
 
-var getAGCBrokerDeploymentDefPath = function (kubernetesTargetDir) {
+let getAGCBrokerDeploymentDefPath = function (kubernetesTargetDir) {
   return `${kubernetesTargetDir}/agc-broker-deployment.yaml`;
 };
 
