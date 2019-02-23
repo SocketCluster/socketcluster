@@ -15,7 +15,7 @@ spec:
       containers:
         -
           name: agc-state
-          image: 'socketcluster/agc-state:v5.0.0'
+          image: 'socketcluster/agc-state:v5.1.0'
           ports:
             -
               name: agc-state
