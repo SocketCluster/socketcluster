@@ -15,7 +15,7 @@ spec:
       containers:
         -
           name: agc-broker
-          image: 'socketcluster/agc-broker:v5.1.0'
+          image: 'socketcluster/agc-broker:v5.2.0'
           ports:
             -
               name: agc-broker
