@@ -1,5 +1,5 @@
 /**
- * Asyngular JavaScript client v5.2.2
+ * Asyngular JavaScript client v5.3.0
  */
  (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.asyngularClient = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 (function (global){
@@ -1156,12 +1156,11 @@ AGClientSocket.prototype.subscribe = function (channelName, options) {
     channel.options = sanitizedOptions;
   }
 
-  let channelDataStream = this._channelDataDemux.stream(channelName);
   let channelIterable = new AGChannel(
     channelName,
     this,
     this._channelEventDemux,
-    channelDataStream
+    this._channelDataDemux
   );
 
   return channelIterable;
@@ -1335,72 +1334,117 @@ AGClientSocket.prototype.hasAnyProcedureConsumer = function (consumerId) {
   return this._procedureDemux.hasConsumerAll(consumerId);
 };
 
-// Channel logic
+// ---- Channel logic ----
 
 AGClientSocket.prototype.channel = function (channelName) {
   let currentChannel = this._channelMap[channelName];
 
-  let channelDataStream = this._channelDataDemux.stream(channelName);
   let channelIterable = new AGChannel(
     channelName,
     this,
     this._channelEventDemux,
-    channelDataStream
+    this._channelDataDemux
   );
 
   return channelIterable;
 };
 
 AGClientSocket.prototype.closeChannel = function (channelName) {
-  this._channelDataDemux.close(channelName);
+  this.channelCloseOutput(channelName);
+  this.channelCloseAllListeners(channelName);
 };
 
-AGClientSocket.prototype.closeAllChannels = function () {
+AGClientSocket.prototype.closeAllChannelOutputs = function () {
   this._channelDataDemux.closeAll();
 };
 
-AGClientSocket.prototype.killChannel = function (channelName) {
-  this._channelDataDemux.kill(channelName);
+AGClientSocket.prototype.closeAllChannelListeners = function () {
+  this._channelEventDemux.closeAll();
 };
 
-AGClientSocket.prototype.killAllChannels = function () {
+AGClientSocket.prototype.closeAllChannels = function () {
+  this.closeAllChannelOutputs();
+  this.closeAllChannelListeners();
+};
+
+AGClientSocket.prototype.killChannel = function (channelName) {
+  this.channelKillOutput(channelName);
+  this.channelKillAllListeners(channelName);
+};
+
+AGClientSocket.prototype.killAllChannelOutputs = function () {
   this._channelDataDemux.killAll();
 };
 
-AGClientSocket.prototype.killChannelConsumer = function (consumerId) {
+AGClientSocket.prototype.killAllChannelListeners = function () {
+  this._channelEventDemux.killAll();
+};
+
+AGClientSocket.prototype.killAllChannels = function () {
+  this.killAllChannelOutputs();
+  this.killAllChannelListeners();
+};
+
+AGClientSocket.prototype.killChannelOutputConsumer = function (consumerId) {
   this._channelDataDemux.killConsumer(consumerId);
 };
 
-AGClientSocket.prototype.getChannelConsumerStats = function (consumerId) {
+AGClientSocket.prototype.killChannelListenerConsumer = function (consumerId) {
+  this._channelEventDemux.killConsumer(consumerId);
+};
+
+AGClientSocket.prototype.getChannelOutputConsumerStats = function (consumerId) {
   return this._channelDataDemux.getConsumerStats(consumerId);
 };
 
-AGClientSocket.prototype.getChannelConsumerStatsList = function (channelName) {
-  return this._channelDataDemux.getConsumerStatsList(channelName);
+AGClientSocket.prototype.getChannelListenerConsumerStats = function (consumerId) {
+  return this._channelEventDemux.getConsumerStats(consumerId);
 };
 
-AGClientSocket.prototype.getAllChannelsConsumerStatsList = function () {
+AGClientSocket.prototype.getAllChannelOutputsConsumerStatsList = function () {
   return this._channelDataDemux.getConsumerStatsListAll();
 };
 
-AGClientSocket.prototype.getChannelBackpressure = function (channelName) {
-  return this._channelDataDemux.getBackpressure(channelName);
+AGClientSocket.prototype.getAllChannelListenersConsumerStatsList = function () {
+  return this._channelEventDemux.getConsumerStatsListAll();
 };
 
-AGClientSocket.prototype.getAllChannelsBackpressure = function () {
+AGClientSocket.prototype.getChannelBackpressure = function (channelName) {
+  return Math.max(
+    this.channelGetOutputBackpressure(channelName),
+    this.channelGetAllListenersBackpressure(channelName)
+  );
+};
+
+AGClientSocket.prototype.getAllChannelOutputsBackpressure = function () {
   return this._channelDataDemux.getBackpressureAll();
 };
 
-AGClientSocket.prototype.getChannelConsumerBackpressure = function (consumerId) {
+AGClientSocket.prototype.getAllChannelListenersBackpressure = function () {
+  return this._channelEventDemux.getBackpressureAll();
+};
+
+AGClientSocket.prototype.getAllChannelsBackpressure = function () {
+  return Math.max(
+    this.getAllChannelOutputsBackpressure(),
+    this.getAllChannelListenersBackpressure()
+  );
+};
+
+AGClientSocket.prototype.getChannelListenerConsumerBackpressure = function (consumerId) {
+  return this._channelEventDemux.getConsumerBackpressure(consumerId);
+};
+
+AGClientSocket.prototype.getChannelOutputConsumerBackpressure = function (consumerId) {
   return this._channelDataDemux.getConsumerBackpressure(consumerId);
 };
 
-AGClientSocket.prototype.hasChannelConsumer = function (channelName, consumerId) {
-  return this._channelDataDemux.hasConsumer(channelName, consumerId);
+AGClientSocket.prototype.hasAnyChannelOutputConsumer = function (consumerId) {
+  return this._channelDataDemux.hasConsumerAll(consumerId);
 };
 
-AGClientSocket.prototype.hasAnyChannelConsumer = function (consumerId) {
-  return this._channelDataDemux.hasConsumerAll(consumerId);
+AGClientSocket.prototype.hasAnyChannelListenerConsumer = function (consumerId) {
+  return this._channelEventDemux.hasConsumerAll(consumerId);
 };
 
 AGClientSocket.prototype.getChannelState = function (channelName) {
@@ -1417,6 +1461,100 @@ AGClientSocket.prototype.getChannelOptions = function (channelName) {
     return {...channel.options};
   }
   return {};
+};
+
+AGClientSocket.prototype._getAllChannelStreamNames = function (channelName) {
+  let streamNamesLookup = this._channelEventDemux.getConsumerStatsListAll()
+  .filter((stats) => {
+    return stats.stream.indexOf(`${channelName}/`) === 0;
+  })
+  .reduce((accumulator, stats) => {
+    accumulator[stats.stream] = true;
+    return accumulator;
+  }, {});
+  return Object.keys(streamNamesLookup);
+};
+
+AGClientSocket.prototype.channelCloseOutput = function (channelName) {
+  this._channelDataDemux.close(channelName);
+};
+
+AGClientSocket.prototype.channelCloseListener = function (channelName, eventName) {
+  this._channelEventDemux.close(`${channelName}/${eventName}`);
+};
+
+AGClientSocket.prototype.channelCloseAllListeners = function (channelName) {
+  let listenerStreams = this._getAllChannelStreamNames(channelName)
+  .forEach((streamName) => {
+    this._channelEventDemux.close(streamName);
+  });
+};
+
+AGClientSocket.prototype.channelKillOutput = function (channelName) {
+  this._channelDataDemux.kill(channelName);
+};
+
+AGClientSocket.prototype.channelKillListener = function (channelName, eventName) {
+  this._channelEventDemux.kill(`${channelName}/${eventName}`);
+};
+
+AGClientSocket.prototype.channelKillAllListeners = function (channelName) {
+  let listenerStreams = this._getAllChannelStreamNames(channelName)
+  .forEach((streamName) => {
+    this._channelEventDemux.kill(streamName);
+  });
+};
+
+AGClientSocket.prototype.channelGetOutputConsumerStatsList = function (channelName) {
+  return this._channelDataDemux.getConsumerStatsList(channelName);
+};
+
+AGClientSocket.prototype.channelGetListenerConsumerStatsList = function (channelName, eventName) {
+  return this._channelEventDemux.getConsumerStatsList(`${channelName}/${eventName}`);
+};
+
+AGClientSocket.prototype.channelGetAllListenersConsumerStatsList = function (channelName) {
+  return this._getAllChannelStreamNames(channelName)
+  .map((streamName) => {
+    return this._channelEventDemux.getConsumerStatsList(streamName);
+  })
+  .reduce((accumulator, statsList) => {
+    statsList.forEach((stats) => {
+      accumulator.push(stats);
+    });
+    return accumulator;
+  }, []);
+};
+
+AGClientSocket.prototype.channelGetOutputBackpressure = function (channelName) {
+  return this._channelDataDemux.getBackpressure(channelName);
+};
+
+AGClientSocket.prototype.channelGetListenerBackpressure = function (channelName, eventName) {
+  return this._channelEventDemux.getBackpressure(`${channelName}/${eventName}`);
+};
+
+AGClientSocket.prototype.channelGetAllListenersBackpressure = function (channelName) {
+  let listenerStreamBackpressures = this._getAllChannelStreamNames(channelName)
+  .map((streamName) => {
+    return this._channelEventDemux.getBackpressure(streamName);
+  });
+  return Math.max(...listenerStreamBackpressures.concat(0));
+};
+
+AGClientSocket.prototype.channelHasOutputConsumer = function (channelName, consumerId) {
+  return this._channelDataDemux.hasConsumer(channelName, consumerId);
+};
+
+AGClientSocket.prototype.channelHasListenerConsumer = function (channelName, eventName, consumerId) {
+  return this._channelEventDemux.hasConsumer(`${channelName}/${eventName}`, consumerId);
+};
+
+AGClientSocket.prototype.channelHasAnyListenerConsumer = function (channelName, consumerId) {
+  return this._getAllChannelStreamNames(channelName)
+  .some((streamName) => {
+    return this._channelEventDemux.hasConsumer(streamName, consumerId);
+  });
 };
 
 AGClientSocket.prototype.subscriptions = function (includePending) {
@@ -1468,7 +1606,7 @@ AGClientSocket.prototype.processPendingSubscriptions = function () {
 module.exports = AGClientSocket;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"./auth":1,"./transport":4,"./wait":5,"ag-channel":7,"async-stream-emitter":9,"base-64":10,"buffer":12,"linked-list":16,"lodash.clonedeep":17,"querystring":20,"sc-errors":22,"sc-formatter":23,"stream-demux":25}],3:[function(require,module,exports){
+},{"./auth":1,"./transport":4,"./wait":5,"ag-channel":7,"async-stream-emitter":9,"base-64":10,"buffer":12,"linked-list":16,"lodash.clonedeep":17,"querystring":20,"sc-errors":22,"sc-formatter":23,"stream-demux":31}],3:[function(require,module,exports){
 (function (global){
 const AGClientSocket = require('./clientsocket');
 const uuid = require('uuid');
@@ -1529,7 +1667,7 @@ module.exports = {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./clientsocket":2,"sc-errors":22,"uuid":26}],4:[function(require,module,exports){
+},{"./clientsocket":2,"sc-errors":22,"uuid":24}],4:[function(require,module,exports){
 (function (global){
 const AGRequest = require('ag-request');
 const querystring = require('querystring');
@@ -2014,7 +2152,7 @@ module.exports = WebSocket ? ws : null;
 const ConsumableStream = require('consumable-stream');
 
 class AGChannel extends ConsumableStream {
-  constructor(name, client, eventDemux, dataStream) {
+  constructor(name, client, eventDemux, dataDemux) {
     super();
     this.PENDING = AGChannel.PENDING;
     this.SUBSCRIBED = AGChannel.SUBSCRIBED;
@@ -2024,7 +2162,7 @@ class AGChannel extends ConsumableStream {
     this.client = client;
 
     this._eventDemux = eventDemux;
-    this._dataStream = dataStream;
+    this._dataStream = dataDemux.stream(this.name);
   }
 
   createConsumer(timeout) {
@@ -2036,11 +2174,63 @@ class AGChannel extends ConsumableStream {
   }
 
   closeListener(eventName) {
-    this._eventDemux.close(`${this.name}/${eventName}`);
+    this.client.closeChannelListener(this.name, eventName);
   }
 
   closeAllListeners() {
-    this._eventDemux.closeAll();
+    this.client.closeAllChannelListeners(this.name);
+  }
+
+  getDataBackpressure() {
+    return this.client.getChannelDataBackpressure(this.name);
+  }
+
+  getBackpressure() {
+    return this.client.getChannelBackpressure(this.name);
+  }
+
+  getListenerConsumerStats(consumerId) {
+    return this.client.getChannelListenerConsumerStats(consumerId);
+  }
+
+  getListenerConsumerStatsList(eventName) {
+    return this.client.getChannelListenerConsumerStatsList(this.name, eventName);
+  }
+
+  getAllListenersConsumerStatsList() {
+    return this.client.getAllChannelListenerConsumerStatsList(this.name);
+  }
+
+  killListener(eventName) {
+    this.client.killChannelListener(this.name, eventName);
+  }
+
+  killAllListeners() {
+    this.client.killAllChannelListeners(this.name);
+  }
+
+  killListenerConsumer(consumerId) {
+    this.client.killChannelListenerConsumer(consumerId);
+  }
+
+  getListenerBackpressure(eventName) {
+    return this.client.getChannelListenerBackpressure(this.name, eventName);
+  }
+
+  getAllListenersBackpressure() {
+    return this.client.getAllChannelListenersBackpressure(this.name);
+  }
+
+  getListenerConsumerBackpressure(consumerId) {
+    return this.client.getChannelListenerConsumerBackpressure(consumerId);
+  }
+
+  hasListenerConsumer(eventName, consumerId) {
+    return this.client.hasChannelListenerConsumer(this.name, eventName, consumerId);
+  }
+
+  hasAnyListenerConsumer(consumerId) {
+    return this.client.hasAnyChannelListenerConsumer(this.name, consumerId);
   }
 
   close() {
@@ -2199,7 +2389,7 @@ AsyncStreamEmitter.prototype.hasAnyListenerConsumer = function (consumerId) {
 
 module.exports = AsyncStreamEmitter;
 
-},{"stream-demux":25}],10:[function(require,module,exports){
+},{"stream-demux":31}],10:[function(require,module,exports){
 (function (global){
 /*! http://mths.be/base64 v0.1.0 by @mathias | MIT license */
 ;(function(root) {
@@ -7271,6 +7461,222 @@ module.exports.encode = function (object) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],24:[function(require,module,exports){
+var v1 = require('./v1');
+var v4 = require('./v4');
+
+var uuid = v4;
+uuid.v1 = v1;
+uuid.v4 = v4;
+
+module.exports = uuid;
+
+},{"./v1":27,"./v4":28}],25:[function(require,module,exports){
+/**
+ * Convert array of 16 byte values to UUID string format of the form:
+ * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+ */
+var byteToHex = [];
+for (var i = 0; i < 256; ++i) {
+  byteToHex[i] = (i + 0x100).toString(16).substr(1);
+}
+
+function bytesToUuid(buf, offset) {
+  var i = offset || 0;
+  var bth = byteToHex;
+  // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
+  return ([bth[buf[i++]], bth[buf[i++]], 
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]]]).join('');
+}
+
+module.exports = bytesToUuid;
+
+},{}],26:[function(require,module,exports){
+// Unique ID creation requires a high quality random # generator.  In the
+// browser this is a little complicated due to unknown quality of Math.random()
+// and inconsistent support for the `crypto` API.  We do the best we can via
+// feature-detection
+
+// getRandomValues needs to be invoked in a context where "this" is a Crypto
+// implementation. Also, find the complete implementation of crypto on IE11.
+var getRandomValues = (typeof(crypto) != 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto)) ||
+                      (typeof(msCrypto) != 'undefined' && typeof window.msCrypto.getRandomValues == 'function' && msCrypto.getRandomValues.bind(msCrypto));
+
+if (getRandomValues) {
+  // WHATWG crypto RNG - http://wiki.whatwg.org/wiki/Crypto
+  var rnds8 = new Uint8Array(16); // eslint-disable-line no-undef
+
+  module.exports = function whatwgRNG() {
+    getRandomValues(rnds8);
+    return rnds8;
+  };
+} else {
+  // Math.random()-based (RNG)
+  //
+  // If all else fails, use Math.random().  It's fast, but is of unspecified
+  // quality.
+  var rnds = new Array(16);
+
+  module.exports = function mathRNG() {
+    for (var i = 0, r; i < 16; i++) {
+      if ((i & 0x03) === 0) r = Math.random() * 0x100000000;
+      rnds[i] = r >>> ((i & 0x03) << 3) & 0xff;
+    }
+
+    return rnds;
+  };
+}
+
+},{}],27:[function(require,module,exports){
+var rng = require('./lib/rng');
+var bytesToUuid = require('./lib/bytesToUuid');
+
+// **`v1()` - Generate time-based UUID**
+//
+// Inspired by https://github.com/LiosK/UUID.js
+// and http://docs.python.org/library/uuid.html
+
+var _nodeId;
+var _clockseq;
+
+// Previous uuid creation time
+var _lastMSecs = 0;
+var _lastNSecs = 0;
+
+// See https://github.com/broofa/node-uuid for API details
+function v1(options, buf, offset) {
+  var i = buf && offset || 0;
+  var b = buf || [];
+
+  options = options || {};
+  var node = options.node || _nodeId;
+  var clockseq = options.clockseq !== undefined ? options.clockseq : _clockseq;
+
+  // node and clockseq need to be initialized to random values if they're not
+  // specified.  We do this lazily to minimize issues related to insufficient
+  // system entropy.  See #189
+  if (node == null || clockseq == null) {
+    var seedBytes = rng();
+    if (node == null) {
+      // Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
+      node = _nodeId = [
+        seedBytes[0] | 0x01,
+        seedBytes[1], seedBytes[2], seedBytes[3], seedBytes[4], seedBytes[5]
+      ];
+    }
+    if (clockseq == null) {
+      // Per 4.2.2, randomize (14 bit) clockseq
+      clockseq = _clockseq = (seedBytes[6] << 8 | seedBytes[7]) & 0x3fff;
+    }
+  }
+
+  // UUID timestamps are 100 nano-second units since the Gregorian epoch,
+  // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
+  // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
+  // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
+  var msecs = options.msecs !== undefined ? options.msecs : new Date().getTime();
+
+  // Per 4.2.1.2, use count of uuid's generated during the current clock
+  // cycle to simulate higher resolution clock
+  var nsecs = options.nsecs !== undefined ? options.nsecs : _lastNSecs + 1;
+
+  // Time since last uuid creation (in msecs)
+  var dt = (msecs - _lastMSecs) + (nsecs - _lastNSecs)/10000;
+
+  // Per 4.2.1.2, Bump clockseq on clock regression
+  if (dt < 0 && options.clockseq === undefined) {
+    clockseq = clockseq + 1 & 0x3fff;
+  }
+
+  // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
+  // time interval
+  if ((dt < 0 || msecs > _lastMSecs) && options.nsecs === undefined) {
+    nsecs = 0;
+  }
+
+  // Per 4.2.1.2 Throw error if too many uuids are requested
+  if (nsecs >= 10000) {
+    throw new Error('uuid.v1(): Can\'t create more than 10M uuids/sec');
+  }
+
+  _lastMSecs = msecs;
+  _lastNSecs = nsecs;
+  _clockseq = clockseq;
+
+  // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
+  msecs += 12219292800000;
+
+  // `time_low`
+  var tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
+  b[i++] = tl >>> 24 & 0xff;
+  b[i++] = tl >>> 16 & 0xff;
+  b[i++] = tl >>> 8 & 0xff;
+  b[i++] = tl & 0xff;
+
+  // `time_mid`
+  var tmh = (msecs / 0x100000000 * 10000) & 0xfffffff;
+  b[i++] = tmh >>> 8 & 0xff;
+  b[i++] = tmh & 0xff;
+
+  // `time_high_and_version`
+  b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
+  b[i++] = tmh >>> 16 & 0xff;
+
+  // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
+  b[i++] = clockseq >>> 8 | 0x80;
+
+  // `clock_seq_low`
+  b[i++] = clockseq & 0xff;
+
+  // `node`
+  for (var n = 0; n < 6; ++n) {
+    b[i + n] = node[n];
+  }
+
+  return buf ? buf : bytesToUuid(b);
+}
+
+module.exports = v1;
+
+},{"./lib/bytesToUuid":25,"./lib/rng":26}],28:[function(require,module,exports){
+var rng = require('./lib/rng');
+var bytesToUuid = require('./lib/bytesToUuid');
+
+function v4(options, buf, offset) {
+  var i = buf && offset || 0;
+
+  if (typeof(options) == 'string') {
+    buf = options === 'binary' ? new Array(16) : null;
+    options = null;
+  }
+  options = options || {};
+
+  var rnds = options.random || (options.rng || rng)();
+
+  // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
+  rnds[6] = (rnds[6] & 0x0f) | 0x40;
+  rnds[8] = (rnds[8] & 0x3f) | 0x80;
+
+  // Copy bytes to buffer, if provided
+  if (buf) {
+    for (var ii = 0; ii < 16; ++ii) {
+      buf[i + ii] = rnds[ii];
+    }
+  }
+
+  return buf || bytesToUuid(rnds);
+}
+
+module.exports = v4;
+
+},{"./lib/bytesToUuid":25,"./lib/rng":26}],29:[function(require,module,exports){
+arguments[4][13][0].apply(exports,arguments)
+},{"dup":13}],30:[function(require,module,exports){
 const ConsumableStream = require('consumable-stream');
 
 class DemuxedConsumableStream extends ConsumableStream {
@@ -7287,7 +7693,7 @@ class DemuxedConsumableStream extends ConsumableStream {
 
 module.exports = DemuxedConsumableStream;
 
-},{"consumable-stream":13}],25:[function(require,module,exports){
+},{"consumable-stream":32}],31:[function(require,module,exports){
 const WritableConsumableStream = require('writable-consumable-stream');
 const DemuxedConsumableStream = require('./demuxed-consumable-stream');
 
@@ -7414,6 +7820,9 @@ class StreamDemux {
             packet.value.stream === streamName ||
             packet.value.consumerId === this.id
           ) {
+            if (packet.value.data.done) {
+              this.return();
+            }
             return packet.value.data;
           }
         }
@@ -7474,221 +7883,9 @@ class StreamDemux {
 
 module.exports = StreamDemux;
 
-},{"./demuxed-consumable-stream":24,"writable-consumable-stream":32}],26:[function(require,module,exports){
-var v1 = require('./v1');
-var v4 = require('./v4');
-
-var uuid = v4;
-uuid.v1 = v1;
-uuid.v4 = v4;
-
-module.exports = uuid;
-
-},{"./v1":29,"./v4":30}],27:[function(require,module,exports){
-/**
- * Convert array of 16 byte values to UUID string format of the form:
- * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
- */
-var byteToHex = [];
-for (var i = 0; i < 256; ++i) {
-  byteToHex[i] = (i + 0x100).toString(16).substr(1);
-}
-
-function bytesToUuid(buf, offset) {
-  var i = offset || 0;
-  var bth = byteToHex;
-  // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
-  return ([bth[buf[i++]], bth[buf[i++]], 
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]],
-	bth[buf[i++]], bth[buf[i++]],
-	bth[buf[i++]], bth[buf[i++]]]).join('');
-}
-
-module.exports = bytesToUuid;
-
-},{}],28:[function(require,module,exports){
-// Unique ID creation requires a high quality random # generator.  In the
-// browser this is a little complicated due to unknown quality of Math.random()
-// and inconsistent support for the `crypto` API.  We do the best we can via
-// feature-detection
-
-// getRandomValues needs to be invoked in a context where "this" is a Crypto
-// implementation. Also, find the complete implementation of crypto on IE11.
-var getRandomValues = (typeof(crypto) != 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto)) ||
-                      (typeof(msCrypto) != 'undefined' && typeof window.msCrypto.getRandomValues == 'function' && msCrypto.getRandomValues.bind(msCrypto));
-
-if (getRandomValues) {
-  // WHATWG crypto RNG - http://wiki.whatwg.org/wiki/Crypto
-  var rnds8 = new Uint8Array(16); // eslint-disable-line no-undef
-
-  module.exports = function whatwgRNG() {
-    getRandomValues(rnds8);
-    return rnds8;
-  };
-} else {
-  // Math.random()-based (RNG)
-  //
-  // If all else fails, use Math.random().  It's fast, but is of unspecified
-  // quality.
-  var rnds = new Array(16);
-
-  module.exports = function mathRNG() {
-    for (var i = 0, r; i < 16; i++) {
-      if ((i & 0x03) === 0) r = Math.random() * 0x100000000;
-      rnds[i] = r >>> ((i & 0x03) << 3) & 0xff;
-    }
-
-    return rnds;
-  };
-}
-
-},{}],29:[function(require,module,exports){
-var rng = require('./lib/rng');
-var bytesToUuid = require('./lib/bytesToUuid');
-
-// **`v1()` - Generate time-based UUID**
-//
-// Inspired by https://github.com/LiosK/UUID.js
-// and http://docs.python.org/library/uuid.html
-
-var _nodeId;
-var _clockseq;
-
-// Previous uuid creation time
-var _lastMSecs = 0;
-var _lastNSecs = 0;
-
-// See https://github.com/broofa/node-uuid for API details
-function v1(options, buf, offset) {
-  var i = buf && offset || 0;
-  var b = buf || [];
-
-  options = options || {};
-  var node = options.node || _nodeId;
-  var clockseq = options.clockseq !== undefined ? options.clockseq : _clockseq;
-
-  // node and clockseq need to be initialized to random values if they're not
-  // specified.  We do this lazily to minimize issues related to insufficient
-  // system entropy.  See #189
-  if (node == null || clockseq == null) {
-    var seedBytes = rng();
-    if (node == null) {
-      // Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
-      node = _nodeId = [
-        seedBytes[0] | 0x01,
-        seedBytes[1], seedBytes[2], seedBytes[3], seedBytes[4], seedBytes[5]
-      ];
-    }
-    if (clockseq == null) {
-      // Per 4.2.2, randomize (14 bit) clockseq
-      clockseq = _clockseq = (seedBytes[6] << 8 | seedBytes[7]) & 0x3fff;
-    }
-  }
-
-  // UUID timestamps are 100 nano-second units since the Gregorian epoch,
-  // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
-  // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
-  // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
-  var msecs = options.msecs !== undefined ? options.msecs : new Date().getTime();
-
-  // Per 4.2.1.2, use count of uuid's generated during the current clock
-  // cycle to simulate higher resolution clock
-  var nsecs = options.nsecs !== undefined ? options.nsecs : _lastNSecs + 1;
-
-  // Time since last uuid creation (in msecs)
-  var dt = (msecs - _lastMSecs) + (nsecs - _lastNSecs)/10000;
-
-  // Per 4.2.1.2, Bump clockseq on clock regression
-  if (dt < 0 && options.clockseq === undefined) {
-    clockseq = clockseq + 1 & 0x3fff;
-  }
-
-  // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
-  // time interval
-  if ((dt < 0 || msecs > _lastMSecs) && options.nsecs === undefined) {
-    nsecs = 0;
-  }
-
-  // Per 4.2.1.2 Throw error if too many uuids are requested
-  if (nsecs >= 10000) {
-    throw new Error('uuid.v1(): Can\'t create more than 10M uuids/sec');
-  }
-
-  _lastMSecs = msecs;
-  _lastNSecs = nsecs;
-  _clockseq = clockseq;
-
-  // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
-  msecs += 12219292800000;
-
-  // `time_low`
-  var tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
-  b[i++] = tl >>> 24 & 0xff;
-  b[i++] = tl >>> 16 & 0xff;
-  b[i++] = tl >>> 8 & 0xff;
-  b[i++] = tl & 0xff;
-
-  // `time_mid`
-  var tmh = (msecs / 0x100000000 * 10000) & 0xfffffff;
-  b[i++] = tmh >>> 8 & 0xff;
-  b[i++] = tmh & 0xff;
-
-  // `time_high_and_version`
-  b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
-  b[i++] = tmh >>> 16 & 0xff;
-
-  // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
-  b[i++] = clockseq >>> 8 | 0x80;
-
-  // `clock_seq_low`
-  b[i++] = clockseq & 0xff;
-
-  // `node`
-  for (var n = 0; n < 6; ++n) {
-    b[i + n] = node[n];
-  }
-
-  return buf ? buf : bytesToUuid(b);
-}
-
-module.exports = v1;
-
-},{"./lib/bytesToUuid":27,"./lib/rng":28}],30:[function(require,module,exports){
-var rng = require('./lib/rng');
-var bytesToUuid = require('./lib/bytesToUuid');
-
-function v4(options, buf, offset) {
-  var i = buf && offset || 0;
-
-  if (typeof(options) == 'string') {
-    buf = options === 'binary' ? new Array(16) : null;
-    options = null;
-  }
-  options = options || {};
-
-  var rnds = options.random || (options.rng || rng)();
-
-  // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
-  rnds[6] = (rnds[6] & 0x0f) | 0x40;
-  rnds[8] = (rnds[8] & 0x3f) | 0x80;
-
-  // Copy bytes to buffer, if provided
-  if (buf) {
-    for (var ii = 0; ii < 16; ++ii) {
-      buf[i + ii] = rnds[ii];
-    }
-  }
-
-  return buf || bytesToUuid(rnds);
-}
-
-module.exports = v4;
-
-},{"./lib/bytesToUuid":27,"./lib/rng":28}],31:[function(require,module,exports){
+},{"./demuxed-consumable-stream":30,"writable-consumable-stream":34}],32:[function(require,module,exports){
+arguments[4][13][0].apply(exports,arguments)
+},{"dup":13}],33:[function(require,module,exports){
 class Consumer {
   constructor(stream, id, startNode, timeout) {
     this.id = id;
@@ -7837,7 +8034,7 @@ function wait(timeout) {
 
 module.exports = Consumer;
 
-},{}],32:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 const ConsumableStream = require('consumable-stream');
 const Consumer = require('./consumer');
 
@@ -7973,10 +8170,10 @@ class WritableConsumableStream extends ConsumableStream {
 
 module.exports = WritableConsumableStream;
 
-},{"./consumer":31,"consumable-stream":13}],"asyngular-client":[function(require,module,exports){
+},{"./consumer":33,"consumable-stream":29}],"asyngular-client":[function(require,module,exports){
 const AGClientSocket = require('./lib/clientsocket');
 const factory = require('./lib/factory');
-const version = '5.2.2';
+const version = '5.3.0';
 
 module.exports.factory = factory;
 module.exports.AGClientSocket = AGClientSocket;
