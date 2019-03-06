@@ -1,5 +1,5 @@
 /**
- * Asyngular JavaScript client v5.3.2
+ * Asyngular JavaScript client v5.3.3
  */
  (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.asyngularClient = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 (function (global){
@@ -61,7 +61,7 @@ module.exports = AuthEngine;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],2:[function(require,module,exports){
-(function (global,Buffer){
+(function (global){
 const StreamDemux = require('stream-demux');
 const AsyncStreamEmitter = require('async-stream-emitter');
 const AGChannel = require('ag-channel');
@@ -70,8 +70,8 @@ const formatter = require('sc-formatter');
 const AGTransport = require('./transport');
 const querystring = require('querystring');
 const LinkedList = require('linked-list');
-const base64 = require('base-64');
 const cloneDeep = require('lodash.clonedeep');
+const Buffer = require('buffer/').Buffer;
 const wait = require('./wait');
 
 const scErrors = require('sc-errors');
@@ -549,33 +549,11 @@ AGClientSocket.prototype._changeToAuthenticatedState = function (signedAuthToken
 };
 
 AGClientSocket.prototype.decodeBase64 = function (encodedString) {
-  let decodedString;
-  if (typeof Buffer === 'undefined') {
-    if (global.atob) {
-      decodedString = global.atob(encodedString);
-    } else {
-      decodedString = base64.decode(encodedString);
-    }
-  } else {
-    let buffer = Buffer.from(encodedString, 'base64');
-    decodedString = buffer.toString('utf8');
-  }
-  return decodedString;
+  return Buffer.from(encodedString, 'base64').toString('utf8');
 };
 
 AGClientSocket.prototype.encodeBase64 = function (decodedString) {
-  let encodedString;
-  if (typeof Buffer === 'undefined') {
-    if (global.btoa) {
-      encodedString = global.btoa(decodedString);
-    } else {
-      encodedString = base64.encode(decodedString);
-    }
-  } else {
-    let buffer = Buffer.from(decodedString, 'utf8');
-    encodedString = buffer.toString('base64');
-  }
-  return encodedString;
+  return Buffer.from(decodedString, 'utf8').toString('base64');
 };
 
 AGClientSocket.prototype._extractAuthTokenData = function (signedAuthToken) {
@@ -1605,8 +1583,8 @@ AGClientSocket.prototype.processPendingSubscriptions = function () {
 
 module.exports = AGClientSocket;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"./auth":1,"./transport":4,"./wait":5,"ag-channel":7,"async-stream-emitter":9,"base-64":10,"buffer":12,"linked-list":16,"lodash.clonedeep":17,"querystring":20,"sc-errors":22,"sc-formatter":23,"stream-demux":25}],3:[function(require,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./auth":1,"./transport":4,"./wait":5,"ag-channel":7,"async-stream-emitter":9,"buffer/":11,"linked-list":15,"lodash.clonedeep":16,"querystring":19,"sc-errors":21,"sc-formatter":22,"stream-demux":24}],3:[function(require,module,exports){
 (function (global){
 const AGClientSocket = require('./clientsocket');
 const uuid = require('uuid');
@@ -1667,7 +1645,7 @@ module.exports = {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./clientsocket":2,"sc-errors":22,"uuid":26}],4:[function(require,module,exports){
+},{"./clientsocket":2,"sc-errors":21,"uuid":25}],4:[function(require,module,exports){
 (function (global){
 const AGRequest = require('ag-request');
 const querystring = require('querystring');
@@ -2100,7 +2078,7 @@ AGTransport.prototype.sendObject = function (object) {
 module.exports = AGTransport;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"ag-request":8,"async-stream-emitter":9,"querystring":20,"sc-errors":22,"ws":6}],5:[function(require,module,exports){
+},{"ag-request":8,"async-stream-emitter":9,"querystring":19,"sc-errors":21,"ws":6}],5:[function(require,module,exports){
 function wait(duration) {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -2328,7 +2306,7 @@ AGChannel.UNSUBSCRIBED = 'unsubscribed';
 
 module.exports = AGChannel;
 
-},{"consumable-stream":13}],8:[function(require,module,exports){
+},{"consumable-stream":12}],8:[function(require,module,exports){
 const scErrors = require('sc-errors');
 const InvalidActionError = scErrors.InvalidActionError;
 
@@ -2368,7 +2346,7 @@ function AGRequest(socket, id, procedureName, data) {
 
 module.exports = AGRequest;
 
-},{"sc-errors":22}],9:[function(require,module,exports){
+},{"sc-errors":21}],9:[function(require,module,exports){
 const StreamDemux = require('stream-demux');
 
 function AsyncStreamEmitter() {
@@ -2437,176 +2415,7 @@ AsyncStreamEmitter.prototype.hasAnyListenerConsumer = function (consumerId) {
 
 module.exports = AsyncStreamEmitter;
 
-},{"stream-demux":25}],10:[function(require,module,exports){
-(function (global){
-/*! http://mths.be/base64 v0.1.0 by @mathias | MIT license */
-;(function(root) {
-
-	// Detect free variables `exports`.
-	var freeExports = typeof exports == 'object' && exports;
-
-	// Detect free variable `module`.
-	var freeModule = typeof module == 'object' && module &&
-		module.exports == freeExports && module;
-
-	// Detect free variable `global`, from Node.js or Browserified code, and use
-	// it as `root`.
-	var freeGlobal = typeof global == 'object' && global;
-	if (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal) {
-		root = freeGlobal;
-	}
-
-	/*--------------------------------------------------------------------------*/
-
-	var InvalidCharacterError = function(message) {
-		this.message = message;
-	};
-	InvalidCharacterError.prototype = new Error;
-	InvalidCharacterError.prototype.name = 'InvalidCharacterError';
-
-	var error = function(message) {
-		// Note: the error messages used throughout this file match those used by
-		// the native `atob`/`btoa` implementation in Chromium.
-		throw new InvalidCharacterError(message);
-	};
-
-	var TABLE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-	// http://whatwg.org/html/common-microsyntaxes.html#space-character
-	var REGEX_SPACE_CHARACTERS = /[\t\n\f\r ]/g;
-
-	// `decode` is designed to be fully compatible with `atob` as described in the
-	// HTML Standard. http://whatwg.org/html/webappapis.html#dom-windowbase64-atob
-	// The optimized base64-decoding algorithm used is based on @atk’s excellent
-	// implementation. https://gist.github.com/atk/1020396
-	var decode = function(input) {
-		input = String(input)
-			.replace(REGEX_SPACE_CHARACTERS, '');
-		var length = input.length;
-		if (length % 4 == 0) {
-			input = input.replace(/==?$/, '');
-			length = input.length;
-		}
-		if (
-			length % 4 == 1 ||
-			// http://whatwg.org/C#alphanumeric-ascii-characters
-			/[^+a-zA-Z0-9/]/.test(input)
-		) {
-			error(
-				'Invalid character: the string to be decoded is not correctly encoded.'
-			);
-		}
-		var bitCounter = 0;
-		var bitStorage;
-		var buffer;
-		var output = '';
-		var position = -1;
-		while (++position < length) {
-			buffer = TABLE.indexOf(input.charAt(position));
-			bitStorage = bitCounter % 4 ? bitStorage * 64 + buffer : buffer;
-			// Unless this is the first of a group of 4 characters…
-			if (bitCounter++ % 4) {
-				// …convert the first 8 bits to a single ASCII character.
-				output += String.fromCharCode(
-					0xFF & bitStorage >> (-2 * bitCounter & 6)
-				);
-			}
-		}
-		return output;
-	};
-
-	// `encode` is designed to be fully compatible with `btoa` as described in the
-	// HTML Standard: http://whatwg.org/html/webappapis.html#dom-windowbase64-btoa
-	var encode = function(input) {
-		input = String(input);
-		if (/[^\0-\xFF]/.test(input)) {
-			// Note: no need to special-case astral symbols here, as surrogates are
-			// matched, and the input is supposed to only contain ASCII anyway.
-			error(
-				'The string to be encoded contains characters outside of the ' +
-				'Latin1 range.'
-			);
-		}
-		var padding = input.length % 3;
-		var output = '';
-		var position = -1;
-		var a;
-		var b;
-		var c;
-		var d;
-		var buffer;
-		// Make sure any padding is handled outside of the loop.
-		var length = input.length - padding;
-
-		while (++position < length) {
-			// Read three bytes, i.e. 24 bits.
-			a = input.charCodeAt(position) << 16;
-			b = input.charCodeAt(++position) << 8;
-			c = input.charCodeAt(++position);
-			buffer = a + b + c;
-			// Turn the 24 bits into four chunks of 6 bits each, and append the
-			// matching character for each of them to the output.
-			output += (
-				TABLE.charAt(buffer >> 18 & 0x3F) +
-				TABLE.charAt(buffer >> 12 & 0x3F) +
-				TABLE.charAt(buffer >> 6 & 0x3F) +
-				TABLE.charAt(buffer & 0x3F)
-			);
-		}
-
-		if (padding == 2) {
-			a = input.charCodeAt(position) << 8;
-			b = input.charCodeAt(++position);
-			buffer = a + b;
-			output += (
-				TABLE.charAt(buffer >> 10) +
-				TABLE.charAt((buffer >> 4) & 0x3F) +
-				TABLE.charAt((buffer << 2) & 0x3F) +
-				'='
-			);
-		} else if (padding == 1) {
-			buffer = input.charCodeAt(position);
-			output += (
-				TABLE.charAt(buffer >> 2) +
-				TABLE.charAt((buffer << 4) & 0x3F) +
-				'=='
-			);
-		}
-
-		return output;
-	};
-
-	var base64 = {
-		'encode': encode,
-		'decode': decode,
-		'version': '0.1.0'
-	};
-
-	// Some AMD build optimizers, like r.js, check for specific condition patterns
-	// like the following:
-	if (
-		typeof define == 'function' &&
-		typeof define.amd == 'object' &&
-		define.amd
-	) {
-		define(function() {
-			return base64;
-		});
-	}	else if (freeExports && !freeExports.nodeType) {
-		if (freeModule) { // in Node.js or RingoJS v0.8.0+
-			freeModule.exports = base64;
-		} else { // in Narwhal or RingoJS v0.7.0-
-			for (var key in base64) {
-				base64.hasOwnProperty(key) && (freeExports[key] = base64[key]);
-			}
-		}
-	} else { // in Rhino or a web browser
-		root.base64 = base64;
-	}
-
-}(this));
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],11:[function(require,module,exports){
+},{"stream-demux":24}],10:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -2759,7 +2568,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],12:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 (function (Buffer){
 /*!
  * The buffer module from node.js, for the browser.
@@ -4540,7 +4349,7 @@ function numberIsNaN (obj) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"base64-js":11,"buffer":12,"ieee754":14}],13:[function(require,module,exports){
+},{"base64-js":10,"buffer":11,"ieee754":13}],12:[function(require,module,exports){
 class ConsumableStream {
   async next(timeout) {
     let asyncIterator = this.createConsumer(timeout);
@@ -4578,7 +4387,7 @@ class ConsumableStream {
 
 module.exports = ConsumableStream;
 
-},{}],14:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = (nBytes * 8) - mLen - 1
@@ -4664,7 +4473,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],15:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 'use strict';
 
 /**
@@ -5052,12 +4861,12 @@ ListItemPrototype.append = function (item) {
 
 module.exports = List;
 
-},{}],16:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 module.exports = require('./_source/linked-list.js');
 
-},{"./_source/linked-list.js":15}],17:[function(require,module,exports){
+},{"./_source/linked-list.js":14}],16:[function(require,module,exports){
 (function (global){
 /**
  * lodash (Custom Build) <https://lodash.com/>
@@ -6809,7 +6618,7 @@ function stubFalse() {
 module.exports = cloneDeep;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],18:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -6895,7 +6704,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],19:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -6982,13 +6791,13 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],20:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":18,"./encode":19}],21:[function(require,module,exports){
+},{"./decode":17,"./encode":18}],20:[function(require,module,exports){
 // Based on https://github.com/dscape/cycle/blob/master/cycle.js
 
 module.exports = function decycle(object) {
@@ -7069,7 +6878,7 @@ module.exports = function decycle(object) {
     }(object, '$'));
 };
 
-},{}],22:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 var decycle = require('./decycle');
 
 var isStrict = (function () { return !this; })();
@@ -7410,7 +7219,7 @@ module.exports.hydrateError = function hydrateError(error) {
 
 module.exports.decycle = decycle;
 
-},{"./decycle":21}],23:[function(require,module,exports){
+},{"./decycle":20}],22:[function(require,module,exports){
 (function (global){
 var base64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 var validJSONStartRegex = /^[ \n\r\t]*[{\[]/;
@@ -7508,7 +7317,7 @@ module.exports.encode = function (object) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],24:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 const ConsumableStream = require('consumable-stream');
 
 class DemuxedConsumableStream extends ConsumableStream {
@@ -7525,7 +7334,7 @@ class DemuxedConsumableStream extends ConsumableStream {
 
 module.exports = DemuxedConsumableStream;
 
-},{"consumable-stream":13}],25:[function(require,module,exports){
+},{"consumable-stream":12}],24:[function(require,module,exports){
 const WritableConsumableStream = require('writable-consumable-stream');
 const DemuxedConsumableStream = require('./demuxed-consumable-stream');
 
@@ -7715,7 +7524,7 @@ class StreamDemux {
 
 module.exports = StreamDemux;
 
-},{"./demuxed-consumable-stream":24,"writable-consumable-stream":32}],26:[function(require,module,exports){
+},{"./demuxed-consumable-stream":23,"writable-consumable-stream":31}],25:[function(require,module,exports){
 var v1 = require('./v1');
 var v4 = require('./v4');
 
@@ -7725,7 +7534,7 @@ uuid.v4 = v4;
 
 module.exports = uuid;
 
-},{"./v1":29,"./v4":30}],27:[function(require,module,exports){
+},{"./v1":28,"./v4":29}],26:[function(require,module,exports){
 /**
  * Convert array of 16 byte values to UUID string format of the form:
  * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
@@ -7751,7 +7560,7 @@ function bytesToUuid(buf, offset) {
 
 module.exports = bytesToUuid;
 
-},{}],28:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 // Unique ID creation requires a high quality random # generator.  In the
 // browser this is a little complicated due to unknown quality of Math.random()
 // and inconsistent support for the `crypto` API.  We do the best we can via
@@ -7787,7 +7596,7 @@ if (getRandomValues) {
   };
 }
 
-},{}],29:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var rng = require('./lib/rng');
 var bytesToUuid = require('./lib/bytesToUuid');
 
@@ -7898,7 +7707,7 @@ function v1(options, buf, offset) {
 
 module.exports = v1;
 
-},{"./lib/bytesToUuid":27,"./lib/rng":28}],30:[function(require,module,exports){
+},{"./lib/bytesToUuid":26,"./lib/rng":27}],29:[function(require,module,exports){
 var rng = require('./lib/rng');
 var bytesToUuid = require('./lib/bytesToUuid');
 
@@ -7929,7 +7738,7 @@ function v4(options, buf, offset) {
 
 module.exports = v4;
 
-},{"./lib/bytesToUuid":27,"./lib/rng":28}],31:[function(require,module,exports){
+},{"./lib/bytesToUuid":26,"./lib/rng":27}],30:[function(require,module,exports){
 class Consumer {
   constructor(stream, id, startNode, timeout) {
     this.id = id;
@@ -8078,7 +7887,7 @@ function wait(timeout) {
 
 module.exports = Consumer;
 
-},{}],32:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 const ConsumableStream = require('consumable-stream');
 const Consumer = require('./consumer');
 
@@ -8214,10 +8023,10 @@ class WritableConsumableStream extends ConsumableStream {
 
 module.exports = WritableConsumableStream;
 
-},{"./consumer":31,"consumable-stream":13}],"asyngular-client":[function(require,module,exports){
+},{"./consumer":30,"consumable-stream":12}],"asyngular-client":[function(require,module,exports){
 const AGClientSocket = require('./lib/clientsocket');
 const factory = require('./lib/factory');
-const version = '5.3.2';
+const version = '5.3.3';
 
 module.exports.factory = factory;
 module.exports.AGClientSocket = AGClientSocket;
