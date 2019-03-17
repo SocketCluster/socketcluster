@@ -15,7 +15,7 @@ spec:
       containers:
         -
           name: agc-worker
-          image: 'socketcluster/asyngular:v5.3.3'
+          image: 'socketcluster/asyngular:v5.3.4'
           ports:
             -
               name: agc-worker

@@ -11,7 +11,7 @@
   "dependencies": {
     "agc-broker-client": "^5.3.2",
     "asyngular-client": "^5.3.3",
-    "asyngular-server": "^5.3.3",
+    "asyngular-server": "^5.3.4",
     "connect": "^3.6.6",
     "eetase": "^3.0.1",
     "express": "^4.16.3",
