@@ -1,5 +1,5 @@
 /**
- * Asyngular JavaScript client v5.3.3
+ * Asyngular JavaScript client v5.4.0
  */
  (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.asyngularClient = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 (function (global){
@@ -859,7 +859,9 @@ AGClientSocket.prototype._handleEventAckTimeout = function (eventObject, eventNo
   }
 };
 
-AGClientSocket.prototype._processOutboundEvent = function (event, data, expectResponse) {
+AGClientSocket.prototype._processOutboundEvent = function (event, data, options, expectResponse) {
+  options = options || {};
+
   if (this.state === this.CLOSED) {
     this.connect();
   }
@@ -892,9 +894,11 @@ AGClientSocket.prototype._processOutboundEvent = function (event, data, expectRe
   }
   eventNode.data = eventObject;
 
+  let ackTimeout = options.ackTimeout == null ? this.ackTimeout : options.ackTimeout;
+
   eventObject.timeout = setTimeout(() => {
     this._handleEventAckTimeout(eventObject, eventNode);
-  }, this.ackTimeout);
+  }, ackTimeout);
 
   this._outboundBuffer.append(eventNode);
   if (this.state === this.OPEN) {
@@ -907,12 +911,12 @@ AGClientSocket.prototype.send = function (data) {
   this.transport.send(data);
 };
 
-AGClientSocket.prototype.transmit = function (event, data) {
-  return this._processOutboundEvent(event, data);
+AGClientSocket.prototype.transmit = function (event, data, options) {
+  return this._processOutboundEvent(event, data, options);
 };
 
-AGClientSocket.prototype.invoke = function (event, data) {
-  return this._processOutboundEvent(event, data, true);
+AGClientSocket.prototype.invoke = function (event, data, options) {
+  return this._processOutboundEvent(event, data, options, true);
 };
 
 AGClientSocket.prototype.transmitPublish = function (channelName, data) {
@@ -8026,7 +8030,7 @@ module.exports = WritableConsumableStream;
 },{"./consumer":30,"consumable-stream":12}],"asyngular-client":[function(require,module,exports){
 const AGClientSocket = require('./lib/clientsocket');
 const factory = require('./lib/factory');
-const version = '5.3.3';
+const version = '5.4.0';
 
 module.exports.factory = factory;
 module.exports.AGClientSocket = AGClientSocket;
