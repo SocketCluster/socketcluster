@@ -649,10 +649,6 @@ if (command === 'create') {
         let serviceAndDeploymentKubeFiles = kubeFiles.filter((configFilePath) => {
           return configFilePath != ingressKubeFileName;
         });
-        let deploymentRegex = /\-deployment\.yaml/;
-        let scalableDeploymentsKubeFiles = kubeFiles.filter((configFilePath) => {
-          return deploymentRegex.test(configFilePath) && configFilePath != 'agc-state-deployment.yaml';
-        });
         serviceAndDeploymentKubeFiles.forEach((configFilePath) => {
           let absolutePath = path.resolve(kubernetesDirPath, configFilePath);
           execSync(`kubectl create -f ${absolutePath}`, {stdio: 'inherit'});
