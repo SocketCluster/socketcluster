@@ -68,7 +68,7 @@
     </div>
     <script type="text/javascript">
       // Initiate the connection to the server
-      let socket = asyngularClient.create();
+      let socket = asyngularClient.create({protocolVersion: 1});
 
       (async () => {
         for await (let {error} of socket.listener('error')) {

@@ -1,5 +1,5 @@
 /**
- * Asyngular JavaScript client v5.4.0
+ * Asyngular JavaScript client v5.4.1
  */
  (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.asyngularClient = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 (function (global){
@@ -102,12 +102,15 @@ function AGClientSocket(socketOptions) {
     batchOnHandshake: false,
     batchOnHandshakeDuration: 100,
     batchInterval: 50,
+    protocolVersion: 2,
+    wsOptions: {},
     cloneData: false
   };
   let opts = Object.assign(defaultOptions, socketOptions);
 
   this.id = null;
   this.version = opts.version || null;
+  this.protocolVersion = opts.protocolVersion;
   this.state = this.CLOSED;
   this.authState = this.UNAUTHENTICATED;
   this.signedAuthToken = null;
@@ -116,6 +119,7 @@ function AGClientSocket(socketOptions) {
   this.pendingReconnectTimeout = null;
   this.preparingPendingSubscriptions = false;
   this.clientId = opts.clientId;
+  this.wsOptions = opts.wsOptions;
 
   this.connectTimeout = opts.connectTimeout;
   this.ackTimeout = opts.ackTimeout;
@@ -413,7 +417,7 @@ AGClientSocket.prototype.connect = function () {
       this.transport.closeAllListeners();
     }
 
-    let transport = new AGTransport(this.auth, this.codec, this.options);
+    let transport = new AGTransport(this.auth, this.codec, this.options, this.wsOptions);
     this.transport = transport;
 
     (async () => {
@@ -1674,13 +1678,15 @@ const scErrors = require('sc-errors');
 const TimeoutError = scErrors.TimeoutError;
 const BadConnectionError = scErrors.BadConnectionError;
 
-function AGTransport(authEngine, codecEngine, options) {
+function AGTransport(authEngine, codecEngine, options, wsOptions) {
   AsyncStreamEmitter.call(this);
 
   this.state = this.CLOSED;
   this.auth = authEngine;
   this.codec = codecEngine;
   this.options = options;
+  this.wsOptions = wsOptions;
+  this.protocolVersion = options.protocolVersion;
   this.connectTimeout = options.connectTimeout;
   this.pingTimeout = options.pingTimeout;
   this.pingTimeoutDisabled = !!options.pingTimeoutDisabled;
@@ -1697,7 +1703,7 @@ function AGTransport(authEngine, codecEngine, options) {
   this.state = this.CONNECTING;
   let uri = this.uri();
 
-  let wsSocket = createWebSocket(uri, this.options);
+  let wsSocket = createWebSocket(uri, wsOptions);
   wsSocket.binaryType = this.options.binaryType;
 
   this.socket = wsSocket;
@@ -1739,6 +1745,30 @@ function AGTransport(authEngine, codecEngine, options) {
     this._onClose(4007);
     this.socket.close(4007);
   }, this.connectTimeout);
+
+  if (this.protocolVersion === 1) {
+    this._handlePing = (message) => {
+      if (message === '#1') {
+        this._resetPingTimeout();
+        if (this.socket.readyState === this.socket.OPEN) {
+          this.send('#2');
+        }
+        return true;
+      }
+      return false;
+    };
+  } else {
+    this._handlePing = (message) => {
+      if (message === '') {
+        this._resetPingTimeout();
+        if (this.socket.readyState === this.socket.OPEN) {
+          this.send('');
+        }
+        return true;
+      }
+      return false;
+    };
+  }
 }
 
 AGTransport.prototype = Object.create(AsyncStreamEmitter.prototype);
@@ -1894,12 +1924,7 @@ AGTransport.prototype._processInboundPacket = function (packet, message) {
 AGTransport.prototype._onMessage = function (message) {
   this.emit('event', {event: 'message', data: {message}});
 
-  // If ping
-  if (message === '') {
-    this._resetPingTimeout();
-    if (this.socket.readyState === this.socket.OPEN) {
-      this.send('');
-    }
+  if (this._handlePing(message)) {
     return;
   }
 
@@ -8030,7 +8055,7 @@ module.exports = WritableConsumableStream;
 },{"./consumer":30,"consumable-stream":12}],"asyngular-client":[function(require,module,exports){
 const AGClientSocket = require('./lib/clientsocket');
 const factory = require('./lib/factory');
-const version = '5.4.0';
+const version = '5.4.1';
 
 module.exports.factory = factory;
 module.exports.AGClientSocket = AGClientSocket;
