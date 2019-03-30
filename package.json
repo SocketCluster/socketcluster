@@ -21,7 +21,7 @@
   "bugs": {
     "url": "https://github.com/SocketCluster/asyngular/issues"
   },
-  "homepage": "https://github.com/SocketCluster/asyngular#readme",
+  "homepage": "https://asyngular.io/",
   "dependencies": {
     "fs-extra": "^7.0.1",
     "inquirer": "^6.2.1",
