@@ -9,4 +9,5 @@ In order to get fully functional copy of this app, execute the following command
 npm install -g socketcluster
 socketcluster create myApp
 cd myApp
+node server.js
 ```
