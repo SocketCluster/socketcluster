@@ -1,11 +1,15 @@
 {
   "name": "socketcluster-sample",
   "description": "A sample SocketCluster app",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "contributors": [
     {
       "name": "Jonathan Gros-Dubois",
       "email": "grosjona@yahoo.com.au"
+    },
+    {
+      "name": "Aza Noriega",
+      "email": "Aza.Noriega@gmail.com"
     }
   ],
   "dependencies": {
