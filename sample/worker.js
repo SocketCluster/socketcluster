@@ -16,26 +16,25 @@ class Worker extends SCWorker {
     var scServer = this.scServer;
 
     if (environment === 'dev') {
-      // Log every HTTP request. See https://github.com/expressjs/morgan for other
-      // available formats.
+      // Log every HTTP request.
+      // See https://github.com/expressjs/morgan for other available formats.
       app.use(morgan('dev'));
     }
     app.use(serveStatic(path.resolve(__dirname, 'public')));
 
-    // Add GET /health-check express route
+    // Listen for HTTP GET "/health-check".
     healthChecker.attach(this, app);
 
     httpServer.on('request', app);
 
+    /**
+     * NOTE: Be sure to replace the following sample logic with your own logic.
+     */
+
+    /**
     var count = 0;
-
-    /*
-      In here we handle our incoming realtime connections and listen for events.
-    */
+    // Handle incoming websocket connections and listen for events.
     scServer.on('connection', function (socket) {
-
-      // Some sample logic to show how to handle client events,
-      // replace this with your own logic
 
       socket.on('sampleClientEvent', function (data) {
         count++;
@@ -52,7 +51,9 @@ class Worker extends SCWorker {
       socket.on('disconnect', function () {
         clearInterval(interval);
       });
+
     });
+    */
   }
 }
 
