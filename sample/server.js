@@ -96,10 +96,10 @@ var filesReadyPromises = [
   startWhenFileIsReady(workerClusterControllerPath)
 ];
 Promise.all(filesReadyPromises)
-  .then(() => {
-    start();
-  })
-  .catch((err) => {
-    console.error(err.stack);
-    process.exit(1);
-  });
+.then(() => {
+  start();
+})
+.catch((err) => {
+  console.error(err.stack);
+  process.exit(1);
+});
