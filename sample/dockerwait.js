@@ -1,7 +1,7 @@
-/*
-  This script waits for the master controller script to become available.
-  With orchestrators like Kubernetes, the master controller file may be fed in through
-  a volume container at runtime and so it is necessary to wait for it before launch.
+/**
+ * This script awaits for the master controller script to become available.
+ * With orchestrators like Kubernetes, the master controller file may be fed in through
+ * a volume container at runtime and so it is necessary to wait for it before launch.
 */
 
 var fsUtil = require('socketcluster/fsutil');
