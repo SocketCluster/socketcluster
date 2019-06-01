@@ -1,25 +1,27 @@
 {
   "name": "socketcluster-sample",
   "description": "A sample SocketCluster app",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "contributors": [
     {
       "name": "Jonathan Gros-Dubois",
       "email": "grosjona@yahoo.com.au"
+    },
+    {
+      "name": "Aza Noriega",
+      "email": "Aza.Noriega@gmail.com"
     }
   ],
   "dependencies": {
-    "connect": "3.6.6",
-    "express": "4.16.3",
-    "minimist": "1.1.0",
-    "morgan": "1.7.0",
-    "sc-errors": "^1.4.1",
+    "express": "4.16.4",
+    "minimist": "1.2.0",
+    "morgan": "^1.9.1",
     "sc-framework-health-check": "^2.0.0",
     "sc-hot-reboot": "^1.0.0",
     "scc-broker-client": "^6.1.0",
     "serve-static": "1.13.2",
     "socketcluster": "^14.3.2",
-    "socketcluster-client": "^14.2.1"
+    "socketcluster-client": "^14.2.2"
   },
   "keywords": [
     "websocket",
