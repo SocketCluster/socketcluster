@@ -1,5 +1,5 @@
 /**
- * Asyngular JavaScript client v5.4.1
+ * Asyngular JavaScript client v6.0.0
  */
  (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.asyngularClient = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 (function (global){
@@ -414,77 +414,41 @@ AGClientSocket.prototype.connect = function () {
     this.emit('connecting', {});
 
     if (this.transport) {
-      this.transport.closeAllListeners();
+      this.transport.clearAllListeners();
     }
 
-    let transport = new AGTransport(this.auth, this.codec, this.options, this.wsOptions);
-    this.transport = transport;
-
-    (async () => {
-      let consumer = transport.listener('open').createConsumer();
-      while (true) {
-        let packet = await consumer.next();
-        if (packet.done) break;
+    let transportHandlers = {
+      onOpen: (value) => {
         this.state = this.OPEN;
-        this._onOpen(packet.value);
+        this._onOpen(value);
+      },
+      onOpenAbort: (value) => {
+        if (this.state !== this.CLOSED) {
+          this.state = this.CLOSED;
+          this._onClose(value.code, value.data, true);
+        }
+      },
+      onClose: (value) => {
+        if (this.state !== this.CLOSED) {
+          this.state = this.CLOSED;
+          this._onClose(value.code, value.data);
+        }
+      },
+      onEvent: (value) => {
+        this.emit(value.event, value.data);
+      },
+      onError: (value) => {
+        this._onError(value.error);
+      },
+      onInboundInvoke: (value) => {
+        this._onInboundInvoke(value);
+      },
+      onInboundTransmit: (value) => {
+        this._onInboundTransmit(value.event, value.data);
       }
-    })();
+    };
 
-    (async () => {
-      let consumer = transport.listener('error').createConsumer();
-      while (true) {
-        let packet = await consumer.next();
-        if (packet.done) break;
-        this._onError(packet.value.error);
-      }
-    })();
-
-    (async () => {
-      let consumer = transport.listener('close').createConsumer();
-      while (true) {
-        let packet = await consumer.next();
-        if (packet.done) break;
-        this.state = this.CLOSED;
-        this._onClose(packet.value.code, packet.value.data);
-      }
-    })();
-
-    (async () => {
-      let consumer = transport.listener('openAbort').createConsumer();
-      while (true) {
-        let packet = await consumer.next();
-        if (packet.done) break;
-        this.state = this.CLOSED;
-        this._onClose(packet.value.code, packet.value.data, true);
-      }
-    })();
-
-    (async () => {
-      let consumer = transport.listener('event').createConsumer();
-      while (true) {
-        let packet = await consumer.next();
-        if (packet.done) break;
-        this.emit(packet.value.event, packet.value.data);
-      }
-    })();
-
-    (async () => {
-      let consumer = transport.listener('inboundTransmit').createConsumer();
-      while (true) {
-        let packet = await consumer.next();
-        if (packet.done) break;
-        this._onInboundTransmit(packet.value.event, packet.value.data);
-      }
-    })();
-
-    (async () => {
-      let consumer = transport.listener('inboundInvoke').createConsumer();
-      while (true) {
-        let packet = await consumer.next();
-        if (packet.done) break;
-        this._onInboundInvoke(packet.value);
-      }
-    })();
+    this.transport = new AGTransport(this.auth, this.codec, this.options, this.wsOptions, transportHandlers);
   }
 };
 
@@ -717,7 +681,7 @@ AGClientSocket.prototype._suspendSubscriptions = function () {
   });
 };
 
-AGClientSocket.prototype._abortAllPendingEventsDueToBadConnection = function (failureType, donePromise) {
+AGClientSocket.prototype._abortAllPendingEventsDueToBadConnection = function (failureType) {
   let currentNode = this._outboundBuffer.head;
   let nextNode;
 
@@ -730,15 +694,13 @@ AGClientSocket.prototype._abortAllPendingEventsDueToBadConnection = function (fa
     currentNode = nextNode;
 
     let callback = eventObject.callback;
+
     if (callback) {
       delete eventObject.callback;
       let errorMessage = `Event "${eventObject.event}" was aborted due to a bad connection`;
       let error = new BadConnectionError(errorMessage, failureType);
 
-      (async () => {
-        await donePromise;
-        callback.call(eventObject, error, eventObject);
-      })();
+      callback.call(eventObject, error, eventObject);
     }
     // Cleanup any pending response callback in the transport layer too.
     if (eventObject.cid) {
@@ -752,7 +714,7 @@ AGClientSocket.prototype._onClose = function (code, reason, openAbort) {
   this._cancelBatching();
 
   if (this.transport) {
-    this.transport.closeAllListeners();
+    this.transport.clearAllListeners();
   }
 
   this.pendingReconnect = false;
@@ -761,8 +723,25 @@ AGClientSocket.prototype._onClose = function (code, reason, openAbort) {
 
   this._suspendSubscriptions();
 
-  let donePromise = this.listener('close').once();
-  this._abortAllPendingEventsDueToBadConnection(openAbort ? 'connectAbort' : 'disconnect', donePromise);
+  if (openAbort) {
+    this.emit('connectAbort', {code, reason});
+  } else {
+    this.emit('disconnect', {code, reason});
+  }
+  this.emit('close', {code, reason});
+
+  if (!AGClientSocket.ignoreStatuses[code]) {
+    let closeMessage;
+    if (reason) {
+      closeMessage = 'Socket connection closed with status code ' + code + ' and reason: ' + reason;
+    } else {
+      closeMessage = 'Socket connection closed with status code ' + code;
+    }
+    let err = new SocketProtocolError(AGClientSocket.errorStatuses[code] || closeMessage, code);
+    this._onError(err);
+  }
+
+  this._abortAllPendingEventsDueToBadConnection(openAbort ? 'connectAbort' : 'disconnect');
 
   // Try to reconnect
   // on server ping timeout (4000)
@@ -784,24 +763,6 @@ AGClientSocket.prototype._onClose = function (code, reason, openAbort) {
     } else if (code !== 1000 && code < 4500) {
       this._tryReconnect();
     }
-  }
-
-  if (openAbort) {
-    this.emit('connectAbort', {code, reason});
-  } else {
-    this.emit('disconnect', {code, reason});
-  }
-  this.emit('close', {code, reason});
-
-  if (!AGClientSocket.ignoreStatuses[code]) {
-    let closeMessage;
-    if (reason) {
-      closeMessage = 'Socket connection closed with status code ' + code + ' and reason: ' + reason;
-    } else {
-      closeMessage = 'Socket connection closed with status code ' + code;
-    }
-    let err = new SocketProtocolError(AGClientSocket.errorStatuses[code] || closeMessage, code);
-    this._onError(err);
   }
 };
 
@@ -1657,7 +1618,6 @@ module.exports = {
 (function (global){
 const AGRequest = require('ag-request');
 const querystring = require('querystring');
-const AsyncStreamEmitter = require('async-stream-emitter');
 
 let WebSocket;
 let createWebSocket;
@@ -1678,9 +1638,7 @@ const scErrors = require('sc-errors');
 const TimeoutError = scErrors.TimeoutError;
 const BadConnectionError = scErrors.BadConnectionError;
 
-function AGTransport(authEngine, codecEngine, options, wsOptions) {
-  AsyncStreamEmitter.call(this);
-
+function AGTransport(authEngine, codecEngine, options, wsOptions, handlers) {
   this.state = this.CLOSED;
   this.auth = authEngine;
   this.codec = codecEngine;
@@ -1697,6 +1655,18 @@ function AGTransport(authEngine, codecEngine, options, wsOptions) {
   this._pingTimeoutTicker = null;
   this._callbackMap = {};
   this._batchBuffer = [];
+
+  if (!handlers) {
+    handlers = {};
+  }
+
+  this._onOpenHandler = handlers.onOpen || function () {};
+  this._onOpenAbortHandler = handlers.onOpenAbort || function () {};
+  this._onCloseHandler = handlers.onClose || function () {};
+  this._onEventHandler = handlers.onEvent || function () {};
+  this._onErrorHandler = handlers.onError || function () {};
+  this._onInboundInvokeHandler  = handlers.onInboundInvoke || function () {};
+  this._onInboundTransmitHandler = handlers.onInboundTransmit || function () {};
 
   // Open the connection.
 
@@ -1771,8 +1741,6 @@ function AGTransport(authEngine, codecEngine, options, wsOptions) {
   }
 }
 
-AGTransport.prototype = Object.create(AsyncStreamEmitter.prototype);
-
 AGTransport.CONNECTING = AGTransport.prototype.CONNECTING = 'connecting';
 AGTransport.OPEN = AGTransport.prototype.OPEN = 'open';
 AGTransport.CLOSED = AGTransport.prototype.CLOSED = 'closed';
@@ -1829,8 +1797,8 @@ AGTransport.prototype._onOpen = async function () {
   if (status) {
     this.pingTimeout = status.pingTimeout;
   }
-  this.emit('open', status);
   this._resetPingTimeout();
+  this._onOpenHandler(status);
 };
 
 AGTransport.prototype._handshake = async function () {
@@ -1852,9 +1820,7 @@ AGTransport.prototype._handshake = async function () {
   return status;
 };
 
-AGTransport.prototype._abortAllPendingEventsDueToBadConnection = async function (failureType, donePromise) {
-  await donePromise;
-
+AGTransport.prototype._abortAllPendingEventsDueToBadConnection = function (failureType) {
   Object.keys(this._callbackMap || {}).forEach((i) => {
     let eventObject = this._callbackMap[i];
     delete this._callbackMap[i];
@@ -1883,26 +1849,24 @@ AGTransport.prototype._onClose = function (code, data) {
 
   if (this.state === this.OPEN) {
     this.state = this.CLOSED;
-    let donePromise = this.listener('close').once();
-    this._abortAllPendingEventsDueToBadConnection('disconnect', donePromise);
-    this.emit('close', {code, data});
+    this._abortAllPendingEventsDueToBadConnection('disconnect');
+    this._onCloseHandler({code, data});
   } else if (this.state === this.CONNECTING) {
     this.state = this.CLOSED;
-    let donePromise = this.listener('openAbort').once();
-    this._abortAllPendingEventsDueToBadConnection('connectAbort', donePromise);
-    this.emit('openAbort', {code, data});
+    this._abortAllPendingEventsDueToBadConnection('connectAbort');
+    this._onOpenAbortHandler({code, data});
   } else if (this.state === this.CLOSED) {
-    this._abortAllPendingEventsDueToBadConnection('connectAbort', Promise.resolve());
+    this._abortAllPendingEventsDueToBadConnection('connectAbort');
   }
 };
 
 AGTransport.prototype._processInboundPacket = function (packet, message) {
   if (packet && packet.event != null) {
     if (packet.cid == null) {
-      this.emit('inboundTransmit', {...packet});
+      this._onInboundTransmitHandler({...packet});
     } else {
       let request = new AGRequest(this, packet.cid, packet.event, packet.data);
-      this.emit('inboundInvoke', request);
+      this._onInboundInvokeHandler(request);
     }
   } else if (packet && packet.rid != null) {
     let eventObject = this._callbackMap[packet.rid];
@@ -1917,12 +1881,12 @@ AGTransport.prototype._processInboundPacket = function (packet, message) {
       }
     }
   } else {
-    this.emit('event', {event: 'raw', data: {message}});
+    this._onEventHandler({event: 'raw', data: {message}});
   }
 };
 
 AGTransport.prototype._onMessage = function (message) {
-  this.emit('event', {event: 'message', data: {message}});
+  this._onEventHandler({event: 'message', data: {message}});
 
   if (this._handlePing(message)) {
     return;
@@ -1941,7 +1905,7 @@ AGTransport.prototype._onMessage = function (message) {
 };
 
 AGTransport.prototype._onError = function (error) {
-  this.emit('error', {error});
+  this._onErrorHandler({error});
 };
 
 AGTransport.prototype._resetPingTimeout = function () {
@@ -1955,6 +1919,16 @@ AGTransport.prototype._resetPingTimeout = function () {
     this._onClose(4000);
     this.socket.close(4000);
   }, this.pingTimeout);
+};
+
+AGTransport.prototype.clearAllListeners = function () {
+  this._onOpenHandler = function () {};
+  this._onOpenAbortHandler = function () {};
+  this._onCloseHandler = function () {};
+  this._onEventHandler = function () {};
+  this._onErrorHandler = function () {};
+  this._onInboundInvokeHandler  = function () {};
+  this._onInboundTransmitHandler = function () {};
 };
 
 AGTransport.prototype.startBatch = function () {
@@ -2107,7 +2081,7 @@ AGTransport.prototype.sendObject = function (object) {
 module.exports = AGTransport;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"ag-request":8,"async-stream-emitter":9,"querystring":19,"sc-errors":21,"ws":6}],5:[function(require,module,exports){
+},{"ag-request":8,"querystring":19,"sc-errors":21,"ws":6}],5:[function(require,module,exports){
 function wait(duration) {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -8055,7 +8029,7 @@ module.exports = WritableConsumableStream;
 },{"./consumer":30,"consumable-stream":12}],"asyngular-client":[function(require,module,exports){
 const AGClientSocket = require('./lib/clientsocket');
 const factory = require('./lib/factory');
-const version = '5.4.1';
+const version = '6.0.0';
 
 module.exports.factory = factory;
 module.exports.AGClientSocket = AGClientSocket;
