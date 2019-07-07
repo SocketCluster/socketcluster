@@ -545,7 +545,7 @@ if (command === 'create') {
     };
 
     let promptSaveAuthDetails = function () {
-      promptConfirm(`Would you like to save your DockerHub username and password as Base64 to ${asyngularK8sConfigFilePath}?`, {default: true}, handleSaveDockerAuthDetails);
+      promptConfirm(`Would you like to save your Docker registry username and password as Base64 to ${asyngularK8sConfigFilePath}?`, {default: true}, handleSaveDockerAuthDetails);
     };
 
     let handlePassword = function (password) {
@@ -563,7 +563,7 @@ if (command === 'create') {
         handlePassword(dockerPassword);
         return;
       }
-      promptInput('Enter your DockerHub password:', handlePassword, true);
+      promptInput('Enter your Docker registry password:', handlePassword, true);
     };
 
     let promptUsername = function () {
@@ -571,7 +571,7 @@ if (command === 'create') {
         handleUsername(dockerUsername);
         return;
       }
-      promptInput('Enter your DockerHub username:', handleUsername);
+      promptInput('Enter your Docker registry username:', handleUsername);
     };
 
     promptUsername();
