@@ -20,8 +20,8 @@
     "sc-hot-reboot": "^1.0.0",
     "scc-broker-client": "^6.1.0",
     "serve-static": "1.13.2",
-    "socketcluster": "^14.3.2",
-    "socketcluster-client": "^14.2.2"
+    "socketcluster": "^14.3.5",
+    "socketcluster-client": "^14.3.0"
   },
   "keywords": [
     "websocket",
