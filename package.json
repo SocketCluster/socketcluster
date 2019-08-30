@@ -21,7 +21,7 @@
     "sc-auth": "^5.0.2",
     "sc-broker-cluster": "^7.0.0",
     "sc-errors": "^1.4.1",
-    "socketcluster-server": "^14.3.2",
+    "socketcluster-server": "^14.6.0",
     "uid-number": "0.0.6",
     "uuid": "3.2.1"
   },
