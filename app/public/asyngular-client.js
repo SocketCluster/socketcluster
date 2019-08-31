@@ -1,5 +1,5 @@
 /**
- * Asyngular JavaScript client v6.0.0
+ * Asyngular JavaScript client v6.2.0
  */
  (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.asyngularClient = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 (function (global){
@@ -425,13 +425,13 @@ AGClientSocket.prototype.connect = function () {
       onOpenAbort: (value) => {
         if (this.state !== this.CLOSED) {
           this.state = this.CLOSED;
-          this._onClose(value.code, value.data, true);
+          this._destroy(value.code, value.reason, true);
         }
       },
       onClose: (value) => {
         if (this.state !== this.CLOSED) {
           this.state = this.CLOSED;
-          this._onClose(value.code, value.data);
+          this._destroy(value.code, value.reason);
         }
       },
       onEvent: (value) => {
@@ -452,12 +452,12 @@ AGClientSocket.prototype.connect = function () {
   }
 };
 
-AGClientSocket.prototype.reconnect = function (code, data) {
-  this.disconnect(code, data);
+AGClientSocket.prototype.reconnect = function (code, reason) {
+  this.disconnect(code, reason);
   this.connect();
 };
 
-AGClientSocket.prototype.disconnect = function (code, data) {
+AGClientSocket.prototype.disconnect = function (code, reason) {
   code = code || 1000;
 
   if (typeof code !== 'number') {
@@ -467,8 +467,8 @@ AGClientSocket.prototype.disconnect = function (code, data) {
   let isConnecting = this.state === this.CONNECTING;
   if (isConnecting || this.state === this.OPEN) {
     this.state = this.CLOSED;
-    this._onClose(code, data, isConnecting);
-    this.transport.close(code, data);
+    this._destroy(code, reason, isConnecting);
+    this.transport.close(code, reason);
   } else {
     this.pendingReconnect = false;
     this.pendingReconnectTimeout = null;
@@ -709,7 +709,7 @@ AGClientSocket.prototype._abortAllPendingEventsDueToBadConnection = function (fa
   }
 };
 
-AGClientSocket.prototype._onClose = function (code, reason, openAbort) {
+AGClientSocket.prototype._destroy = function (code, reason, openAbort) {
   this.id = null;
   this._cancelBatching();
 
@@ -1693,7 +1693,7 @@ function AGTransport(authEngine, codecEngine, options, wsOptions, handlers) {
     } else {
       code = event.code;
     }
-    this._onClose(code, event.reason);
+    this._destroy(code, event.reason);
   };
 
   wsSocket.onmessage = (message, flags) => {
@@ -1707,12 +1707,12 @@ function AGTransport(authEngine, codecEngine, options, wsOptions, handlers) {
     // to prevent inconsistent behavior when running the client in Node.js
     // vs in a browser.
     if (this.state === this.CONNECTING) {
-      this._onClose(1006);
+      this._destroy(1006);
     }
   };
 
   this._connectTimeoutRef = setTimeout(() => {
-    this._onClose(4007);
+    this._destroy(4007);
     this.socket.close(4007);
   }, this.connectTimeout);
 
@@ -1788,7 +1788,7 @@ AGTransport.prototype._onOpen = async function () {
       err.statusCode = 4003;
     }
     this._onError(err);
-    this._onClose(err.statusCode, err.toString());
+    this._destroy(err.statusCode, err.toString());
     this.socket.close(err.statusCode);
     return;
   }
@@ -1838,7 +1838,11 @@ AGTransport.prototype._abortAllPendingEventsDueToBadConnection = function (failu
   });
 };
 
-AGTransport.prototype._onClose = function (code, data) {
+AGTransport.prototype._destroy = function (code, reason) {
+  let protocolReason = scErrors.socketProtocolErrorStatuses[code];
+  if (!reason && scErrors.socketProtocolErrorStatuses[code]) {
+    reason = scErrors.socketProtocolErrorStatuses[code];
+  }
   delete this.socket.onopen;
   delete this.socket.onclose;
   delete this.socket.onmessage;
@@ -1850,11 +1854,11 @@ AGTransport.prototype._onClose = function (code, data) {
   if (this.state === this.OPEN) {
     this.state = this.CLOSED;
     this._abortAllPendingEventsDueToBadConnection('disconnect');
-    this._onCloseHandler({code, data});
+    this._onCloseHandler({code, reason});
   } else if (this.state === this.CONNECTING) {
     this.state = this.CLOSED;
     this._abortAllPendingEventsDueToBadConnection('connectAbort');
-    this._onOpenAbortHandler({code, data});
+    this._onOpenAbortHandler({code, reason});
   } else if (this.state === this.CLOSED) {
     this._abortAllPendingEventsDueToBadConnection('connectAbort');
   }
@@ -1916,7 +1920,7 @@ AGTransport.prototype._resetPingTimeout = function () {
   let now = (new Date()).getTime();
   clearTimeout(this._pingTimeoutTicker);
   this._pingTimeoutTicker = setTimeout(() => {
-    this._onClose(4000);
+    this._destroy(4000);
     this.socket.close(4000);
   }, this.pingTimeout);
 };
@@ -1955,11 +1959,11 @@ AGTransport.prototype.getBytesReceived = function () {
   return this.socket.bytesReceived;
 };
 
-AGTransport.prototype.close = function (code, data) {
+AGTransport.prototype.close = function (code, reason) {
   if (this.state === this.OPEN || this.state === this.CONNECTING) {
     code = code || 1000;
-    this._onClose(code, data);
-    this.socket.close(code, data);
+    this._destroy(code, reason);
+    this.socket.close(code, reason);
   }
 };
 
@@ -2050,7 +2054,7 @@ AGTransport.prototype.encode = function (object) {
 
 AGTransport.prototype.send = function (data) {
   if (this.socket.readyState !== this.socket.OPEN) {
-    this._onClose(1005);
+    this._destroy(1005);
   } else {
     this.socket.send(data);
   }
@@ -2486,7 +2490,8 @@ function toByteArray (b64) {
     ? validLen - 4
     : validLen
 
-  for (var i = 0; i < len; i += 4) {
+  var i
+  for (i = 0; i < len; i += 4) {
     tmp =
       (revLookup[b64.charCodeAt(i)] << 18) |
       (revLookup[b64.charCodeAt(i + 1)] << 12) |
@@ -2585,6 +2590,10 @@ function fromByteArray (uint8) {
 
 var base64 = require('base64-js')
 var ieee754 = require('ieee754')
+var customInspectSymbol =
+  (typeof Symbol === 'function' && typeof Symbol.for === 'function')
+    ? Symbol.for('nodejs.util.inspect.custom')
+    : null
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -2621,7 +2630,9 @@ function typedArraySupport () {
   // Can typed array instances can be augmented?
   try {
     var arr = new Uint8Array(1)
-    arr.__proto__ = { __proto__: Uint8Array.prototype, foo: function () { return 42 } }
+    var proto = { foo: function () { return 42 } }
+    Object.setPrototypeOf(proto, Uint8Array.prototype)
+    Object.setPrototypeOf(arr, proto)
     return arr.foo() === 42
   } catch (e) {
     return false
@@ -2650,7 +2661,7 @@ function createBuffer (length) {
   }
   // Return an augmented `Uint8Array` instance
   var buf = new Uint8Array(length)
-  buf.__proto__ = Buffer.prototype
+  Object.setPrototypeOf(buf, Buffer.prototype)
   return buf
 }
 
@@ -2700,7 +2711,7 @@ function from (value, encodingOrOffset, length) {
   }
 
   if (value == null) {
-    throw TypeError(
+    throw new TypeError(
       'The first argument must be one of type string, Buffer, ArrayBuffer, Array, ' +
       'or Array-like Object. Received type ' + (typeof value)
     )
@@ -2752,8 +2763,8 @@ Buffer.from = function (value, encodingOrOffset, length) {
 
 // Note: Change prototype *after* Buffer.from is defined to workaround Chrome bug:
 // https://github.com/feross/buffer/pull/148
-Buffer.prototype.__proto__ = Uint8Array.prototype
-Buffer.__proto__ = Uint8Array
+Object.setPrototypeOf(Buffer.prototype, Uint8Array.prototype)
+Object.setPrototypeOf(Buffer, Uint8Array)
 
 function assertSize (size) {
   if (typeof size !== 'number') {
@@ -2857,7 +2868,8 @@ function fromArrayBuffer (array, byteOffset, length) {
   }
 
   // Return an augmented `Uint8Array` instance
-  buf.__proto__ = Buffer.prototype
+  Object.setPrototypeOf(buf, Buffer.prototype)
+
   return buf
 }
 
@@ -3179,6 +3191,9 @@ Buffer.prototype.inspect = function inspect () {
   if (this.length > max) str += ' ... '
   return '<Buffer ' + str + '>'
 }
+if (customInspectSymbol) {
+  Buffer.prototype[customInspectSymbol] = Buffer.prototype.inspect
+}
 
 Buffer.prototype.compare = function compare (target, start, end, thisStart, thisEnd) {
   if (isInstance(target, Uint8Array)) {
@@ -3304,7 +3319,7 @@ function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
         return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset)
       }
     }
-    return arrayIndexOf(buffer, [ val ], byteOffset, encoding, dir)
+    return arrayIndexOf(buffer, [val], byteOffset, encoding, dir)
   }
 
   throw new TypeError('val must be string, number or Buffer')
@@ -3670,7 +3685,8 @@ Buffer.prototype.slice = function slice (start, end) {
 
   var newBuf = this.subarray(start, end)
   // Return an augmented `Uint8Array` instance
-  newBuf.__proto__ = Buffer.prototype
+  Object.setPrototypeOf(newBuf, Buffer.prototype)
+
   return newBuf
 }
 
@@ -4159,6 +4175,8 @@ Buffer.prototype.fill = function fill (val, start, end, encoding) {
     }
   } else if (typeof val === 'number') {
     val = val & 255
+  } else if (typeof val === 'boolean') {
+    val = Number(val)
   }
 
   // Invalid ranges are not set to a default, so can range check early.
@@ -7161,7 +7179,8 @@ module.exports.socketProtocolErrorStatuses = {
   4005: 'Did not receive #handshake from client before timeout',
   4006: 'Failed to bind socket to message broker',
   4007: 'Client connection establishment timed out',
-  4008: 'Server rejected handshake from client'
+  4008: 'Server rejected handshake from client',
+  4009: 'Server received a message before the client handshake'
 };
 
 module.exports.socketProtocolIgnoreStatuses = {
@@ -8029,7 +8048,7 @@ module.exports = WritableConsumableStream;
 },{"./consumer":30,"consumable-stream":12}],"asyngular-client":[function(require,module,exports){
 const AGClientSocket = require('./lib/clientsocket');
 const factory = require('./lib/factory');
-const version = '6.0.0';
+const version = '6.2.0';
 
 module.exports.factory = factory;
 module.exports.AGClientSocket = AGClientSocket;
