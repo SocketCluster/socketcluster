@@ -1,7 +1,7 @@
 FROM node:10-slim
 
 LABEL maintainer="Jonathan Gros-Dubois"
-LABEL version="6.0.0"
+LABEL version="6.1.0"
 LABEL description="Docker file for Asyngular with support for clustering."
 
 RUN mkdir -p /usr/src/
