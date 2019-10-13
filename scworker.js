@@ -79,7 +79,7 @@ function SCWorker(options) {
     this.createHTTPServer = options.createHTTPServer;
   }
 
-  var workerOptions = Object.assign({}, options, workerInitOptions);
+  var workerOptions = Object.assign({}, workerInitOptions, options);
   this._init(workerOptions);
 }
 
