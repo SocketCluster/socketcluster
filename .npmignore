@@ -1,0 +1,4 @@
+.gitignore
+app/public/node_modules
+test
+
