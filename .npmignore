@@ -1,4 +1,5 @@
 .gitignore
+sample/node_modules
 sample/public/socketcluster.js
 test
 assets
