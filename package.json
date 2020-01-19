@@ -1,16 +1,15 @@
 {
-  "name": "asyngular",
-  "version": "6.1.1",
+  "name": "socketcluster",
+  "version": "15.0.0",
   "description": "Highly scalable realtime framework with support for async/await",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SocketCluster/asyngular.git"
+    "url": "git+https://github.com/SocketCluster/socketcluster.git"
   },
   "keywords": [
-    "asyngular",
     "socketcluster",
     "async",
     "await",
@@ -19,9 +18,9 @@
   "author": "Jonathan Gros-Dubois",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/SocketCluster/asyngular/issues"
+    "url": "https://github.com/SocketCluster/socketcluster/issues"
   },
-  "homepage": "https://asyngular.io/",
+  "homepage": "https://socketcluster.io/",
   "dependencies": {
     "fs-extra": "^7.0.1",
     "inquirer": "^6.2.1",
@@ -29,6 +28,6 @@
     "yamljs": "^0.3.0"
   },
   "bin": {
-    "asyngular": "bin/cli.js"
+    "socketcluster": "bin/cli.js"
   }
 }

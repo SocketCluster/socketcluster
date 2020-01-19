@@ -1,46 +1,46 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: agc-worker
+  name: scc-broker
 spec:
   replicas: 1
   selector:
     matchLabels:
-      component: agc-worker
+      component: scc-broker
   template:
     metadata:
       labels:
-        component: agc-worker
+        component: scc-broker
     spec:
       containers:
         -
-          name: agc-worker
-          image: 'socketcluster/asyngular:v6.1.1'
+          name: scc-broker
+          image: 'socketcluster/scc-broker:v6.0.0'
           ports:
             -
-              name: agc-worker
-              containerPort: 8000
+              name: scc-broker
+              containerPort: 8888
           env:
             -
-              name: AGC_STATE_SERVER_HOST
-              value: agc-state
+              name: SCC_STATE_SERVER_HOST
+              value: scc-state
             -
-              name: AGC_INSTANCE_IP
+              name: SCC_INSTANCE_IP
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
             -
-              name: ENV
-              value: prod
+              name: SCC_BROKER_SERVER_LOG_LEVEL
+              value: '2'
           readinessProbe:
             httpGet:
               path: /health-check
-              port: agc-worker
+              port: scc-broker
             initialDelaySeconds: 5
             timeoutSeconds: 10
           livenessProbe:
             httpGet:
               path: /health-check
-              port: agc-worker
+              port: scc-broker
             initialDelaySeconds: 15
             timeoutSeconds: 20

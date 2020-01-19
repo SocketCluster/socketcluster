@@ -1,18 +1,18 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: agc-ingress
+  name: scc-ingress
   annotations:
     kubernetes.io/ingress.allow-http: 'false'
 spec:
   # You should upload a certificate to your Kubernetes platform and refer to it here by secretName.
-  # If you do not want to serve AGC over TLS, you can remove or comment out the
+  # If you do not want to serve SCC over TLS, you can remove or comment out the
   # kubernetes.io/ingress.allow-http annotation above and the tls section below.
   # Note that raw (unencrypted) WebSockets may not work if you are behind a corporate proxy so
-  # it is advised that you provide a cert for production and access the AGC service via https:// and wss://
+  # it is advised that you provide a cert for production and access the SCC service via https:// and wss://
   tls:
     -
-      secretName: agc-tls-credentials
+      secretName: scc-tls-credentials
   backend:
-    serviceName: agc-worker
+    serviceName: scc-worker
     servicePort: 8000

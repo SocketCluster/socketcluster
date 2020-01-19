@@ -1,7 +1,7 @@
 /**
- * Asyngular JavaScript client v6.2.0
+ * SocketCluster JavaScript client v15.0.0
  */
- (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.asyngularClient = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+ (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.socketClusterClient = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 (function (global){
 function AuthEngine() {
   this._internalStorage = {};
@@ -88,7 +88,7 @@ function AGClientSocket(socketOptions) {
   AsyncStreamEmitter.call(this);
 
   let defaultOptions = {
-    path: '/asyngular/',
+    path: '/socketcluster/',
     secure: false,
     autoConnect: true,
     autoReconnect: true,
@@ -97,7 +97,7 @@ function AGClientSocket(socketOptions) {
     ackTimeout: 10000,
     timestampRequests: false,
     timestampParam: 't',
-    authTokenName: 'asyngular.authToken',
+    authTokenName: 'socketcluster.authToken',
     binaryType: 'arraybuffer',
     batchOnHandshake: false,
     batchOnHandshakeDuration: 100,
@@ -212,7 +212,7 @@ function AGClientSocket(socketOptions) {
 
   if (this.options.protocol) {
     let protocolOptionError = new InvalidArgumentsError(
-      'The "protocol" option does not affect asyngular-client - ' +
+      'The "protocol" option does not affect socketcluster-client - ' +
       'If you want to utilize SSL/TLS, use "secure" option instead'
     );
     this._onError(protocolOptionError);
@@ -3648,7 +3648,7 @@ function hexSlice (buf, start, end) {
 
   var out = ''
   for (var i = start; i < end; ++i) {
-    out += toHex(buf[i])
+    out += hexSliceLookupTable[buf[i]]
   }
   return out
 }
@@ -4234,11 +4234,6 @@ function base64clean (str) {
   return str
 }
 
-function toHex (n) {
-  if (n < 16) return '0' + n.toString(16)
-  return n.toString(16)
-}
-
 function utf8ToBytes (string, units) {
   units = units || Infinity
   var codePoint
@@ -4368,6 +4363,20 @@ function numberIsNaN (obj) {
   // For IE11 support
   return obj !== obj // eslint-disable-line no-self-compare
 }
+
+// Create lookup table for `toString('hex')`
+// See: https://github.com/feross/buffer/issues/219
+var hexSliceLookupTable = (function () {
+  var alphabet = '0123456789abcdef'
+  var table = new Array(256)
+  for (var i = 0; i < 16; ++i) {
+    var i16 = i * 16
+    for (var j = 0; j < 16; ++j) {
+      table[i16 + j] = alphabet[i] + alphabet[j]
+    }
+  }
+  return table
+})()
 
 }).call(this,require("buffer").Buffer)
 },{"base64-js":10,"buffer":11,"ieee754":13}],12:[function(require,module,exports){
@@ -7570,14 +7579,16 @@ function bytesToUuid(buf, offset) {
   var i = offset || 0;
   var bth = byteToHex;
   // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
-  return ([bth[buf[i++]], bth[buf[i++]], 
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]],
-	bth[buf[i++]], bth[buf[i++]],
-	bth[buf[i++]], bth[buf[i++]]]).join('');
+  return ([
+    bth[buf[i++]], bth[buf[i++]],
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]],
+    bth[buf[i++]], bth[buf[i++]],
+    bth[buf[i++]], bth[buf[i++]]
+  ]).join('');
 }
 
 module.exports = bytesToUuid;
@@ -7634,7 +7645,7 @@ var _clockseq;
 var _lastMSecs = 0;
 var _lastNSecs = 0;
 
-// See https://github.com/broofa/node-uuid for API details
+// See https://github.com/uuidjs/uuid for API details
 function v1(options, buf, offset) {
   var i = buf && offset || 0;
   var b = buf || [];
@@ -8045,10 +8056,10 @@ class WritableConsumableStream extends ConsumableStream {
 
 module.exports = WritableConsumableStream;
 
-},{"./consumer":30,"consumable-stream":12}],"asyngular-client":[function(require,module,exports){
+},{"./consumer":30,"consumable-stream":12}],"socketcluster-client":[function(require,module,exports){
 const AGClientSocket = require('./lib/clientsocket');
 const factory = require('./lib/factory');
-const version = '6.2.0';
+const version = '15.0.0';
 
 module.exports.factory = factory;
 module.exports.AGClientSocket = AGClientSocket;
@@ -8059,5 +8070,5 @@ module.exports.create = function (options) {
 
 module.exports.version = version;
 
-},{"./lib/clientsocket":2,"./lib/factory":3}]},{},["asyngular-client"])("asyngular-client")
+},{"./lib/clientsocket":2,"./lib/factory":3}]},{},["socketcluster-client"])("socketcluster-client")
 });

@@ -1,34 +1,34 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: agc-state
+  name: scc-state
 spec:
   replicas: 1
   selector:
     matchLabels:
-      component: agc-state
+      component: scc-state
   template:
     metadata:
       labels:
-        component: agc-state
+        component: scc-state
     spec:
       containers:
         -
-          name: agc-state
-          image: 'socketcluster/agc-state:v6.0.0'
+          name: scc-state
+          image: 'socketcluster/scc-state:v6.0.0'
           ports:
             -
-              name: agc-state
+              name: scc-state
               containerPort: 7777
           readinessProbe:
             httpGet:
               path: /health-check
-              port: agc-state
+              port: scc-state
             initialDelaySeconds: 5
             timeoutSeconds: 10
           livenessProbe:
             httpGet:
               path: /health-check
-              port: agc-state
+              port: scc-state
             initialDelaySeconds: 15
             timeoutSeconds: 20

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: agc-worker
+  name: scc-worker
 spec:
   type: NodePort
   ports:
@@ -9,4 +9,4 @@ spec:
       port: 8000
       targetPort: 8000
   selector:
-    component: agc-worker
+    component: scc-worker

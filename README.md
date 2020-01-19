@@ -1,31 +1,31 @@
-# Asyngular
+# SocketCluster
 
-Toolset and boilerplate for quickly creating systems using Asyngular.
+Toolset and boilerplate for quickly creating systems using SocketCluster.
 See the client and server repos for documentation:
 
-- https://github.com/SocketCluster/asyngular-client
-- https://github.com/SocketCluster/asyngular-server
+- https://github.com/SocketCluster/socketcluster-client
+- https://github.com/SocketCluster/socketcluster-server
 
-Documentation for AGC (horizontally scalable cluster) is available at https://github.com/SocketCluster/asyngular/blob/master/agc-guide.md
+Documentation for SCC (horizontally scalable cluster) is available at https://github.com/SocketCluster/socketcluster/blob/master/scc-guide.md
 
 ## Installation
 
-Setup the `asyngular` command:
+Setup the `socketcluster` command:
 
 ```bash
-npm install -g asyngular
+npm install -g socketcluster
 ```
 
 or:
 
 ```bash
-sudo npm install -g asyngular
+sudo npm install -g socketcluster
 ```
 
 then:
 
 ```bash
-asyngular create myapp
+socketcluster create myapp
 ```
 
 Once it's installed, go to your new myapp/ directory and launch with:
@@ -36,14 +36,14 @@ node server
 
 Access at URL http://localhost:8000/
 
-Node.js `v10.0.0` or above is recommended but you can also use Asyngular with older Node.js versions if you use `while` loops instead of `for-await-of` loops.
+Node.js `v10.0.0` or above is recommended but you can also use SocketCluster with older Node.js versions if you use `while` loops instead of `for-await-of` loops.
 
 ## Compatibility mode
 
 For compatibility with existing SocketCluster clients, set the `protocolVersion` to `1` and make sure that the `path` matches your old client path:
 
 ```js
-let agServer = asyngularServer.attach(httpServer, {
+let agServer = socketClusterServer.attach(httpServer, {
   protocolVersion: 1,
   path: '/socketcluster/'
 });
@@ -51,7 +51,7 @@ let agServer = asyngularServer.attach(httpServer, {
 
 ## Change log
 
-See the 'releases' section for changes: https://github.com/SocketCluster/asyngular/releases
+See the 'releases' section for changes: https://github.com/SocketCluster/socketcluster/releases
 
 ## License
 

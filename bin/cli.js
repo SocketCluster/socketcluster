@@ -12,7 +12,7 @@ const spawn = childProcess.spawn;
 const fork = childProcess.fork;
 const YAML = require('yamljs');
 
-const DEFAULT_TLS_SECRET_NAME = 'agc-tls-credentials';
+const DEFAULT_TLS_SECRET_NAME = 'scc-tls-credentials';
 
 let command = argv._[0];
 let commandRawArgs = process.argv.slice(3);
@@ -68,9 +68,9 @@ let warningMessage = function (message) {
 };
 
 let showCorrectUsage = function () {
-  console.log('Usage: asyngular [options] [command]\n');
+  console.log('Usage: socketcluster [options] [command]\n');
   console.log('Options:');
-  console.log("  -v            Get the version of the current Asyngular installation");
+  console.log("  -v            Get the version of the current SocketCluster installation");
   console.log('  --help        Get info on how to use this command');
   console.log('  --force       Force all necessary directory modifications without prompts');
   console.log();
@@ -93,7 +93,7 @@ let showCorrectUsage = function () {
   console.log(`    -s                        Optional secret name; defaults to "${DEFAULT_TLS_SECRET_NAME}"`);
   console.log('');
   let extraMessage = 'Note that the app-name/app-path in the commands above is optional (except for create) - If not provided, ' +
-    'asyngular will use the current working directory as the app path.';
+    'socketcluster will use the current working directory as the app path.';
   console.log(extraMessage);
 };
 
@@ -182,15 +182,15 @@ let wd = process.cwd();
 
 let appDir = `${__dirname}/../app`;
 let destDir = path.normalize(`${wd}/${arg1}`);
-let clientFileSourcePath = path.normalize(`${destDir}/node_modules/asyngular-client/asyngular-client.js`);
-let clientFileDestPath = path.normalize(`${destDir}/public/asyngular-client.js`);
+let clientFileSourcePath = path.normalize(`${destDir}/node_modules/socketcluster-client/socketcluster-client.js`);
+let clientFileDestPath = path.normalize(`${destDir}/public/socketcluster-client.js`);
 let deploymentYAMLRegex = /-deployment\.yaml$/;
 
 let createFail = function (error) {
   if (error) {
-    errorMessage(`Failed to create Asyngular app. ${error}`);
+    errorMessage(`Failed to create SocketCluster app. ${error}`);
   } else {
-    errorMessage('Failed to create Asyngular app.');
+    errorMessage('Failed to create SocketCluster app.');
   }
   process.exit();
 };
@@ -220,7 +220,7 @@ let createSuccess = function () {
     } else {
       try {
         fs.writeFileSync(clientFileDestPath, fs.readFileSync(clientFileSourcePath));
-        successMessage(`Asyngular app "${destDir}" was setup successfully.`);
+        successMessage(`SocketCluster app "${destDir}" was setup successfully.`);
       } catch (err) {
         warningMessage(
           `Failed to copy file from "${clientFileSourcePath}" to "${clientFileDestPath}" - Try copying it manually.`
@@ -246,17 +246,17 @@ let confirmReplaceSetup = function (confirm) {
       createFail();
     }
   } else {
-    errorMessage('Asyngular "create" action was aborted.');
+    errorMessage('SocketCluster "create" action was aborted.');
     process.exit();
   }
 };
 
-let getAGCWorkerDeploymentDefPath = function (kubernetesTargetDir) {
-  return `${kubernetesTargetDir}/agc-worker-deployment.yaml`;
+let getSCCWorkerDeploymentDefPath = function (kubernetesTargetDir) {
+  return `${kubernetesTargetDir}/scc-worker-deployment.yaml`;
 };
 
-let getAGCBrokerDeploymentDefPath = function (kubernetesTargetDir) {
-  return `${kubernetesTargetDir}/agc-broker-deployment.yaml`;
+let getSCCBrokerDeploymentDefPath = function (kubernetesTargetDir) {
+  return `${kubernetesTargetDir}/scc-broker-deployment.yaml`;
 };
 
 let promptSecret = function (callback) {
@@ -322,24 +322,24 @@ let removeTLSSecret = function (secretName, errorLogger) {
 if (command === 'create') {
   let transformK8sConfigs = function (callback) {
     let kubernetesTargetDir = destDir + '/kubernetes';
-    let kubeConfAGCWorker = getAGCWorkerDeploymentDefPath(kubernetesTargetDir);
+    let kubeConfSCCWorker = getSCCWorkerDeploymentDefPath(kubernetesTargetDir);
     try {
-      let kubeConfContentAGCWorker = fs.readFileSync(kubeConfAGCWorker, {encoding: 'utf8'});
-      let deploymentConfAGCWorker = YAML.parse(kubeConfContentAGCWorker);
+      let kubeConfContentSCCWorker = fs.readFileSync(kubeConfSCCWorker, {encoding: 'utf8'});
+      let deploymentConfSCCWorker = YAML.parse(kubeConfContentSCCWorker);
 
-      deploymentConfAGCWorker.spec.template.spec.volumes = [{
+      deploymentConfSCCWorker.spec.template.spec.volumes = [{
         name: 'app-src-volume',
         emptyDir: {}
       }];
-      let containers = deploymentConfAGCWorker.spec.template.spec.containers;
-      let templateSpec = deploymentConfAGCWorker.spec.template.spec;
+      let containers = deploymentConfSCCWorker.spec.template.spec.containers;
+      let templateSpec = deploymentConfSCCWorker.spec.template.spec;
       if (!templateSpec.initContainers) {
         templateSpec.initContainers = [];
       }
       let initContainers = templateSpec.initContainers;
       let appSrcContainerIndex;
       containers.forEach((value, index) => {
-        if (value && value.name == 'agc-worker') {
+        if (value && value.name == 'scc-worker') {
           appSrcContainerIndex = index;
           return;
         }
@@ -360,8 +360,8 @@ if (command === 'create') {
         }],
         command: ['cp', '-a', '/usr/src/.', '/usr/dest/']
       });
-      let formattedYAMLString = sanitizeYAML(YAML.stringify(deploymentConfAGCWorker, Infinity, 2));
-      fs.writeFileSync(kubeConfAGCWorker, formattedYAMLString);
+      let formattedYAMLString = sanitizeYAML(YAML.stringify(deploymentConfSCCWorker, Infinity, 2));
+      fs.writeFileSync(kubeConfSCCWorker, formattedYAMLString);
     } catch (err) {
       callback(err);
       return;
@@ -425,7 +425,7 @@ if (command === 'create') {
   } catch (e) {}
 
   let dockerCommand = `docker run -d -p ${portNumber}:8000 -v ${absoluteAppPath}:/usr/src/app/ ` +
-    `${envFlagString}--name ${appName} socketcluster/asyngular:v6.1.1`;
+    `${envFlagString}--name ${appName} socketcluster/socketcluster:v15.0.0`;
   try {
     execSync(dockerCommand, {stdio: 'inherit'});
     successMessage(`App "${appName}" is running at http://localhost:${portNumber}`);
@@ -509,18 +509,18 @@ if (command === 'create') {
     process.exit();
   };
 
-  let asyngularK8sConfigFilePath = appPath + '/asyngular-k8s.json';
-  let asyngularK8sConfig = parseJSONFile(asyngularK8sConfigFilePath);
+  let socketClusterK8sConfigFilePath = appPath + '/socketcluster-k8s.json';
+  let socketClusterK8sConfig = parseJSONFile(socketClusterK8sConfigFilePath);
 
-  let addAuthDetailsToAsyngularK8s = function (asyngularK8sConfigJSON, username, password) {
-    if (!asyngularK8sConfigJSON.docker) {
-      asyngularK8sConfigJSON.docker = {};
+  let addAuthDetailsToSocketClusterK8s = function (socketClusterK8sConfigJSON, username, password) {
+    if (!socketClusterK8sConfigJSON.docker) {
+      socketClusterK8sConfigJSON.docker = {};
     }
-    asyngularK8sConfigJSON.docker.auth = Buffer.from(`${username}:${password}`, 'utf8').toString('base64');
+    socketClusterK8sConfigJSON.docker.auth = Buffer.from(`${username}:${password}`, 'utf8').toString('base64');
   };
 
-  let saveAsyngularK8sConfigFile = function (asyngularK8sConfigJSON) {
-    fs.writeFileSync(asyngularK8sConfigFilePath, JSON.stringify(asyngularK8sConfigJSON, null, 2));
+  let saveSocketClusterK8sConfigFile = function (socketClusterK8sConfigJSON) {
+    fs.writeFileSync(socketClusterK8sConfigFilePath, JSON.stringify(socketClusterK8sConfigJSON, null, 2));
   };
 
   let parseVersionTag = function (fullImageName) {
@@ -545,7 +545,7 @@ if (command === 'create') {
     };
 
     let promptSaveAuthDetails = function () {
-      promptConfirm(`Would you like to save your Docker registry username and password as Base64 to ${asyngularK8sConfigFilePath}?`, {default: true}, handleSaveDockerAuthDetails);
+      promptConfirm(`Would you like to save your Docker registry username and password as Base64 to ${socketClusterK8sConfigFilePath}?`, {default: true}, handleSaveDockerAuthDetails);
     };
 
     let handlePassword = function (password) {
@@ -588,10 +588,10 @@ if (command === 'create') {
     }
     dockerConfig.imageName = setImageVersionTag(dockerConfig.imageName, fullVersionTag);
     if (saveDockerAuthDetails) {
-      addAuthDetailsToAsyngularK8s(asyngularK8sConfig, username, password);
+      addAuthDetailsToSocketClusterK8s(socketClusterK8sConfig, username, password);
     }
     try {
-      saveAsyngularK8sConfigFile(asyngularK8sConfig);
+      saveSocketClusterK8sConfigFile(socketClusterK8sConfig);
 
       execSync(`docker build -t ${dockerConfig.imageName} .`, {stdio: 'inherit'});
       execSync(`${dockerLoginCommand}; docker push ${dockerConfig.imageName}`, {stdio: 'inherit'});
@@ -602,33 +602,33 @@ if (command === 'create') {
 
       let kubernetesDirPath = appPath + '/kubernetes';
 
-      let kubeConfAGCWorker = getAGCWorkerDeploymentDefPath(kubernetesDirPath);
-      let kubeConfContentAGCWorker = fs.readFileSync(kubeConfAGCWorker, {encoding: 'utf8'});
+      let kubeConfSCCWorker = getSCCWorkerDeploymentDefPath(kubernetesDirPath);
+      let kubeConfContentSCCWorker = fs.readFileSync(kubeConfSCCWorker, {encoding: 'utf8'});
 
-      let deploymentConfAGCWorker = YAML.parse(kubeConfContentAGCWorker);
+      let deploymentConfSCCWorker = YAML.parse(kubeConfContentSCCWorker);
 
-      let initContainersAGCWorker = deploymentConfAGCWorker.spec.template.spec.initContainers;
-      initContainersAGCWorker.forEach((value, index) => {
+      let initContainersSCCWorker = deploymentConfSCCWorker.spec.template.spec.initContainers;
+      initContainersSCCWorker.forEach((value, index) => {
         if (value) {
           if (value.name === 'app-src-container') {
-            initContainersAGCWorker[index].image = dockerConfig.imageName;
+            initContainersSCCWorker[index].image = dockerConfig.imageName;
           }
         }
       });
 
-      let formattedYAMLStringAGCWorker = sanitizeYAML(YAML.stringify(deploymentConfAGCWorker, Infinity, 2));
-      fs.writeFileSync(kubeConfAGCWorker, formattedYAMLStringAGCWorker);
+      let formattedYAMLStringSCCWorker = sanitizeYAML(YAML.stringify(deploymentConfSCCWorker, Infinity, 2));
+      fs.writeFileSync(kubeConfSCCWorker, formattedYAMLStringSCCWorker);
 
-      let kubeConfAGCBroker = getAGCBrokerDeploymentDefPath(kubernetesDirPath);
-      let kubeConfContentAGCBroker = fs.readFileSync(kubeConfAGCBroker, {encoding: 'utf8'});
+      let kubeConfSCCBroker = getSCCBrokerDeploymentDefPath(kubernetesDirPath);
+      let kubeConfContentSCCBroker = fs.readFileSync(kubeConfSCCBroker, {encoding: 'utf8'});
 
-      let deploymentConfAGCBroker = YAML.parse(kubeConfContentAGCBroker);
+      let deploymentConfSCCBroker = YAML.parse(kubeConfContentSCCBroker);
 
-      let formattedYAMLStringAGCBroker = sanitizeYAML(YAML.stringify(deploymentConfAGCBroker, Infinity, 2));
-      fs.writeFileSync(kubeConfAGCBroker, formattedYAMLStringAGCBroker);
+      let formattedYAMLStringSCCBroker = sanitizeYAML(YAML.stringify(deploymentConfSCCBroker, Infinity, 2));
+      fs.writeFileSync(kubeConfSCCBroker, formattedYAMLStringSCCBroker);
 
-      let ingressKubeFileName = 'agc-ingress.yaml';
-      let agcWorkerDeploymentFileName = 'agc-worker-deployment.yaml';
+      let ingressKubeFileName = 'scc-ingress.yaml';
+      let agcWorkerDeploymentFileName = 'scc-worker-deployment.yaml';
 
       let deploySuccess = () => {
         successMessage(
@@ -670,7 +670,7 @@ if (command === 'create') {
   };
 
   let handleDockerVersionTagAndPushToDockerImageRepo = function (versionTag) {
-    let dockerConfig = asyngularK8sConfig.docker;
+    let dockerConfig = socketClusterK8sConfig.docker;
 
     if (dockerConfig.auth) {
       let authParts = Buffer.from(dockerConfig.auth, 'base64').toString('utf8').split(':');
@@ -691,12 +691,12 @@ if (command === 'create') {
   };
 
   let pushToDockerImageRepo = function () {
-    let versionTagString = parseVersionTag(asyngularK8sConfig.docker.imageName).replace(/^:/, '');
+    let versionTagString = parseVersionTag(socketClusterK8sConfig.docker.imageName).replace(/^:/, '');
     let nextVersionTag;
     if (versionTagString) {
       if (isUpdate) {
         nextVersionTag = incrementVersion(versionTagString);
-        asyngularK8sConfig.docker.imageName = setImageVersionTag(asyngularK8sConfig.docker.imageName, nextVersionTag);
+        socketClusterK8sConfig.docker.imageName = setImageVersionTag(socketClusterK8sConfig.docker.imageName, nextVersionTag);
       } else {
         nextVersionTag = versionTagString;
       }
@@ -707,21 +707,21 @@ if (command === 'create') {
     promptInput(`Enter the Docker version tag for this deployment (Default: ${nextVersionTag}):`, handleDockerVersionTagAndPushToDockerImageRepo);
   };
 
-  if (asyngularK8sConfig.docker && asyngularK8sConfig.docker.imageRepo) {
+  if (socketClusterK8sConfig.docker && socketClusterK8sConfig.docker.imageRepo) {
     pushToDockerImageRepo();
   } else {
     let dockerImageName, dockerDefaultImageName, dockerDefaultImageVersionTag;
 
-    let saveAsyngularK8sConfigs = function () {
-      asyngularK8sConfig.docker = {
+    let saveSocketClusterK8sConfigs = function () {
+      socketClusterK8sConfig.docker = {
         imageRepo: 'https://index.docker.io/v1/',
         imageName: dockerImageName
       };
       if (saveDockerAuthDetails) {
-        addAuthDetailsToAsyngularK8s(asyngularK8sConfig, dockerUsername, dockerPassword);
+        addAuthDetailsToSocketClusterK8s(socketClusterK8sConfig, dockerUsername, dockerPassword);
       }
       try {
-        saveAsyngularK8sConfigFile(asyngularK8sConfig);
+        saveSocketClusterK8sConfigFile(socketClusterK8sConfig);
       } catch (err) {
         failedToDeploy(err);
       }
@@ -734,7 +734,7 @@ if (command === 'create') {
       } else {
         dockerImageName = setImageVersionTag(dockerDefaultImageName, dockerDefaultImageVersionTag);
       }
-      saveAsyngularK8sConfigs();
+      saveSocketClusterK8sConfigs();
     };
 
     let promptDockerImageName = function () {
@@ -788,7 +788,7 @@ if (command === 'create') {
   }
   process.exit();
 } else {
-  errorMessage(`"${command}" is not a valid Asyngular command.`);
+  errorMessage(`"${command}" is not a valid SocketCluster command.`);
   showCorrectUsage();
   process.exit();
 }
