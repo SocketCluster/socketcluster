@@ -729,13 +729,14 @@ if (command === 'create') {
     };
 
     let handleDockerImageName = function (imageName) {
-      let slashes = (imageName || dockerDefaultImageName).match(/\//g) || [];
+      imageName = imageName || dockerDefaultImageName;
+      let slashes = imageName.match(/\//g) || [];
       if (slashes.length !== 1) {
         failedToDeploy(
           new Error('Invalid Docker image name; it must be in the format organizationName/projectName')
         );
       }
-      dockerImageName = setImageVersionTag(dockerDefaultImageName, dockerDefaultImageVersionTag);
+      dockerImageName = setImageVersionTag(imageName, dockerDefaultImageVersionTag);
       saveSocketClusterK8sConfigs();
     };
 
