@@ -494,6 +494,10 @@ if (command === 'create') {
   command.stdout.pipe(process.stdout);
   command.stderr.pipe(process.stderr);
 } else if (command === 'deploy' || command === 'deploy-update') {
+  let dockerImageName, dockerDefaultImageName;
+  let dockerDefaultImageVersionTag = 'v1.0.0';
+  let nextVersionTag;
+
   let appPath = arg1 || '.';
   let absoluteAppPath = path.resolve(appPath);
   let pkg = parsePackageFile(appPath);
@@ -532,7 +536,7 @@ if (command === 'create') {
   };
 
   let setImageVersionTag = function (imageName, versionTag) {
-    if (versionTag.indexOf(':') != 0) {
+    if (versionTag.indexOf(':') !== 0) {
       versionTag = ':' + versionTag;
     }
     return imageName.replace(/(\/[^\/:]*)(:[^:]*)?$/g, `$1${versionTag}`);
@@ -578,7 +582,7 @@ if (command === 'create') {
   };
 
   let performDeployment = function (dockerConfig, versionTag, username, password) {
-    let dockerLoginCommand = `docker login -u ${username} -p ${password}`;
+    let dockerLoginCommand = `docker login -u "${username}" -p "${password}"`;
 
     let fullVersionTag;
     if (versionTag) {
@@ -592,7 +596,6 @@ if (command === 'create') {
     }
     try {
       saveSocketClusterK8sConfigFile(socketClusterK8sConfig);
-
       execSync(`docker build -t ${dockerConfig.imageName} .`, {stdio: 'inherit'});
       execSync(`${dockerLoginCommand}; docker push ${dockerConfig.imageName}`, {stdio: 'inherit'});
 
@@ -670,6 +673,7 @@ if (command === 'create') {
   };
 
   let handleDockerVersionTagAndPushToDockerImageRepo = function (versionTag) {
+    socketClusterK8sConfig.docker.imageName = setImageVersionTag(socketClusterK8sConfig.docker.imageName, nextVersionTag);
     let dockerConfig = socketClusterK8sConfig.docker;
 
     if (dockerConfig.auth) {
@@ -692,16 +696,14 @@ if (command === 'create') {
 
   let pushToDockerImageRepo = function () {
     let versionTagString = parseVersionTag(socketClusterK8sConfig.docker.imageName).replace(/^:/, '');
-    let nextVersionTag;
     if (versionTagString) {
       if (isUpdate) {
         nextVersionTag = incrementVersion(versionTagString);
-        socketClusterK8sConfig.docker.imageName = setImageVersionTag(socketClusterK8sConfig.docker.imageName, nextVersionTag);
       } else {
         nextVersionTag = versionTagString;
       }
     } else {
-      nextVersionTag = '""';
+      nextVersionTag = dockerDefaultImageVersionTag;
     }
 
     promptInput(`Enter the Docker version tag for this deployment (Default: ${nextVersionTag}):`, handleDockerVersionTagAndPushToDockerImageRepo);
@@ -710,8 +712,6 @@ if (command === 'create') {
   if (socketClusterK8sConfig.docker && socketClusterK8sConfig.docker.imageRepo) {
     pushToDockerImageRepo();
   } else {
-    let dockerImageName, dockerDefaultImageName, dockerDefaultImageVersionTag;
-
     let saveSocketClusterK8sConfigs = function () {
       socketClusterK8sConfig.docker = {
         imageRepo: 'https://index.docker.io/v1/',
@@ -729,17 +729,18 @@ if (command === 'create') {
     };
 
     let handleDockerImageName = function (imageName) {
-      if (imageName) {
-        dockerImageName = imageName;
-      } else {
-        dockerImageName = setImageVersionTag(dockerDefaultImageName, dockerDefaultImageVersionTag);
+      let slashes = (imageName || dockerDefaultImageName).match(/\//g) || [];
+      if (slashes.length !== 1) {
+        failedToDeploy(
+          new Error('Invalid Docker image name; it must be in the format organizationName/projectName')
+        );
       }
+      dockerImageName = setImageVersionTag(dockerDefaultImageName, dockerDefaultImageVersionTag);
       saveSocketClusterK8sConfigs();
     };
 
     let promptDockerImageName = function () {
       dockerDefaultImageName = `${dockerUsername}/${appName}`;
-      dockerDefaultImageVersionTag = 'v1.0.0';
 
       promptInput(`Enter the Docker image name without the version tag (Or press enter for default: ${dockerDefaultImageName}):`, handleDockerImageName);
     };
