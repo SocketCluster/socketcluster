@@ -628,7 +628,7 @@ if (command === 'create') {
       fs.writeFileSync(kubeConfSCCBroker, formattedYAMLStringSCCBroker);
 
       let ingressKubeFileName = 'scc-ingress.yaml';
-      let agcWorkerDeploymentFileName = 'scc-worker-deployment.yaml';
+      let sccWorkerDeploymentFileName = 'scc-worker-deployment.yaml';
 
       let deploySuccess = () => {
         successMessage(
@@ -640,7 +640,7 @@ if (command === 'create') {
 
       if (isUpdate) {
         try {
-          execSync(`kubectl replace -f ${kubernetesDirPath}/${agcWorkerDeploymentFileName}`, {stdio: 'inherit'});
+          execSync(`kubectl replace -f ${kubernetesDirPath}/${sccWorkerDeploymentFileName}`, {stdio: 'inherit'});
         } catch (err) {}
 
         deploySuccess();

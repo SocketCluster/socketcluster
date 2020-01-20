@@ -10,7 +10,7 @@
   ],
   "dependencies": {
     "scc-broker-client": "^7.0.0",
-    "socketcluster-client": "^15.0.0",
+    "socketcluster-client": "^15.0.1",
     "socketcluster-server": "^15.0.0",
     "connect": "^3.6.6",
     "eetase": "^3.0.1",
