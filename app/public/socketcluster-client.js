@@ -1,5 +1,5 @@
 /**
- * SocketCluster JavaScript client v15.0.2
+ * SocketCluster JavaScript client v16.0.1
  */
  (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.socketClusterClient = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 (function (global){
@@ -90,6 +90,8 @@ function AGClientSocket(socketOptions) {
   let defaultOptions = {
     path: '/socketcluster/',
     secure: false,
+    protocolScheme: null,
+    socketPath: null,
     autoConnect: true,
     autoReconnect: true,
     autoSubscribeOnConnect: true,
@@ -1747,7 +1749,12 @@ AGTransport.CLOSED = AGTransport.prototype.CLOSED = 'closed';
 
 AGTransport.prototype.uri = function () {
   let query = this.options.query || {};
-  let schema = this.options.secure ? 'wss' : 'ws';
+  let scheme;
+  if (this.options.protocolScheme == null) {
+    scheme = this.options.secure ? 'wss' : 'ws';
+  } else {
+    scheme = this.options.protocolScheme;
+  }
 
   if (this.options.timestampRequests) {
     query[this.options.timestampParam] = (new Date()).getTime();
@@ -1760,19 +1767,25 @@ AGTransport.prototype.uri = function () {
   }
 
   let host;
-  if (this.options.host) {
-    host = this.options.host;
-  } else {
-    let port = '';
+  let path;
+  if (this.options.socketPath == null) {
+    if (this.options.host) {
+      host = this.options.host;
+    } else {
+      let port = '';
 
-    if (this.options.port && ((schema === 'wss' && this.options.port !== 443)
-      || (schema === 'ws' && this.options.port !== 80))) {
-      port = ':' + this.options.port;
+      if (this.options.port && ((scheme === 'wss' && this.options.port !== 443)
+        || (scheme === 'ws' && this.options.port !== 80))) {
+        port = ':' + this.options.port;
+      }
+      host = this.options.hostname + port;
     }
-    host = this.options.hostname + port;
+    path = this.options.path;
+  } else {
+    host = this.options.socketPath;
+    path = `:${this.options.path}`;
   }
-
-  return schema + '://' + host + this.options.path + query;
+  return scheme + '://' + host + path + query;
 };
 
 AGTransport.prototype._onOpen = async function () {
@@ -4452,15 +4465,6 @@ class ConsumableStream {
     throw new TypeError('Method must be overriden by subclass');
   }
 
-  createConsumable(timeout) {
-    let asyncIterator = this.createConsumer(timeout);
-    return {
-      [Symbol.asyncIterator]: () => {
-        return asyncIterator;
-      }
-    }
-  }
-
   [Symbol.asyncIterator]() {
     return this.createConsumer();
   }
@@ -6349,7 +6353,7 @@ class Consumer {
     this.stream = stream;
     this.currentNode = startNode;
     this.timeout = timeout;
-    this._isIterating = false;
+    this.isAlive = true;
     this.stream.setConsumer(this.id, this);
   }
 
@@ -6364,7 +6368,7 @@ class Consumer {
     return stats;
   }
 
-  resetBackpressure() {
+  _resetBackpressure() {
     this._backpressure = 0;
   }
 
@@ -6397,17 +6401,19 @@ class Consumer {
       clearTimeout(this._timeoutId);
       delete this._timeoutId;
     }
-    if (this._isIterating) {
-      this._killPacket = {value, done: true};
-      this.applyBackpressure(this._killPacket);
-    } else {
-      this.stream.removeConsumer(this.id);
-      this.resetBackpressure();
-    }
+    this._killPacket = {value, done: true};
+    this._destroy();
+
     if (this._resolve) {
       this._resolve();
       delete this._resolve;
     }
+  }
+
+  _destroy() {
+    this.isAlive = false;
+    this._resetBackpressure();
+    this.stream.removeConsumer(this.id);
   }
 
   async _waitForNextItem(timeout) {
@@ -6432,7 +6438,6 @@ class Consumer {
   }
 
   async next() {
-    this._isIterating = true;
     this.stream.setConsumer(this.id, this);
 
     while (true) {
@@ -6440,15 +6445,12 @@ class Consumer {
         try {
           await this._waitForNextItem(this.timeout);
         } catch (error) {
-          this._isIterating = false;
-          this.stream.removeConsumer(this.id);
+          this._destroy();
           throw error;
         }
       }
       if (this._killPacket) {
-        this._isIterating = false;
-        this.stream.removeConsumer(this.id);
-        this.resetBackpressure();
+        this._destroy();
         let killPacket = this._killPacket;
         delete this._killPacket;
 
@@ -6463,8 +6465,7 @@ class Consumer {
       }
 
       if (this.currentNode.data.done) {
-        this._isIterating = false;
-        this.stream.removeConsumer(this.id);
+        this._destroy();
       }
 
       return this.currentNode.data;
@@ -6473,10 +6474,12 @@ class Consumer {
 
   return() {
     delete this.currentNode;
-    this._isIterating = false;
-    this.stream.removeConsumer(this.id);
-    this.resetBackpressure();
+    this._destroy();
     return {};
+  }
+
+  [Symbol.asyncIterator]() {
+    return this;
   }
 }
 
@@ -6629,7 +6632,7 @@ module.exports = WritableConsumableStream;
 },{"./consumer":34,"consumable-stream":13}],"socketcluster-client":[function(require,module,exports){
 const AGClientSocket = require('./lib/clientsocket');
 const factory = require('./lib/factory');
-const version = '15.0.2';
+const version = '16.0.1';
 
 module.exports.factory = factory;
 module.exports.AGClientSocket = AGClientSocket;
