@@ -24,7 +24,7 @@
   "dependencies": {
     "fs-extra": "^7.0.1",
     "inquirer": "^6.2.1",
-    "minimist": "^1.2.0",
+    "minimist": "^1.2.5",
     "yamljs": "^0.3.0"
   },
   "bin": {
