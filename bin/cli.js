@@ -527,9 +527,9 @@ let removeTLSSecret = function (secretName, errorLogger) {
 
       if(confirmation) {
         saveDockerAuthDetails = confirmation
-
-        return Promise.resolve({ username: dockerUsername, password: dockerPassword, saveDockerAuthDetails})
       }
+
+      return Promise.resolve({ username: dockerUsername, password: dockerPassword, saveDockerAuthDetails})
 
     };
 
