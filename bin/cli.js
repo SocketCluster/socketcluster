@@ -119,8 +119,8 @@ let promptInput = async function (message, secret) {
         name: 'result',
         default: null
       }
-    ])
-    return answers.result
+    ]);
+    return answers.result;
   } catch (err) {
     errorMessage(err.message);
     process.exit();
@@ -140,7 +140,7 @@ let promptConfirm = async function (message, options) {
     const answers = await prompt([
       promptOptions
     ]);
-    return answers.result
+    return answers.result;
   } catch(err) {
     errorMessage(err.message);
     process.exit();
