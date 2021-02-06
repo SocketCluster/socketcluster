@@ -1,0 +1,7 @@
+- [x] Added package.json as version for `run` command and added it to the docker run command (take a look if you want this)
+- [x] `transformK8sConfigs` to Promise
+- [x] `promptInput`, `promptConfirm` to async await
+- [x] If statement wrapped in async function
+- [x] removed unused vars `absoluteAppPath`, `targetCPUUtilization`, `deploymentYAMLRegex` and `maxPodsPerService`
+- [x] significally improved `promptSecret`, `promptK8sTLSCredentials`, `promptDockerAuthDetails` with async await
+- [x] Removed prompt and handle callback functions

@@ -514,13 +514,13 @@ let removeTLSSecret = function (secretName, errorLogger) {
       // Check if username is specified
       if (dockerUsername == null) {
         username = await promptInput('Enter your Docker registry username:');
-        dockerUsername = username;
+        dockerUsername = username.toLowerCase();
       }
 
       // Check if password is specified
       if (dockerPassword == null) {
         password = await promptInput('Enter your Docker registry password:', true);
-        dockerPassword = password
+        dockerPassword = password;
       }
 
       const confirmation = await promptConfirm(`Would you like to save your Docker registry username and password as Base64 to ${socketClusterK8sConfigFilePath}?`, {default: true});
