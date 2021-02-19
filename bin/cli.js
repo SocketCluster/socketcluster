@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const { REPLClient } = require('@maartennnn/cli-builder')
+const actions = require('./actions')
 
 let helpFooter =
   'Note that the app-name/app-path in the commands above is optional (except for create) - If not provided, ' +
@@ -10,11 +11,12 @@ const cli = new REPLClient({
   binCommand: 'socketcluster',
   enableInteractive: 'false',
   helpFooter,
+  actions
 })
 
 const commands = {
   create: {
-    execute: () => {},
+    execute: async (app) => cli.actions.create(app),
     help: 'Create a new boilerplate app in your working directory',
     input: '<app-name>',
   },
@@ -79,6 +81,4 @@ const commands = {
   },
 }
 
-;(async () => {
-  cli.run(commands)
-})()
+cli.run(commands)
