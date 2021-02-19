@@ -1,3 +1,23 @@
+const path = require('path');
+const { execSync } = require('child_process');
+const fs = require('fs-extra');
+const YAML = require('yamljs');
+
+const {
+  parsePackageFile,
+  parseJSONFile,
+  getSCCWorkerDeploymentDefPath,
+  getSCCBrokerDeploymentDefPath,
+  sanitizeYAML,
+} = require('../lib');
+
+let dockerUsername, dockerPassword;
+let saveDockerAuthDetails = null;
+
+let tlsSecretName = null;
+let tlsKeyPath = null;
+let tlsCertPath = null;
+
 const uploadTLSSecret = function (
   secretName,
   privateKeyPath,
@@ -34,18 +54,20 @@ const removeTLSSecret = function (secretName, errorLogger) {
   return true;
 };
 
-const k8sDeployAndDeployUpdate = async function () {
+const k8sDeployAndDeployUpdate = async function (arg1, updateRequest) {
   let dockerImageName, dockerDefaultImageName;
   let dockerDefaultImageVersionTag = 'v1.0.0';
   let nextVersionTag;
+
+  const self = this
 
   let appPath = arg1 || '.';
   let pkg = parsePackageFile(appPath);
   let appName = pkg.name;
 
-  let isUpdate = command === 'deploy-update';
+  let isUpdate = updateRequest;
 
-  let failedToDeploy = function (err) {
+  let failedToDeploy = (err) => {
     this.errorLog(`Failed to deploy the '${appName}' app. ${err.message}`);
     process.exit();
   };
@@ -89,25 +111,25 @@ const k8sDeployAndDeployUpdate = async function () {
     return imageName.replace(/(\/[^\/:]*)(:[^:]*)?$/g, `$1${versionTag}`);
   };
 
-  let promptDockerAuthDetails = async function () {
+  let promptDockerAuthDetails = async () => {
     let username, password;
 
     // Check if username is specified
     if (dockerUsername == null) {
-      username = await promptInput('Enter your Docker registry username:');
+      username = await this.promptInput('Enter your Docker registry username:');
       dockerUsername = username.toLowerCase();
     }
 
     // Check if password is specified
     if (dockerPassword == null) {
-      password = await promptInput(
+      password = await this.promptInput(
         'Enter your Docker registry password:',
         true,
       );
       dockerPassword = password;
     }
 
-    const confirmation = await promptConfirm(
+    const confirmation = await this.promptConfirm(
       `Would you like to save your Docker registry username and password as Base64 to ${socketClusterK8sConfigFilePath}?`,
       { default: true },
     );
@@ -201,7 +223,7 @@ const k8sDeployAndDeployUpdate = async function () {
       let sccWorkerDeploymentFileName = 'scc-worker-deployment.yaml';
 
       let deploySuccess = () => {
-        this.successLog(
+        self.successLog(
           `The '${appName}' app was deployed successfully - You should be able to access it online ` +
             `once it has finished booting up. This can take a while depending on your platform.`,
         );
@@ -253,7 +275,7 @@ const k8sDeployAndDeployUpdate = async function () {
     });
   };
 
-  let pushToDockerImageRepo = async function () {
+  let pushToDockerImageRepo = async () => {
     let versionTagString = parseVersionTag(
       socketClusterK8sConfig.docker.imageName,
     ).replace(/^:/, '');
@@ -267,7 +289,7 @@ const k8sDeployAndDeployUpdate = async function () {
       nextVersionTag = dockerDefaultImageVersionTag;
     }
 
-    const versionTag = await promptInput(
+    const versionTag = await this.promptInput(
       `Enter the Docker version tag for this deployment (Default: ${nextVersionTag}):`,
     );
 
@@ -322,7 +344,7 @@ const k8sDeployAndDeployUpdate = async function () {
       nextVersionTag = dockerDefaultImageVersionTag;
     }
 
-    const versionTag = await promptInput(
+    const versionTag = await this.promptInput(
       `Enter the Docker version tag for this deployment (Default: ${nextVersionTag}):`,
     );
 
@@ -373,17 +395,17 @@ const k8sDeployAndDeployUpdate = async function () {
       pushToDockerImageRepo();
     };
 
-    const provideKeyAndCert = await promptConfirm(
+    const provideKeyAndCert = await this.promptConfirm(
       'Would you like to upload a TLS private key and certificate to your cluster? (both must be unencrypted)',
       { default: true },
     );
 
     if (provideKeyAndCert) {
       const secretName =
-        (await promptInput(
+        (await this.promptInput(
           `Insert a TLS secretName for Kubernetes (or press enter to leave it as "${DEFAULT_TLS_SECRET_NAME}" - Recommended):`,
         )) || DEFAULT_TLS_SECRET_NAME;
-      const privateKeyPath = await promptInput(
+      const privateKeyPath = await this.promptInput(
         'Insert the path to a private key file to upload to K8s (or press enter to cancel):',
       );
 
@@ -391,7 +413,7 @@ const k8sDeployAndDeployUpdate = async function () {
         return;
       }
 
-      const certFilePath = await promptInput(
+      const certFilePath = await this.promptInput(
         'Insert the path to a certificate file to upload to K8s (or press enter to cancel):',
       );
 
@@ -408,7 +430,7 @@ const k8sDeployAndDeployUpdate = async function () {
 
     dockerDefaultImageName = `${dockerUsername}/${appName}`;
 
-    let imageName = await promptInput(
+    let imageName = await this.promptInput(
       `Enter the Docker image name without the version tag (Or press enter for default: ${dockerDefaultImageName}):`,
     );
 
@@ -431,7 +453,7 @@ const k8sDeployAndDeployUpdate = async function () {
   }
 };
 
-const k8sUndeploy = async function () {
+const k8sUndeploy = async function (arg1) {
   let appPath = arg1 || '.';
 
   let pkg = parsePackageFile(appPath);

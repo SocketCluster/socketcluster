@@ -16,51 +16,51 @@ const cli = new REPLClient({
 
 const commands = {
   create: {
-    execute: async (appName) => cli.actions.create(appName),
+    execute: async (appName) => await cli.actions.create(appName),
     help: 'Create a new boilerplate app in your working directory',
     input: '<app-name>',
   },
   run: {
-    execute: async (path) => cli.actions.dockerRun(path),
+    execute: async (path) => await cli.actions.dockerRun(path),
     help:
       '[requires docker] Run the app at path inside a container on your local machine',
     input: '<path>',
   },
   restart: {
-    execute: async (appName) => cli.actions.dockerRestart(appName),
+    execute: async (appName) => await cli.actions.dockerRestart(appName),
     help: '[requires docker] Restart the app at path',
     input: '<app-path-or-name>',
   },
   stop: {
-    execute: async (path) => cli.actions.dockerStop(path),
+    execute: async (path) => await cli.actions.dockerStop(path),
     help: '[requires docker] Stop the app',
     input: '<app-path-or-name>',
   },
   list: {
-    execute: async () => cli.actions.dockerList(),
+    execute: async () => await cli.actions.dockerList(),
     help:
       '[requires docker] List all running Docker containers on your local machine',
   },
   logs: {
-    execute: async (appName) => cli.actions.dockerLogs(appName),
+    execute: async (appName) => await cli.actions.dockerLogs(appName),
     help: '[requires docker] Get logs for the specified app',
     input: '<app-path-or-name>',
     options: [{ option: 's', help: 'Follow the logs' }],
   },
   deploy: {
-    execute: () => {},
+    execute: async (path) => await cli.actions.k8sDeployAndDeployUpdate(path),
     help:
       '[requires kubectl] Deploy the app at path to your Kubernetes cluster',
     input: '<app-path>',
   },
   deployUpdate: {
-    execute: () => {},
+    execute: async (path) => await cli.actions.k8sDeployAndDeployUpdate(path, true),
     help:
       '[requires kubectl] Deploy update to an app which was previously deployed',
     input: '<app-path>',
   },
   undeploy: {
-    execute: () => {},
+    execute: async (path) => await cli.actions.k8sUndeploy(path, true),
     help:
       '[requires kubectl] Shutdown all core app services running on your cluster',
     input: '<app-path>',

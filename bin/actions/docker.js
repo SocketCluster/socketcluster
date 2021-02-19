@@ -2,12 +2,7 @@ const path = require('path');
 const { execSync, exec } = require('child_process');
 const scVersion = require('../../package.json').version;
 
-const { parseJSONFile } = require('../lib');
-
-let parsePackageFile = function (moduleDir) {
-  let packageFile = path.join(moduleDir, 'package.json');
-  return parseJSONFile(packageFile);
-};
+const { parseJSONFile, parsePackageFile } = require('../lib');
 
 const dockerStop = async function (arg) {
   let appName = arg;

@@ -36,11 +36,16 @@ let fileExistsSync = function (filePath) {
 let parseJSONFile = function (filePath) {
   try {
     if (fileExistsSync(filePath)) {
-      return JSON.parse(fs.readFileSync(filePath, {encoding: 'utf8'}));
+      return JSON.parse(fs.readFileSync(filePath, { encoding: 'utf8' }));
     }
   } catch (e) {}
 
   return {};
+};
+
+let parsePackageFile = function (moduleDir) {
+  let packageFile = path.join(moduleDir, 'package.json');
+  return parseJSONFile(packageFile);
 };
 
 module.exports = {
@@ -53,4 +58,5 @@ module.exports = {
   clientFileSourcePath,
   fileExistsSync,
   parseJSONFile,
+  parsePackageFile,
 };
