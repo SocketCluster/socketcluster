@@ -11,6 +11,8 @@ const {
   sanitizeYAML,
 } = require('../lib');
 
+const DEFAULT_TLS_SECRET_NAME = 'scc-tls-credentials';
+
 let dockerUsername, dockerPassword;
 let saveDockerAuthDetails = null;
 
@@ -474,9 +476,9 @@ const k8sUndeploy = async function (arg1) {
 };
 
 const k8sAddSecret = async function () {
-  let secretName = argv.s || DEFAULT_TLS_SECRET_NAME;
-  let privateKeyPath = argv.k;
-  let certFilePath = argv.c;
+  let secretName = this.argv.s || DEFAULT_TLS_SECRET_NAME;
+  let privateKeyPath = this.argv.k;
+  let certFilePath = this.argv.c;
 
   if (privateKeyPath == null || certFilePath == null) {
     this.errorLog(
@@ -499,7 +501,7 @@ const k8sAddSecret = async function () {
 };
 
 const k8sRemoveSecret = async function () {
-  const secretName = argv.s || DEFAULT_TLS_SECRET_NAME;
+  const secretName = this.argv.s || DEFAULT_TLS_SECRET_NAME;
   const success = removeTLSSecret(secretName, this.errorLog);
   if (success) {
     this.successLog(
