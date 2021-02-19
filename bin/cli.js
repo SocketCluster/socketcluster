@@ -16,33 +16,33 @@ const cli = new REPLClient({
 
 const commands = {
   create: {
-    execute: async (app) => cli.actions.create(app),
+    execute: async (appName) => cli.actions.create(appName),
     help: 'Create a new boilerplate app in your working directory',
     input: '<app-name>',
   },
   run: {
-    execute: () => {},
+    execute: async (path) => cli.actions.dockerRun(path),
     help:
       '[requires docker] Run the app at path inside a container on your local machine',
     input: '<path>',
   },
   restart: {
-    execute: () => {},
+    execute: async (appName) => cli.actions.dockerRestart(appName),
     help: '[requires docker] Restart the app at path',
     input: '<app-path-or-name>',
   },
   stop: {
-    execute: () => {},
+    execute: async (path) => cli.actions.dockerStop(path),
     help: '[requires docker] Stop the app',
     input: '<app-path-or-name>',
   },
   list: {
-    execute: () => {},
+    execute: async () => cli.actions.dockerList(),
     help:
       '[requires docker] List all running Docker containers on your local machine',
   },
   logs: {
-    execute: () => {},
+    execute: async (appName) => cli.actions.dockerLogs(appName),
     help: '[requires docker] Get logs for the specified app',
     input: '<app-path-or-name>',
     options: [{ option: 's', help: 'Follow the logs' }],

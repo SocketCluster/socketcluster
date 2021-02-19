@@ -7,7 +7,7 @@ const sanitizeYAML = function (yamlString) {
 
 const wd = process.cwd();
 
-const appDir = `${process.cwd()}/app`;
+const appDir = `${__dirname}/../../app`;
 const destDir = (app) => path.normalize(`${wd}/${app}`);
 const clientFileSourcePath = path.normalize(
   `${destDir}/node_modules/socketcluster-client/socketcluster-client.js`,
@@ -33,6 +33,16 @@ let fileExistsSync = function (filePath) {
   return true;
 };
 
+let parseJSONFile = function (filePath) {
+  try {
+    if (fileExistsSync(filePath)) {
+      return JSON.parse(fs.readFileSync(filePath, {encoding: 'utf8'}));
+    }
+  } catch (e) {}
+
+  return {};
+};
+
 module.exports = {
   sanitizeYAML,
   getSCCBrokerDeploymentDefPath,
@@ -41,5 +51,6 @@ module.exports = {
   destDir,
   clientFileDestPath,
   clientFileSourcePath,
-  fileExistsSync
+  fileExistsSync,
+  parseJSONFile,
 };
