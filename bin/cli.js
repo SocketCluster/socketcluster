@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 
-const { REPLClient } = require('@maartennnn/cli-builder')
-const actions = require('./actions')
+const { REPLClient } = require('@maartennnn/cli-builder');
+const actions = require('./actions');
 
 let helpFooter =
   'Note that the app-name/app-path in the commands above is optional (except for create) - If not provided, ' +
-  'socketcluster will use the current working directory as the app path.'
+  'socketcluster will use the current working directory as the app path.';
 
 const cli = new REPLClient({
   binCommand: 'socketcluster',
   enableInteractive: 'false',
   helpFooter,
-  actions
-})
+  actions,
+});
 
 const commands = {
   create: {
@@ -54,7 +54,8 @@ const commands = {
     input: '<app-path>',
   },
   deployUpdate: {
-    execute: async (path) => await cli.actions.k8sDeployAndDeployUpdate(path, true),
+    execute: async (path) =>
+      await cli.actions.k8sDeployAndDeployUpdate(path, true),
     help:
       '[requires kubectl] Deploy update to an app which was previously deployed',
     input: '<app-path>',
@@ -79,6 +80,6 @@ const commands = {
     help: '[requires kubectl] Remove a TLS key and cert pair from your cluster',
     options: [{ option: 's', help: 'Optional secret name; defaults to ' }],
   },
-}
+};
 
-cli.run(commands)
+cli.run(commands);
