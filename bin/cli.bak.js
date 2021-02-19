@@ -42,29 +42,6 @@ let fileExistsSync = function (filePath) {
   return true;
 };
 
-let parseJSONFile = function (filePath) {
-  try {
-    if (fileExistsSync(filePath)) {
-      return JSON.parse(fs.readFileSync(filePath, {encoding: 'utf8'}));
-    }
-  } catch (e) {}
-
-  return {};
-};
-
-let parsePackageFile = function (moduleDir) {
-  let packageFile = path.join(moduleDir, 'package.json');
-  return parseJSONFile(packageFile);
-};
-
-let this.errorLog = function (message) {
-  console.log(`\x1b[31m[Error]\x1b[0m ${message}`);
-};
-
-let this.successLog = function (message) {
-  console.log(`\x1b[32m[Success]\x1b[0m ${message}`);
-};
-
 let warningMessage = function (message) {
   console.log(`\x1b[33m[Warning]\x1b[0m ${message}`);
 };

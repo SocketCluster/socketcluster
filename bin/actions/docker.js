@@ -1,5 +1,16 @@
-const dockerStop = async function () {
-  let appName = arg1;
+const path = require('path');
+const { execSync, exec } = require('child_process');
+const scVersion = require('../../package.json').version;
+
+const { parseJSONFile } = require('../lib');
+
+let parsePackageFile = function (moduleDir) {
+  let packageFile = path.join(moduleDir, 'package.json');
+  return parseJSONFile(packageFile);
+};
+
+const dockerStop = async function (arg) {
+  let appName = arg;
   if (!appName) {
     let appPath = '.';
     let pkg = parsePackageFile(appPath);
@@ -10,13 +21,14 @@ const dockerStop = async function () {
     execSync(`docker rm ${appName}`);
     this.successLog(`App '${appName}' was stopped.`);
   } catch (e) {
+    debugger;
     this.errorLog(`Failed to stop app '${appName}'.`);
   }
   process.exit();
 };
 
-const dockerRestart = async function () {
-  let appName = arg1;
+const dockerRestart = async function (arg) {
+  let appName = arg;
   if (!appName) {
     let appPath = '.';
     let pkg = parsePackageFile(appPath);
@@ -24,31 +36,32 @@ const dockerRestart = async function () {
   }
   try {
     execSync(`docker stop ${appName}`, { stdio: 'ignore' });
-    this.successLog(`App '${appName}' was stopped.`);
+    this.successLog(`App '${appName}' was stopped.`, null, true);
   } catch (e) {}
   try {
     execSync(`docker start ${appName}`);
     this.successLog(`App '${appName}' is running.`);
   } catch (e) {
+    debugger;
     this.errorLog(`Failed to start app '${appName}'.`);
   }
   process.exit();
 };
 
-const dockerRun = async function () {
-  let appPath = arg1 || '.';
+const dockerRun = async function (arg) {
+  let appPath = arg || '.';
   let absoluteAppPath = path.resolve(appPath);
   let pkg = parsePackageFile(appPath);
   let appName = pkg.name;
 
-  let portNumber = Number(argv.p) || 8000;
+  let portNumber = Number(this.argv.p) || 8000;
   let envVarList;
-  if (argv.e === undefined) {
+  if (this.argv.e === undefined) {
     envVarList = [];
-  } else if (!Array.isArray(argv.e)) {
-    envVarList = [argv.e];
+  } else if (!Array.isArray(this.argv.e)) {
+    envVarList = [this.argv.e];
   } else {
-    envVarList = argv.e;
+    envVarList = this.argv.e;
   }
   let envFlagList = envVarList.map((value) => {
     return `-e "${value}"`;
@@ -72,12 +85,17 @@ const dockerRun = async function () {
       `App "${appName}" is running at http://localhost:${portNumber}`,
     );
   } catch (e) {
+    debugger;
     this.errorLog(`Failed to start app "${appName}".`);
   }
   process.exit();
 };
 
 const dockerList = async function () {
+  // TODO: Implement commandRawArgsString
+
+  const commandRawArgsString = ''
+
   let command = exec(`docker ps${commandRawArgsString}`, (err) => {
     if (err) {
       this.errorLog(`Failed to list active containers. ` + err);
@@ -88,13 +106,24 @@ const dockerList = async function () {
   command.stderr.pipe(process.stderr);
 };
 
-const dockerLogs = async function () {
-  let appName = arg1;
+const dockerLogs = async function (arg) {
+  let appName = arg;
+
   if (!appName) {
     let appPath = '.';
     let pkg = parsePackageFile(appPath);
     appName = pkg.name;
   }
+
+  // TODO: Implement this
+  // const commandRawArgs = this.argv.slice(3);
+  // let commandRawArgsString = commandRawArgs.join(' ');
+  // if (commandRawArgsString.length) {
+  //   commandRawArgsString = ' ' + commandRawArgsString;
+  // }
+
+  const commandRawArgsString = ''
+
   let command = exec(`docker logs ${appName}${commandRawArgsString}`, (err) => {
     if (err) {
       this.errorLog(`Failed to get logs for '${appName}' app. ` + err);

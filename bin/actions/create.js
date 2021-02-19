@@ -9,6 +9,7 @@ const copyDirRecursive = (src, dest, opts) => {
     fs.copySync(src, dest);
     return true;
   } catch (e) {
+    debugger
     opts.errorLog(
       'Failed to create necessary files. Please check your permissions and try again.',
     );
@@ -84,7 +85,7 @@ const confirmReplaceSetup = function (confirm, destinationDir, opts) {
       rmdirRecursive(destinationDir) &&
       copyDirRecursive(appDir, destinationDir, opts)
     ) {
-      createSuccess();
+      createSuccess(null, this);
     } else {
       this.errorLog();
     }
@@ -173,7 +174,7 @@ const create = async function (app) {
       if (copyDirRecursive(appDir, destinationDir, this)) {
         try {
           await transformK8sConfigs();
-          createSuccess(destinationDir);
+          createSuccess(destinationDir, this);
         } catch (err) {
           this.errorLog(
             `Failed to format Kubernetes configs. Failed to create SocketCluster app. ${err}`,
