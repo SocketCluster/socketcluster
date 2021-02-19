@@ -22,6 +22,7 @@
   },
   "homepage": "https://socketcluster.io/",
   "dependencies": {
+    "@maartennnn/cli-builder": "~/Documents/code/projects/cli-builder",
     "fs-extra": "^7.0.1",
     "inquirer": "^6.2.1",
     "minimist": "^1.2.5",
