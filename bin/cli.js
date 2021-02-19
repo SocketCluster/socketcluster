@@ -14,6 +14,7 @@ const cli = new REPLClient({
   actions,
 });
 
+// CLI ACTIONS CAN BE FOUND IN BIN/ACTIONS/. THESE ARE MOUNTED VIA THE REPLCIENT
 const commands = {
   create: {
     execute: async (appName) => await cli.actions.create(appName),
