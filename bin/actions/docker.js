@@ -89,7 +89,7 @@ const dockerRun = async function (arg) {
 const dockerList = async function () {
   // TODO: Implement commandRawArgsString
 
-  const commandRawArgsString = ''
+  const commandRawArgsString = '';
 
   let command = exec(`docker ps${commandRawArgsString}`, (err) => {
     if (err) {
@@ -102,7 +102,12 @@ const dockerList = async function () {
 };
 
 const dockerLogs = async function (arg) {
-  let appName = arg;
+  let appName;
+  let commandRawArgsString = ''
+  if (arg !== 'f') {
+    appName = arg;
+    commandRawArgsString = `-${arg}`;
+}
 
   if (!appName) {
     let appPath = '.';
@@ -116,8 +121,6 @@ const dockerLogs = async function (arg) {
   // if (commandRawArgsString.length) {
   //   commandRawArgsString = ' ' + commandRawArgsString;
   // }
-
-  const commandRawArgsString = ''
 
   let command = exec(`docker logs ${appName}${commandRawArgsString}`, (err) => {
     if (err) {
