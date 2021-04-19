@@ -2,14 +2,21 @@ const fs = require('fs-extra');
 const { spawn } = require('child_process');
 const YAML = require('yamljs');
 
-const { destDir, fileExistsSync, appDir, getSCCWorkerDeploymentDefPath, sanitizeYAML } = require('../lib');
+const {
+  destDir,
+  fileExistsSync,
+  appDir,
+  getSCCWorkerDeploymentDefPath,
+  sanitizeYAML,
+  clientFileDestPath,
+  clientFileSourcePath,
+} = require('../lib');
 
 const copyDirRecursive = (src, dest, opts) => {
   try {
     fs.copySync(src, dest);
     return true;
   } catch (e) {
-    debugger
     opts.errorLog(
       'Failed to create necessary files. Please check your permissions and try again.',
     );
@@ -39,20 +46,25 @@ const createSuccess = (destinationDir, opts) => {
   });
 
   npmProcess.on('close', (code) => {
+    const clientFileDestination = clientFileDestPath(destinationDir);
+    const clientFileSource = clientFileSourcePath(destinationDir);
+
     if (code) {
-      opts.errorLog(`Failed to install npm dependencies. Exited with code ${code}.`);
+      opts.errorLog(
+        `Failed to install npm dependencies. Exited with code ${code}.`,
+      );
     } else {
       try {
         fs.writeFileSync(
-          clientFileDestPath,
-          fs.readFileSync(clientFileSourcePath),
+          clientFileDestination,
+          fs.readFileSync(clientFileSource),
         );
         opts.successLog(
           `SocketCluster app "${destinationDir}" was setup successfully.`,
         );
       } catch (err) {
         opts.errorLog(
-          `Failed to copy file from "${clientFileSourcePath}" to "${clientFileDestPath}" - Try copying it manually.`,
+          `Failed to copy file from "${clientFileSource}" to "${clientFileDestination}" - Try copying it manually.`,
           code,
         );
       }
@@ -165,9 +177,15 @@ const create = async function (app) {
         confirmReplaceSetup(true, destinationDir, this);
       } else {
         let message = `There is already a directory at ${destinationDir}. Do you want to overwrite it?`;
-        if(await this.promptConfirm(message, { default: true }, confirmReplaceSetup)) {
-          createSuccess(destinationDir, this)
-        };
+        if (
+          await this.promptConfirm(
+            message,
+            { default: true },
+            confirmReplaceSetup,
+          )
+        ) {
+          createSuccess(destinationDir, this);
+        }
       }
     } else {
       setupMessage();

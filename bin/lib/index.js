@@ -9,11 +9,13 @@ const wd = process.cwd();
 
 const appDir = `${__dirname}/../../app`;
 const destDir = (app) => path.normalize(`${wd}/${app}`);
-const clientFileSourcePath = path.normalize(
-  `${destDir}/node_modules/socketcluster-client/socketcluster-client.js`,
+
+const clientFileSourcePath = (dir) => path.normalize(
+  `${dir}/node_modules/socketcluster-client/socketcluster-client.js`,
 );
-const clientFileDestPath = path.normalize(
-  `${destDir}/public/socketcluster-client.js`,
+
+const clientFileDestPath = (dir) => path.normalize(
+  `${dir}/public/socketcluster-client.js`,
 );
 
 const getSCCWorkerDeploymentDefPath = function (kubernetesTargetDir) {
