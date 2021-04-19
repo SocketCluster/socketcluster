@@ -104,7 +104,8 @@ const dockerList = async function () {
 const dockerLogs = async function (arg) {
   let appName;
   let commandRawArgsString = ''
-  if (arg !== 'f') {
+  console.log(arg)
+  if (arg && arg !== 'f') {
     appName = arg;
     commandRawArgsString = `-${arg}`;
 }
@@ -121,6 +122,8 @@ const dockerLogs = async function (arg) {
   // if (commandRawArgsString.length) {
   //   commandRawArgsString = ' ' + commandRawArgsString;
   // }
+
+  console.log(appName, commandRawArgsString)
 
   let command = exec(`docker logs ${appName}${commandRawArgsString}`, (err) => {
     if (err) {
