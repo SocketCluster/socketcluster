@@ -22,7 +22,7 @@
   },
   "homepage": "https://socketcluster.io/",
   "dependencies": {
-    "@maartennnn/cli-builder": "^0.0.11",
+    "@maartennnn/cli-builder": "^1.1.0",
     "fs-extra": "^7.0.1",
     "inquirer": "^6.2.1",
     "minimist": "^1.2.5",

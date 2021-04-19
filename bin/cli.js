@@ -9,13 +9,14 @@ let helpFooter =
 
 const cli = new REPLClient({
   binCommand: 'socketcluster',
-  enableInteractive: 'false',
+  enableInteractive: false,
   helpFooter,
   actions,
 });
 
 // CLI ACTIONS CAN BE FOUND IN BIN/ACTIONS/. THESE ARE MOUNTED VIA THE REPLCIENT
 const commands = {
+  execute: () => cli.errorLog('Input not recognized try socketcluster -h'),
   create: {
     execute: async (appName) => await cli.actions.create(appName),
     help: 'Create a new boilerplate app in your working directory',
