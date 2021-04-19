@@ -47,7 +47,7 @@ const commands = {
     execute: async (appName) => await cli.actions.dockerLogs(appName),
     help: '[requires docker] Get logs for the specified app',
     input: '<app-path-or-name>',
-    options: [{ option: 's', help: 'Follow the logs' }],
+    options: [{ option: 'f', help: 'Follow the logs' }],
   },
   deploy: {
     execute: async (path) => await cli.actions.k8sDeployAndDeployUpdate(path),
