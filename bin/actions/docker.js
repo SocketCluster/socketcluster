@@ -2,7 +2,7 @@ const path = require('path');
 const { execSync, exec } = require('child_process');
 const scVersion = require('../../package.json').version;
 
-const { parseJSONFile, parsePackageFile } = require('../lib');
+const { parsePackageFile } = require('../lib');
 
 const dockerStop = async function (arg) {
   let appName = arg;
@@ -37,26 +37,25 @@ const dockerRestart = async function (arg) {
     execSync(`docker start ${appName}`);
     this.successLog(`App '${appName}' is running.`);
   } catch (e) {
-    debugger;
     this.errorLog(`Failed to start app '${appName}'.`);
   }
   process.exit();
 };
 
-const dockerRun = async function (arg) {
+const dockerRun = async function (arg, options) {
   let appPath = arg || '.';
   let absoluteAppPath = path.resolve(appPath);
   let pkg = parsePackageFile(appPath);
   let appName = pkg.name;
 
-  let portNumber = Number(this.argv.p) || 8000;
+  let portNumber = Number(options.p) || 8000;
   let envVarList;
-  if (this.argv.e === undefined) {
+  if (options.e === undefined) {
     envVarList = [];
-  } else if (!Array.isArray(this.argv.e)) {
-    envVarList = [this.argv.e];
+  } else if (!Array.isArray(options.e)) {
+    envVarList = [options.e];
   } else {
-    envVarList = this.argv.e;
+    envVarList = options.e;
   }
   let envFlagList = envVarList.map((value) => {
     return `-e "${value}"`;
@@ -87,8 +86,6 @@ const dockerRun = async function (arg) {
 };
 
 const dockerList = async function () {
-  // TODO: Implement commandRawArgsString
-
   const commandRawArgsString = '';
 
   let command = exec(`docker ps${commandRawArgsString}`, (err) => {
@@ -101,29 +98,19 @@ const dockerList = async function () {
   command.stderr.pipe(process.stderr);
 };
 
-const dockerLogs = async function (arg) {
+const dockerLogs = async function (arg, options) {
   let appName;
-  let commandRawArgsString = ''
-  console.log(arg)
-  if (arg && arg !== 'f') {
+  let commandRawArgsString = '';
+  if (options.f) commandRawArgsString = ' -f';
+  if (arg) {
     appName = arg;
-    commandRawArgsString = `-${arg}`;
-}
+  }
 
   if (!appName) {
     let appPath = '.';
     let pkg = parsePackageFile(appPath);
     appName = pkg.name;
   }
-
-  // TODO: Implement this
-  // const commandRawArgs = this.argv.slice(3);
-  // let commandRawArgsString = commandRawArgs.join(' ');
-  // if (commandRawArgsString.length) {
-  //   commandRawArgsString = ' ' + commandRawArgsString;
-  // }
-
-  console.log(appName, commandRawArgsString)
 
   let command = exec(`docker logs ${appName}${commandRawArgsString}`, (err) => {
     if (err) {

@@ -56,7 +56,7 @@ const removeTLSSecret = function (secretName, errorLogger) {
   return true;
 };
 
-const k8sDeployAndDeployUpdate = async function (arg1, updateRequest) {
+const k8sDeployAndDeployUpdate = async function (arg1, options, updateRequest) {
   let dockerImageName, dockerDefaultImageName;
   let dockerDefaultImageVersionTag = 'v1.0.0';
   let nextVersionTag;
@@ -475,10 +475,10 @@ const k8sUndeploy = async function (arg1) {
   process.exit();
 };
 
-const k8sAddSecret = async function () {
-  let secretName = this.argv.s || DEFAULT_TLS_SECRET_NAME;
-  let privateKeyPath = this.argv.k;
-  let certFilePath = this.argv.c;
+const k8sAddSecret = async function (arg, options) {
+  let secretName = options.s || DEFAULT_TLS_SECRET_NAME;
+  let privateKeyPath = options.k;
+  let certFilePath = options.c;
 
   if (privateKeyPath == null || certFilePath == null) {
     this.errorLog(
@@ -500,8 +500,8 @@ const k8sAddSecret = async function () {
   process.exit();
 };
 
-const k8sRemoveSecret = async function () {
-  const secretName = this.argv.s || DEFAULT_TLS_SECRET_NAME;
+const k8sRemoveSecret = async function (arg, options) {
+  const secretName = options.s || DEFAULT_TLS_SECRET_NAME;
   const success = removeTLSSecret(secretName, this.errorLog);
   if (success) {
     this.successLog(
