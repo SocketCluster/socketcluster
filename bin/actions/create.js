@@ -106,7 +106,7 @@ const confirmReplaceSetup = function (confirm, destinationDir, opts) {
   }
 };
 
-const create = async function (app) {
+const create = async function (app, options) {
   const destinationDir = destDir(app);
 
   let transformK8sConfigs = function () {
@@ -173,7 +173,7 @@ const create = async function (app) {
 
   if (app) {
     if (fileExistsSync(destinationDir)) {
-      if (this.argv.force) {
+      if (options.force) {
         confirmReplaceSetup(true, destinationDir, this);
       } else {
         let message = `There is already a directory at ${destinationDir}. Do you want to overwrite it?`;

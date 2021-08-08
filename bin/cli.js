@@ -18,54 +18,51 @@ const cli = new REPLClient({
 const commands = {
   execute: () => cli.errorLog('Input not recognized try socketcluster -h'),
   create: {
-    execute: async (appName) => await cli.actions.create(appName),
+    execute: async ({ argument, options }) => await cli.actions.create(argument, options),
     help: 'Create a new boilerplate app in your working directory',
     input: '<app-name>',
   },
   run: {
-    execute: async (path) => await cli.actions.dockerRun(path),
-    help:
-      '[requires docker] Run the app at path inside a container on your local machine',
+    execute: async ({ argument, options }) => await cli.actions.dockerRun(argument, options),
+    help: '[requires docker] Run the app at path inside a container on your local machine',
     input: '<path>',
   },
   restart: {
-    execute: async (appName) => await cli.actions.dockerRestart(appName),
+    execute: async ({ argument, options }) => await cli.actions.dockerRestart(argument, options),
     help: '[requires docker] Restart the app at path',
     input: '<app-path-or-name>',
   },
   stop: {
-    execute: async (path) => await cli.actions.dockerStop(path),
+    execute: async ({ argument, options }) => await cli.actions.dockerStop(argument, options),
     help: '[requires docker] Stop the app',
     input: '<app-path-or-name>',
   },
   list: {
     execute: async () => await cli.actions.dockerList(),
-    help:
-      '[requires docker] List all running Docker containers on your local machine',
+    help: '[requires docker] List all running Docker containers on your local machine',
   },
   logs: {
-    execute: async (appName) => await cli.actions.dockerLogs(appName),
+    execute: async ({ argument, options }) =>
+      await cli.actions.dockerLogs(argument, options),
     help: '[requires docker] Get logs for the specified app',
     input: '<app-path-or-name>',
     options: [{ option: 'f', help: 'Follow the logs' }],
   },
   deploy: {
-    execute: async (path) => await cli.actions.k8sDeployAndDeployUpdate(path),
-    help:
-      '[requires kubectl] Deploy the app at path to your Kubernetes cluster',
+    execute: async ({ argument, options }) =>
+      await cli.actions.k8sDeployAndDeployUpdate(argument, options),
+    help: '[requires kubectl] Deploy the app at path to your Kubernetes cluster',
     input: '<app-path>',
   },
   deployUpdate: {
-    execute: async (path) =>
-      await cli.actions.k8sDeployAndDeployUpdate(path, true),
-    help:
-      '[requires kubectl] Deploy update to an app which was previously deployed',
+    execute: async ({ argument, options }) =>
+      await cli.actions.k8sDeployAndDeployUpdate(argument, options, true),
+    help: '[requires kubectl] Deploy update to an app which was previously deployed',
     input: '<app-path>',
   },
   undeploy: {
-    execute: async (path) => await cli.actions.k8sUndeploy(path, true),
-    help:
-      '[requires kubectl] Shutdown all core app services running on your cluster',
+    execute: async ({ argument, options }) => await cli.actions.k8sUndeploy(argument, options, true),
+    help: '[requires kubectl] Shutdown all core app services running on your cluster',
     input: '<app-path>',
   },
   addSecret: {
