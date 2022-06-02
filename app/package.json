@@ -15,13 +15,12 @@
     "install": "^0.13.0",
     "morgan": "^1.7.0",
     "nodemon": "^2.0.7",
-    "npm": "^7.17.0",
     "sc-errors": "^2.0.1",
     "scc-broker-client": "^8.1.0",
     "serve-static": "^1.13.2",
-    "socketcluster-client": "^16.0.3",
-    "socketcluster-server": "^16.0.2",
-    "uuid": "^3.3.2"
+    "socketcluster-client": "^16.1.0",
+    "socketcluster-server": "^16.2.0",
+    "uuid": "^8.3.2"
   },
   "keywords": [
     "websocket",

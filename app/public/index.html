@@ -2,10 +2,13 @@
 <html>
   <head>
     <title>SocketCluster</title>
-    <link href="//fonts.googleapis.com/css?family=Roboto:100,300" rel="stylesheet" type="text/css">
     <link rel="icon" type="image/png" href="/favicon.ico">
     <script type="text/javascript" src="/socketcluster-client.js"></script>
     <style>
+      @font-face {
+        font-family: 'Roboto';
+        src: URL('Roboto-Light.ttf') format('truetype');
+      }
       html {
         height: 100%;
       }
@@ -17,7 +20,7 @@
         color: #666666;
         display: table;
         font-weight: 100;
-        font-family: 'Roboto', Helvetica, sans-serif;
+        font-family: Arial, Helvetica, sans-serif;
       }
       a {
         font-weight: 300;
@@ -32,9 +35,15 @@
         text-align: center;
         display: inline-block;
       }
-      .title {
-        font-size: 96px;
+      .logo {
+        width: 200px;
+        height: 200px;
         margin-bottom: 10px;
+      }
+      .title {
+        font-family: 'Roboto', Helvetica, sans-serif;
+        font-size: 96px;
+        margin-bottom: 20px;
       }
       .text {
         font-size: 24px;
@@ -44,13 +53,14 @@
         font-size: 18px;
       }
       .github-button {
-        padding-top: 10px;
+        padding-top: 20px;
       }
     </style>
   </head>
   <body>
     <div class="container">
       <div class="content">
+        <img class="logo" src="img/logo.png" alt="Logo" />
         <div class="title">
           SocketCluster
         </div>
