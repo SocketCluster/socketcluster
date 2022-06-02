@@ -15,7 +15,7 @@
     "install": "^0.13.0",
     "morgan": "^1.7.0",
     "nodemon": "^2.0.7",
-    "npm": "^7.17.0",
+    "npm": "^8.11.0",
     "sc-errors": "^2.0.1",
     "scc-broker-client": "^8.1.0",
     "serve-static": "^1.13.2",
