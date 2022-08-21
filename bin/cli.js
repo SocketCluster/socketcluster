@@ -14,26 +14,35 @@ const cli = new REPLClient({
   actions,
 });
 
+if (cli.argv.v || cli.argv.version) {
+  cli.successLog(`Version: ${require('../package.json').version}`);
+  process.exit(0);
+}
+
 // CLI ACTIONS CAN BE FOUND IN BIN/ACTIONS/. THESE ARE MOUNTED VIA THE REPLCIENT
 const commands = {
   execute: () => cli.errorLog('Input not recognized try socketcluster -h'),
   create: {
-    execute: async ({ argument, options }) => await cli.actions.create(argument, options),
+    execute: async ({ argument, options }) =>
+      await cli.actions.create(argument, options),
     help: 'Create a new boilerplate app in your working directory',
     input: '<app-name>',
   },
   run: {
-    execute: async ({ argument, options }) => await cli.actions.dockerRun(argument, options),
+    execute: async ({ argument, options }) =>
+      await cli.actions.dockerRun(argument, options),
     help: '[requires docker] Run the app at path inside a container on your local machine',
     input: '<path>',
   },
   restart: {
-    execute: async ({ argument, options }) => await cli.actions.dockerRestart(argument, options),
+    execute: async ({ argument, options }) =>
+      await cli.actions.dockerRestart(argument, options),
     help: '[requires docker] Restart the app at path',
     input: '<app-path-or-name>',
   },
   stop: {
-    execute: async ({ argument, options }) => await cli.actions.dockerStop(argument, options),
+    execute: async ({ argument, options }) =>
+      await cli.actions.dockerStop(argument, options),
     help: '[requires docker] Stop the app',
     input: '<app-path-or-name>',
   },
@@ -61,12 +70,14 @@ const commands = {
     input: '<app-path>',
   },
   undeploy: {
-    execute: async ({ argument, options }) => await cli.actions.k8sUndeploy(argument, options, true),
+    execute: async ({ argument, options }) =>
+      await cli.actions.k8sUndeploy(argument, options, true),
     help: '[requires kubectl] Shutdown all core app services running on your cluster',
     input: '<app-path>',
   },
   addSecret: {
-    execute: async ({ argument, options }) => await cli.actions.k8sAddSecret(argument, options),
+    execute: async ({ argument, options }) =>
+      await cli.actions.k8sAddSecret(argument, options),
     help: '[requires kubectl] Upload a TLS key and cert pair to your cluster',
     options: [
       { option: 's', help: 'Optional secret name' },
@@ -75,10 +86,13 @@ const commands = {
     ],
   },
   removeSecret: {
-    execute: async ({ argument, options }) => await cli.actions.k8sRemoveSecret(argument, options),
+    execute: async ({ argument, options }) =>
+      await cli.actions.k8sRemoveSecret(argument, options),
     help: '[requires kubectl] Remove a TLS key and cert pair from your cluster',
     options: [{ option: 's', help: 'Optional secret name' }],
   },
+  v: async () =>
+    cli.successLog(`Version: ${require('../package.json').version}`),
 };
 
 cli.run(commands);
