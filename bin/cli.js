@@ -14,6 +14,11 @@ const cli = new REPLClient({
   actions,
 });
 
+if (cli.argv.v || cli.argv.version) {
+  cli.successLog(`Version: ${require('../package.json').version}`);
+  process.exit(0)
+}
+
 // CLI ACTIONS CAN BE FOUND IN BIN/ACTIONS/. THESE ARE MOUNTED VIA THE REPLCIENT
 const commands = {
   execute: () => cli.errorLog('Input not recognized try socketcluster -h'),
