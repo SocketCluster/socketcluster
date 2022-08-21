@@ -16,7 +16,7 @@ const cli = new REPLClient({
 
 if (cli.argv.v || cli.argv.version) {
   cli.successLog(`Version: ${require('../package.json').version}`);
-  process.exit(0)
+  process.exit(0);
 }
 
 // CLI ACTIONS CAN BE FOUND IN BIN/ACTIONS/. THESE ARE MOUNTED VIA THE REPLCIENT
