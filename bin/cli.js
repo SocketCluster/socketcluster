@@ -66,18 +66,18 @@ const commands = {
     input: '<app-path>',
   },
   addSecret: {
-    execute: async () => await cli.actions.k8sAddSecret(),
+    execute: async ({ argument, options }) => await cli.actions.k8sAddSecret(argument, options),
     help: '[requires kubectl] Upload a TLS key and cert pair to your cluster',
     options: [
-      { option: 's', help: 'Optional secret name; defaults to' },
+      { option: 's', help: 'Optional secret name' },
       { option: 'k', help: 'Path to a key file' },
       { option: 'c', help: 'Path to a certificate file' },
     ],
   },
   removeSecret: {
-    execute: async () => await cli.actions.k8sRemoveSecret(),
+    execute: async ({ argument, options }) => await cli.actions.k8sRemoveSecret(argument, options),
     help: '[requires kubectl] Remove a TLS key and cert pair from your cluster',
-    options: [{ option: 's', help: 'Optional secret name; defaults to ' }],
+    options: [{ option: 's', help: 'Optional secret name' }],
   },
 };
 
