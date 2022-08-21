@@ -84,7 +84,6 @@ const commands = {
     help: '[requires kubectl] Remove a TLS key and cert pair from your cluster',
     options: [{ option: 's', help: 'Optional secret name' }],
   },
-  v: async () => cli.successLog(`Version: ${require('../package.json').version}`),
 };
 
 cli.run(commands);
