@@ -1,6 +1,6 @@
 {
   "name": "socketcluster",
-  "version": "17.0.0",
+  "version": "17.1.0",
   "description": "Highly scalable realtime framework with support for async/await",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
