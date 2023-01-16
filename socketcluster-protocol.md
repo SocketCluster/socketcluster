@@ -1,16 +1,74 @@
-# SocketCluster Protocol V1
+# SocketCluster Protocol
 
 ## Overview
 
-SocketCluster implements a protocol on top of the WebSockets protocol to allow clients to communicate with a SocketCluster server.
-This protocol is made up of multiple layers (some of which are optional), these are:
-- The event layer
-- The pub/sub layer [optional]
-- The authentication layer [optional]
+SocketCluster protocol is implemented on top of the WebSockets protocol and consists of multiple components:
+- Handshake
+- Connection health check (ping/pong)
+- Event layer
+- Pub/Sub layer
+- Authentication layer
 
-In order to make a simple SC client, you do not need to implement all the layers - Only the first 'event layer' is required - This
-will allow your client to expose a `socket.emit('eventName', data)` and `socket.on('eventName', handlerFunction)`.
+Minimal requirements for a simple SocketCluster compatible client are to implement:  
+Handshake, ping/pong and (at least partially) the Event layer.  
 
+Pub/Sub and Authentication layers are completely optional.
+
+
+### Contrast between Protocol V1 and V2
+
+- SocketCluster <=v14 uses Protocol v1.  
+  SocketCluster >=v15 uses Protocol v2 by default and supports `protocolVersion` configuration option, which allows it to work with clients which use Protocol v1.  
+
+- SocketCluster <=v14 doesn't send back Handshake event response, if `cid` is not specified in Handshake event.  
+  SocketCluster >=v15 always sends back Handshake event response, regardles of `cid` presence. If `cid` is not present in Handshake event, `rid` is omitted from Handshake event response.  
+
+- In SocketCluster >=v15 `#disconnect` event is deprecated and no longer in use.  
+
+- Protocol V1 uses `'#1'` and `'#2'` for ping/pong
+  Protocol V2 uses empty strings `''` for both.  
+
+- In Protocol V1 all event names starting with `'#'` are considered reserved for special control events.  
+  In Protocol V2 only a handful of event names starting with `'#'` are considered reserved.  
+
+
+### Reserved event names
+
+Protocol V1:  
+
+- All event names starting with `'#'`  
+
+Protocol V2:  
+- `#handshake`
+- `#publish`
+- `#subscribe`
+- `#unsubscribe`
+- `#kickOut`
+- `#authenticate`
+- `#setAuthToken`
+- `#removeAuthToken`
+
+
+### Call ID & Response ID
+
+`cid` - Call ID  
+`rid` - Response ID  
+
+Some events require acknowledgement from another side of communication, in other words they expect event responses.  
+In order to track which event responses belong to which events, `cid` and `rid` exist in SocketCluster Protocol.  
+
+
+`cid` must be unique for each event sent, during the whole socket connection lifetime.  
+Call IDs originated from server and Call IDs originated from client are two different sets of ids and are being appointed and tracked separately.  
+
+`cid`, included in events sent from `socketcluster-server` to a SocketCluster client, for each new socket connection, will always start with number `1` and will be incremented with each event sent.
+
+In your custom SocketCluster client you could use something like `UUID` strings for `cid` but, for efficiency, it's recommended to also use number `1` and increment it with each subsequent event sent.  
+
+
+Some special events expect no response, hence `cid` for them is not required and ignored if present.  
+
+---
 
 ### The event layer
 
