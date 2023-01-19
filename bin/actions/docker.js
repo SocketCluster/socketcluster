@@ -16,7 +16,6 @@ const dockerStop = async function (arg) {
     execSync(`docker rm ${appName}`);
     this.successLog(`App '${appName}' was stopped.`);
   } catch (e) {
-    debugger;
     this.errorLog(`Failed to stop app '${appName}'.`);
   }
   process.exit();
@@ -79,7 +78,6 @@ const dockerRun = async function (arg, options) {
       `App "${appName}" is running at http://localhost:${portNumber}`,
     );
   } catch (e) {
-    debugger;
     this.errorLog(`Failed to start app "${appName}".`);
   }
   process.exit();
