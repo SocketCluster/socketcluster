@@ -70,6 +70,75 @@ Some special events expect no response, hence `cid` for them is not required and
 
 ---
 
+## Handshake
+
+As soon as you establish a WebSocket connection, you are to send a special Handshake event for `socketcluster-server` to initiate the socket.  
+Clients are not allowed to interact with the server before Handshake.  
+
+#### **Handshake event** is a JSON-encoded string with the following structure:
+
+```js
+{
+  event: '#handshake'
+
+  // [optional] A JSON-compatible Object
+  data: { },
+
+  // [optional] Call ID
+  cid: 1
+}
+```
+
+`socketcluster-server` <=v14:  
+- If `cid` was specified in the Handshake event, `socketcluster-server` will send back Handshake event response with matching `rid`.  
+If `cid` was not specified, no Handshake event response will be sent.  
+
+`socketcluster-server` >=v15:  
+- Whether or not `cid` was specified in the Handshake event, `socketcluster-server` will always send back Handshake event response.  
+If `cid` was specified in the Handshake event, Handshake event response will include matching `rid`.  
+If `cid` was not specified, `rid` will be omitted.  
+
+#### **Handshake event response** is a JSON-encoded string with the following structure:
+
+```js
+{
+  data: {
+    // A unique ID, assigned to this socket connection by the server
+    id: 'Y7gRvz-hVW_uXx5qAAH',
+
+    // Value of `pingTimeout` configuration option of the server
+    pingTimeout: 20000, // ms
+
+    // Look at the Authentication layer overview for more information
+    isAuthenticated: false
+  }
+
+  // [optional] Response ID
+  rid: 1,
+}
+```
+
+---
+
+## Connection health check (ping/pong)
+
+`socketcluster-server` periodically sends ping messages to connected clients to check whether or not a connection is still alive.  
+A SocketCluster client has to answer every ping message with pong message as soon as possible.  
+
+#### **Protocol V1:**  
+Ping message (from server) is a String: `'#1'`  
+Pong message (from client) is a String: `'#2'`  
+#### **Protocol V2:**  
+Ping message (from server) is an empty String: `''`  
+Pong message (from client) is an empty String: `''`  
+
+Ping/pong mechanism is required to account for cases when a connection might be closed without sending a proper SocketCluster `#disconnect`\* event or WebSockets `Close` control frame.  
+For example, if a user's internet drops out suddenly, there would be no way to tell that the `socket` is no longer connected otherwise.  
+
+\* \- In Protocol V2 `#disconnect` event is deprecated and no longer in use.
+
+---
+
 ### The event layer
 
 **Emitted events**
@@ -119,69 +188,7 @@ In SC, sending back a response to an event is always optional (depends on user l
 
 As an example; for the SocketCluster JavaScript client, if the user provides a callback to the `socket.emit('eventName', data, callback)` then we will throw an error if the server does not send back a response after ackTimeout. However, if the user does not provide a callback to `socket.emit('eventName', data)` then the client will assume that we don't expect a response to that event and so it will not throw an error in that case.
 
-
-**The SocketCluster handshake**
-
-Before you can send custom events to the SocketCluster server, you first need to establish a WebSocket connection to a SocketCluster server and then perform a handshake to initiate the socket.
-
-As soon as the WebSocket connection is opened, your client should emit a special `#handshake` event to the server, the `#handshake` event message should look like this:
-
-```
-{
-  event: '#handshake',
-
-  // To implement authentication, we will need to pass an object here, but
-  // we don't need to worry about this for now - So you can just leave
-  // this as an empty object.
-  data: {},
-
-  // This can be any number/string, just make sure that it is unique for the life of the client session.
-  cid: 1
-}
-```
-
-As soon as it receives the event, your server should send back a handshake response event message in this format:
-
-```
-{
-  // The rid will match the cid from the #handshake event.
-  "rid": 1,
-  "data": {
-    // This is the ID for the SC connection assigned by the server.
-    "id": "Y7Uw-jHCJP-gld4QAAAA",
-
-    // Because we did not send any auth token, this will be false.
-    "isAuthenticated": false,
-
-    // SC uses a ping/pong mechanism for checking if a connection is alive.
-    // This value is the number of milliseconds of inactivity after which the SC server
-    // will mark this connections as dead.
-    "pingTimeout": 10000
-  }
-}
-```
-
-
-**Ping and pong - Connection health check**
-
-As mentioned above, SC has a ping/pong mechanism for checking whether or not a connection is still alive.
-This is to account for scenarios were a connection might close without sending a proper WebSocket close control frame.
-For example, if the user's internet drops out suddenly, there would be no way to tell that the socket is no longer connected.
-
-For the ping/pong protocol, the SocketCluster server will periodically send a ping message to the client and the client has to answer every ping with a pong message.
-
-The ping message which comes from the server is just an empty string (``).
-
-Whenever you get this message from the WebSocket, your client needs to send back an empty string as soon as possible.
-
-Note that there are three kinds of strings which have special meaning within SocketCluster:
-
-1. Ping/pong empty strings
-2. Event packets (I.e. JSON objects that have an `event` property)
-3. Response packets (I.e. JSON objects that have an `rid` property)
-
-Every other kind of string/binary packet will be interpreted as a raw message and should trigger a `raw` event on the client socket.
-
+---
 
 ### The pub/sub layer
 
