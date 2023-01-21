@@ -1,7 +1,7 @@
 {
   "name": "socketcluster-sample",
   "description": "A sample SocketCluster app",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "contributors": [
     {
       "name": "Jonathan Gros-Dubois",
@@ -9,10 +9,8 @@
     }
   ],
   "dependencies": {
-    "connect": "^3.6.6",
     "eetase": "^4.0.0",
     "express": "^4.16.3",
-    "install": "^0.13.0",
     "morgan": "^1.7.0",
     "nodemon": "^2.0.7",
     "sc-errors": "^2.0.1",
