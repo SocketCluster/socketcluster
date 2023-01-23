@@ -23,7 +23,7 @@ Note that SCC can continue to operate without any disruption of service while th
 
 ## Running on Kubernetes (recommended)
 
-Running on Kubernetes (K8s) is easy; you just need to run all the `.yaml` files from the `kubernetes/` directory from the SocketCluster repo (https://github.com/SocketCluster/socketcluster/tree/master/kubernetes) using the `kubectl` command (one at a time):
+Running on Kubernetes (K8s) is easy; you just need to run all the `.yaml` files from the `kubernetes/` directory from the SocketCluster repo (https://github.com/SocketCluster/socketcluster/tree/master/app/kubernetes) using the `kubectl` command (one at a time):
 
 ```
 kubectl create -f <service-deployment-or-ingress-definition.yaml>
