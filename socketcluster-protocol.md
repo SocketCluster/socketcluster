@@ -139,54 +139,124 @@ For example, if a user's internet drops out suddenly, there would be no way to t
 
 ---
 
-### The event layer
+## Event layer
 
-**Emitted events**
+Event layer is responsible for `one-to-one` communication between a particular socket connection and the server.
 
-An emitted event is a simple JSON string with this format:
+### Basic part
+Basic part of the Event layer is responsible for transmitting and receiving user-defined events.  
+API example from JavaScript `socketcluster-client` v17:
+```js
+// transmit an event to the server
+socket.transmit('eventName', data)
 
+// receive events from the server
+for await (const data of socket.receiver('eventName')) {
+  console.info('received data', data)
+}
 ```
+For more in depth knowledge on API visit https://socketcluster.io/docs/basic-usage  
+
+
+#### **Transmitted event** is a JSON-encoded string with the following structure:
+
+```js
 {
-  // The name of the event
+  // Arbitrary name of the event*
   event: 'eventName',
 
-  // Any JSON-compatible data type (e.g. String, Number, Date, Object).
+  // [optional] Any JSON-compatible data
   data: eventData,
+}
+```
+\* \- Some event names starting with `'#'` are [reserved for special control events](#Reserved-event-names) in SocketCluster Protocol.  
 
-  // Each emitted event can have call ID (if specified, it needs to be unique for the life of the
-  // client session) - You can use UUID strings, but for efficiency, we recommend using
-  // a number starting a 1 and incrementing it with each event sent.
-  // For additional efficiency, you only need to specify the cid if you expect a response (rid) from
-  // the other side of the connection.
-  cid: 11
+Transmitted events never expect responses.  
+Even if `action.TRANSMIT` was blocked within `agServer.MIDDLEWARE_INBOUND`, no response will be sent.  
+
+
+### Advanced part
+
+Advanced part of the Event layer is responsible for invoking and processing **Remote Procedure Calls**.  
+API example from JavaScript `socketcluster-client` v17:
+```js
+// invoke a remote procedure on the server
+const responseData = await socket.invoke('procedureName', data)
+
+// process remote procedure calls from the server
+for await (const request of socket.procedure('procedureName')) { 
+  console.info('received data', request.data)
+  request.end(dataToReturnToServer)
 }
 ```
 
-To emit an event, you just need to send a JSON string like the one above through an open WebSocket connection linked to a SocketCluster server.
-Note that the server might also emit event messages to the client - You should listen for those incoming messages on the WebSocket; they will have the same format as above.
+Transmitted events and RPC are similar in structure. They share the same property `event` for their names, but they are different entities.  
+In order to invoke a RPC, a SocketCluster client should send a RPC request.  
+Unlike transmitted events, every RPC request must include a unique `cid` (Call ID), because every RPC expects a RPC response with matching `rid` (Response ID) from another side of communication.  
 
-
-**Event responses**
-
-Whenever a client emits an event to the server, the server can (optionally) send a matching response to that event in the following format:
-
-```
+#### **RPC request** is a JSON-encoded string with the following structure:
+```js
 {
-  // In SC, an event message may have a cid; a response message must have a matching rid.
-  // You should only have a single matching response for each cid.
-  "rid": 11,
+  // Call ID
+  cid: 12345,
 
-  // Any JSON-compatible data type (e.g. String, Number, Date, Object) sent back by the server.
-  "data": responseData
+  // Arbitrary name of the procedure*
+  event: 'procedureName',
+
+  // [optional] Any JSON-compatible data
+  data: procedureData
+}
+```
+\* \- Some procedure names starting with `'#'` are [reserved for special control events](#Reserved-event-names) in SocketCluster Protocol.
+
+
+When the RPC request is processed, a RPC response should be sent back.  
+
+#### **Successful RPC response** is a JSON-encoded string with the following structure:
+
+```js
+{
+  // Response ID
+  rid: 12345,
+
+  // [optional] Any JSON-compatible data
+  data: responseData
 }
 ```
 
-Note that if you receive an event message from the server, you can optionally send back a response message to this by sending a JSON string like that one above
-to the server - But you need to make sure that the rid you provide matches the cid of the original event.
+If the RPC request was blocked within `agServer.MIDDLEWARE_INBOUND`, then the argument, which was provided to the `action.block(err)` method, will be included into the RPC response as `error` property.  
+If no argument was provided to the `action.block()` method, the `error` will contain default SocketCluster `SilentMiddlewareBlockedError`:  
 
-In SC, sending back a response to an event is always optional (depends on user logic); the client or server might decide to throw an error if a response to an event has not been received after a certain timeout or it could have no timeout.
+#### **Unsuccessful RPC response** is a JSON-encoded string with the following structure:
+```js
+{
+  rid: 12345,
 
-As an example; for the SocketCluster JavaScript client, if the user provides a callback to the `socket.emit('eventName', data, callback)` then we will throw an error if the server does not send back a response after ackTimeout. However, if the user does not provide a callback to `socket.emit('eventName', data)` then the client will assume that we don't expect a response to that event and so it will not throw an error in that case.
+  error: {
+    message: 'The invoke AGAction was blocked by inbound middleware',
+    name: 'SilentMiddlewareBlockedError',
+    type: 'inbound'
+  }
+}
+```
+
+Every RPC response must include `rid` exactly matching `cid` of the respective RPC.  
+As an example, let's invoke a RPC from the server side.  
+API example from `socketcluster-server` v17:
+```js
+try {
+  const responseData = await socket.invoke('procedureName', data)
+} catch (err) {
+  if (err.name === 'TimeoutError') {
+    // ...
+  }
+}
+```
+
+If no response with matching `rid` will be received from a client, the `socket.invoke` method will throw `TimeoutError`, after time interval specified in `ackTimeout` configuration option of the server.
+
+Most of the [SocketCluster clients](https://github.com/SocketCluster/client-drivers) follow the same logic.  
+A SocketCluster client sets a timer (alike `setTimeout`) for each RPC sent, with consideration of `cid`. Those timers expose a `TimeoutError` when are finished. And if the client receives a RPC response with `rid` matching `cid` of one of the ongoing timers, the client destroys the timer before it fires up.
 
 ---
 
