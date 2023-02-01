@@ -260,7 +260,174 @@ A SocketCluster client sets a timer (alike `setTimeout`) for each RPC sent, with
 
 ---
 
-### The pub/sub layer
+## Pub/Sub layer
 
-Coming soon....
+Pub/Sub layer is responsible for `one-to-many` communication between a particular socket connection or a particular SocketCluster worker and unlimited amount of connected sockets, which are subscribed to a Pub/Sub channel.  
 
+### Subscribe
+
+In order to subscribe a socket connection to a Pub/Sub channel, a SocketCluster client should send to server a subscription request.  
+API example from JavaScript `socketcluster-client` v17:  
+```js
+const channel = socket.subscribe('channelName')
+for await (const message of channel) {
+  console.info(message)
+}
+```
+
+#### **Subscription request** is a JSON-encoded string with the following structure:
+
+```js
+{
+  event: '#subscribe',
+
+  data: {
+    // Arbitrary name of the channel to subscribe to
+    channel: 'channelName'
+  },
+
+  cid: 12345
+}
+```
+
+When subscription request will be processed, `socketcluster-server` will send back subscription response with matching `rid`. So the client would know it's successfully subscribed to the channel.  
+
+#### **Successful subscription response** is a JSON-encoded string with the following structure:
+```js
+{
+  rid: 12345
+}
+```
+
+If the subscription request was blocked within `agServer.MIDDLEWARE_INBOUND`, then the argument, which was provided to the `action.block(err)` method, will be included into the subscription response as `error` property.  
+If no argument was provided to the `action.block()` method, the `error` will contain default SocketCluster `SilentMiddlewareBlockedError`:  
+
+#### **Unsuccessful subscription response** is a JSON-encoded string with the following structure:
+
+```js
+{
+  rid: 12345,
+
+  error: {
+    message: 'The subscribe AGAction was blocked by inbound middleware',
+    name: 'SilentMiddlewareBlockedError',
+    type: 'inbound'
+  }
+}
+```
+
+
+### Publish
+
+In order to publish a message to a Pub/Sub channel, a SocketCluster client should send to server a publish request.  
+API example from JavaScript `socketcluster-client` v17:  
+```js
+// transmitPublish will not include `cid`
+socket.transmitPublish('channelName', messageData)
+
+// invokePublish will include `cid`
+const responseData = await socket.invokePublish('channelName', messageData)
+```
+
+#### **Publish request** is a JSON-encoded string with the following structure:
+
+```js
+{
+  event: '#publish',
+
+  data: {
+    // Name of the channel to publish message to
+    channel: 'channelName',
+    // [optional] Any JSON-compatible data
+    data: messageData
+  },
+
+  // [optional]
+  cid: 12345
+}
+```
+
+If `cid` was specified, `socketcluster-server` will send back publish response with matching `rid`. So the client would know the sent message was successfully published to the channel.  
+
+#### **Successful publish response** is a JSON-encoded string with the following structure:  
+
+```js
+{
+  rid: 12345
+}
+```
+
+If `cid` was specified and the publish request was blocked within `agServer.MIDDLEWARE_INBOUND`, then the argument, which was provided to the `action.block(err)` method, will be included into the publish response as `error` property.  
+If no argument was provided to the `action.block()` method, the `error` will contain default SocketCluster `SilentMiddlewareBlockedError`:  
+
+#### **Unsuccessful publish response** is a JSON-encoded string with the following structure:  
+
+```js
+{
+  rid: 12345,
+
+  error: {
+    message: 'The publishIn AGAction was blocked by inbound middleware',
+    name: 'SilentMiddlewareBlockedError',
+    type: 'inbound'
+  }
+}
+```
+
+
+If `cid` was not specified in the publish request, no publish response will be sent even if the request was unsuccessful.
+
+### Unsubscribe
+
+In order to unsubscribe a socket connection from a Pub/Sub channel, a SocketCluster client should send to server unsubscription event.  
+
+#### **Unsubscription event** is a JSON-encoded string with the following structure:  
+
+```js
+{
+  event: '#unsubscribe',
+
+  // Name of a channel to unsubscribe from
+  data: 'channelName',
+
+  // [optional] Call ID
+  cid: 12345
+}
+```
+
+When unsubscription event will be processed, `socketcluster-server` will send back unsubscription event response with matching `rid`. So the client would know it's successfully unsubscribed from the channel.  
+
+#### **Unsubscription event response** is a JSON-encoded string with the following structure:  
+
+```js
+{
+  rid: 12345
+}
+```
+
+If no `cid` was specified in the unsubscription event, no unsubscription event response will be sent.  
+
+### Kick out
+
+It's possible, from server side, to forcibly unsubscribe a socket connection from one or more particular Pub/Sub channels or from all Pub/Sub channels at once.  
+API example from `socketcluster-server` v17:
+```js
+socket.kickOut(['channelName', 'channelName2'], 'custom message')
+```
+In that case a SocketCluster client will receive a special `#kickOut` event. Or multiple events, if it was kicked from multiple channels. One per each channel it was kicked from.
+
+#### **kickOut event** is a JSON-encoded string with the following structure:  
+
+```js
+{
+  event: '#kickOut',
+
+  data: {
+    // Name of the channel the socket connection was kicked from
+    channel: 'channelName',
+
+    // [optional] a message provided to the socket.kickOut method
+    message: 'custom message'
+  }
+}
+```
