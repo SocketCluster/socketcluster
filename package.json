@@ -1,6 +1,6 @@
 {
   "name": "socketcluster",
-  "version": "17.3.0",
+  "version": "17.3.1",
   "description": "Highly scalable realtime framework with support for async/await",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -24,7 +24,6 @@
   "dependencies": {
     "@maartennnn/cli-builder": "^2.3.0",
     "fs-extra": "^7.0.1",
-    "minimist": "^1.2.5",
     "yamljs": "^0.3.0"
   },
   "bin": {
