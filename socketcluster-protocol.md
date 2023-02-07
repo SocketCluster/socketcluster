@@ -431,3 +431,237 @@ In that case a SocketCluster client will receive a special `#kickOut` event. Or 
   }
 }
 ```
+
+---
+
+## Authentication layer
+
+Authentication layer is responsible for means of acquiring and storing an authentication token on client side, as well as for transfering previously acquired authentication token to server for processing.  
+
+Authentication process in SocketCluster is deeply customizable. You could implement and use in your SocketCluster client virtually any authentication strategy for your application.  
+Here let's review the default SocketCluster authentication strategy, which uses JWT as the authentication token and transfers it to server via WebSockets connection within [Handshake](#Handshake) event.  
+
+### Token acquisition
+
+For more in depth knowledge how to initiate authentication process visit https://socketcluster.io/docs/authentication  
+API example from `socketcluster-server` v17:
+```js
+socket.setAuthToken({username: 'Alice', channels: []})
+```
+When `setAuthToken` method is called on the server side, a SocketCluster client will receive a JSON-encoded string with the following structure:
+
+```js
+{
+  event: '#setAuthToken',
+
+  data: {
+    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IkFsaWNlIiwiY2hhbm5lbHMiOltdLCJUaGFua1lvdUZvckNob29zaW5nU29ja2V0Q2x1c3RlciI6dHJ1ZSwiaWF0IjoxNjc0NzMxODc3LCJleHAiOjE2NzQ4MTgyNzd9.MzQ0QQzofbtlnzvPbeTgtpcvg8Sh6cY8EwXqNXHj5ns'
+  }
+}
+```
+Receiving `#setAuthToken` event on the client side means the socket connection is now authenticated. A SocketCluster client is supposed to store the acquired token somewhere locally for later use. If the client was already authenticated, it's supposed to replace previously stored token with the new one.
+
+### Transfer token to server for processing
+
+In the default authentication strategy this could be done in two ways:
+- [By including authentication token within Handshake event](#Authentication-within-Handshake)
+- [By sending Authentication event](#Authentication-event)
+
+### Authentication within Handshake
+
+The most practical way is to include previously acquired authentication token within the [Handshake](#Handshake) event.  
+This way `socketcluster-server` will automatically pick up the token and your client will become authenticated right away.
+
+#### **Handshake event** is a JSON-encoded string with the following structure:
+
+```js
+{
+  event: '#handshake',
+
+  data: {
+    authToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IkFsaWNlIiwiY2hhbm5lbHMiOltdLCJUaGFua1lvdUZvckNob29zaW5nU29ja2V0Q2x1c3RlciI6dHJ1ZSwiaWF0IjoxNjc0NzMxODc3LCJleHAiOjE2NzQ4MTgyNzd9.MzQ0QQzofbtlnzvPbeTgtpcvg8Sh6cY8EwXqNXHj5ns'
+  },
+
+  // [optional] Call ID
+  cid: 1
+}
+```
+
+`socketcluster-server` <=v14:  
+- If `cid` was specified in the Handshake event, `socketcluster-server` will send back Handshake event response with matching `rid`.  
+If `cid` was not specified, no Handshake event response will be sent.  
+
+`socketcluster-server` >=v15:  
+- Whether or not `cid` was specified in the Handshake event, `socketcluster-server` will always send back Handshake event response.  
+If `cid` was specified in the Handshake event, Handshake event response will include matching `rid`.  
+If `cid` was not specified, `rid` will be omitted.  
+
+Depending on success of authentication process, Handshake event response may include different information.  
+If provided `authToken` is valid and not expired, a SocketCluster client will receive Handshake event response with no `authError` property included.  
+
+#### **Handshake event response** is a JSON-encoded string with the following structure:
+
+```js
+{
+  // [optional] Response ID
+  rid: 1,
+
+  data: {
+    // A unique ID, assigned to this socket connection by the server
+    id: 'ZnY2picItxGyKbzeAAAE',
+
+    // Value of `pingTimeout` configuration option of the server
+    pingTimeout: 20000, // ms
+
+    // todo: WILL IT REALLY BE SENT BACK JUST BECAUSE OF HANDSHAKE?
+    // if true, then `#setAuthToken` event will be received promptly after Handshake
+    isAuthenticated: true
+  }
+}
+```
+
+If any errors will occur during authentication process, for example the provided `authToken` is invalid or expired, or Handshake was blocked in the server middleware, then Handshake event response will include `authError` property describing the occured error. [More about authentication errors](#Authentication-errors)
+
+#### **Handshake event response** is a JSON-encoded string with the following structure:
+
+```js
+{
+  // [optional] Response ID
+  rid: 1,
+
+  data: {
+    // A unique ID, assigned to this socket connection by the server
+    id: 'Y7Uw-jHCJP_gld4QAAAA',
+
+    // Value of `pingTimeout` configuration option of the server
+    pingTimeout: 20000, // ms
+
+    // if false, server will not send `#setAuthToken` event
+    isAuthenticated: false,
+
+    authError: {
+      name: 'ErrorName',
+      message: 'error message',
+      isBadToken: true
+    }
+  }
+}
+```
+
+### Authentication event
+
+Instead of including authentication token within Handshake event, a SocketCluster client could send special Authentication event any time after Handshake.  
+This could be useful if authentication token somehow becomes available in your client after Handshake.  
+As an example, if you use JavaScript `socketcluster-client` in a web browser and get multiple tabs opened, you could acquire authentication token in one tab and, when `authToken` becomes available in the `localStorage`, other tabs would send to server Authentication event, for their socket connections to also become authenticated, without need for page reload.
+
+#### **Authentication event** is a JSON-encoded string with the following structure:
+```js
+{
+  event: '#authenticate',
+
+  // A String with an authentication token
+  data: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IkFsaWNlIiwiY2hhbm5lbHMiOltdLCJUaGFua1lvdUZvckNob29zaW5nU29ja2V0Q2x1c3RlciI6dHJ1ZSwiaWF0IjoxNjc0NzMxODc3LCJleHAiOjE2NzQ4MTgyNzd9.MzQ0QQzofbtlnzvPbeTgtpcvg8Sh6cY8EwXqNXHj5ns',
+
+  // [optional] Call ID
+  cid: 12345
+}
+```
+
+Depending on success of authentication process, the Authentication event response may include different information.  
+If `authToken` is valid and not expired, a SocketCluster client will receive successful Authentication event response, which means socket connection is now authenticated.  
+If `cid` was specified in Authentication event, Authentication event response will also include matching `rid`.
+
+#### **Successful Authentication event response** is a JSON-encoded string with the following structure:
+
+```js
+{
+  // [optional] Response ID
+  rid: 12345,
+
+  data: {
+    isAuthenticated: true,
+    authError: null
+  }
+}
+```
+If any errors will occur during authentication process, for example authentication token is invalid or expired, Authentication event response will include `error` property describing the occured error. [More about authentication errors](#Authentication-errors)
+
+#### **Unsuccessful Authentication event response** is a JSON-encoded string with the following structure:
+
+```js
+{
+  // [optional] Response ID
+  rid: 12345,
+
+  error: {
+    name: 'ErrorName',
+    message: 'error message',
+    isBadToken: true
+  }
+}
+```
+
+### Deathentication
+
+When you deauthenticate a socket connection from server side, a SocketCluster client will receive special `#removeAuthToken` event. It means the socket connection is no longer authenticated.  
+API example from `socketcluster-server` v17:
+```js
+socket.deauthenticate()
+```
+
+#### **Deauthentication event** is a JSON-encoded string with the following structure:
+```js
+{
+  event: '#removeAuthToken'
+}
+```
+
+No response is expected for Deauthentication event.  
+
+If a SocketCluster client intends to deauthenticate, it should send to server identical Deauthentication event.  
+
+In both cases the client should remove previously stored authentication token, as well as to perform any other operations you deem necessary, like routing client to login screen, etc.
+
+---
+
+### Authentication errors
+
+By default authentication errors consist of `name`, `message` and `isBadToken`. But they also could include additional information depending on the error type. Or to have various content in case of user-defined errors.  
+
+When you block an authentication action (`action.type === action.AUTHENTICATE`) within the server middleware (`agServer.MIDDLEWARE_INBOUND`), the error object you pass to the `action.block(err)` method becomes the authentication error, which your client will receive.  
+For more in depth knowledge on API visit https://socketcluster.io/docs/middleware-and-authorization  
+
+`name:`  
+Could be either one of the SocketCluster error names or a user-defined error name.  
+
+All possible SocketCluster errors are listed in [SC-errors](https://github.com/SocketCluster/sc-errors/blob/master/index.js) module.  
+List of the `name`s which are relevant to the authentication process, in order of frequency occurring are:
+
+- AuthTokenExpiredError
+- AuthTokenInvalidError
+- AuthTokenError  
+- AuthTokenNotBeforeError
+
+`message:`  
+Could be originated from SocketCluster or from underlying libraries like `jsonwebtoken`. It also could be a user-defined error message.  
+List of all the possible error `message`s is hard to come by, but some of them you could find in [JWT Readme](https://github.com/auth0/node-jsonwebtoken/blob/e1fa9dcc12054a8681db4e6373da1b30cf7016e3/README.md#jsonwebtokenerror)
+
+`isBadToken:`  
+If an authentication error was caused by an expired or invalid or malformed JWT or by incorrect JWT signature, `isBadToken` will be `true`. If the authentication error was caused by any other reason, it will be `false`.  
+If a SocketCluster client encounters an authentication error with `isBadToken === true`, it should just start over the [token acquisition process](#Token-acquisition)  
+
+As an example, the two most frequently occurring errors are:
+```js
+authError: {
+  name: 'AuthTokenExpiredError',
+  message: 'jwt expired',
+  expiry: '2023-01-01T01:23:45.000Z',
+  isBadToken: true
+}
+
+authError: {
+  name: 'AuthTokenInvalidError',
+  message: 'invalid token',
+  isBadToken: true
+}
+```
