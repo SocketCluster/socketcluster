@@ -3,11 +3,11 @@
 ## Overview
 
 SocketCluster protocol is implemented on top of the WebSockets protocol and consists of multiple components:
-- Handshake
-- Connection health check (ping/pong)
-- Event layer
-- Pub/Sub layer
-- Authentication layer
+- [Handshake](#Handshake)
+- [Connection health check (ping/pong)](#Connection-health-check-(ping/pong))
+- [Event layer](#Event-layer)
+- [Pub/Sub layer](#Pub/Sub-layer)
+- [Authentication layer](#Authentication-layer)
 
 Minimal requirements for a simple SocketCluster compatible client are to implement:  
 Handshake, ping/pong and (at least partially) the Event layer.  
@@ -25,7 +25,7 @@ Pub/Sub and Authentication layers are completely optional.
 
 - In SocketCluster >=v15 `#disconnect` event is deprecated and no longer in use.  
 
-- Protocol V1 uses `'#1'` and `'#2'` for ping/pong
+- Protocol V1 uses `'#1'` and `'#2'` for [ping/pong](#Connection-health-check-(ping/pong))  
   Protocol V2 uses empty strings `''` for both.  
 
 - In Protocol V1 all event names starting with `'#'` are considered reserved for special control events.  
@@ -39,14 +39,14 @@ Protocol V1:
 - All event names starting with `'#'`  
 
 Protocol V2:  
-- `#handshake`
-- `#publish`
-- `#subscribe`
-- `#unsubscribe`
-- `#kickOut`
-- `#authenticate`
-- `#setAuthToken`
-- `#removeAuthToken`
+- [`#handshake`](#Handshake)
+- [`#publish`](#Publish)
+- [`#subscribe`](#Subscribe)
+- [`#unsubscribe`](#Unsubscribe)
+- [`#kickOut`](#Kick-out)
+- [`#authenticate`](#Authentication-event)
+- [`#setAuthToken`](#Token-acquisition)
+- [`#removeAuthToken`](#Deathentication)
 
 
 ### Call ID & Response ID
@@ -665,3 +665,9 @@ authError: {
   isBadToken: true
 }
 ```
+
+---
+
+Thank you for your time implementing custom SocketCluster client! :heart:  
+If you have completed one, please, open a pull request to add your client to the [list of SocketCluster clients](https://github.com/SocketCluster/client-drivers)  
+If you encounter any errors or have any questions, feel free to ask for help in [SocketCluster Gitter chat room](https://gitter.im/SocketCluster/socketcluster)  
