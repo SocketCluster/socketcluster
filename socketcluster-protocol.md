@@ -2,9 +2,9 @@
 
 SocketCluster protocol is implemented on top of the WebSockets protocol and consists of multiple components:
 - [Handshake](#Handshake)
-- [Connection health check (ping/pong)](#Connection-health-check-(ping/pong))
+- [Connection health check (ping/pong)](#Connection-health-check-pingpong)
 - [Event layer](#Event-layer)
-- [Pub/Sub layer](#Pub/Sub-layer)
+- [Pub/Sub layer](#PubSub-layer)
 - [Authentication layer](#Authentication-layer)
 
 Minimal requirements for a simple SocketCluster compatible client are to implement:  
@@ -23,7 +23,7 @@ Pub/Sub and Authentication layers are completely optional.
 
 - In SocketCluster >=v15 `#disconnect` event is deprecated and no longer in use.  
 
-- Protocol V1 uses `'#1'` and `'#2'` for [ping/pong](#Connection-health-check-(ping/pong))  
+- Protocol V1 uses `'#1'` and `'#2'` for [ping/pong](#Connection-health-check-pingpong)  
   Protocol V2 uses empty strings `''` for both.  
 
 - In Protocol V1 all event names starting with `'#'` are considered reserved for special control events.  
