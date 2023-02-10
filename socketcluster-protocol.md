@@ -1,6 +1,4 @@
-# SocketCluster Protocol
-
-## Overview
+## SocketCluster Protocol Overview
 
 SocketCluster protocol is implemented on top of the WebSockets protocol and consists of multiple components:
 - [Handshake](#Handshake)
@@ -68,7 +66,6 @@ In your custom SocketCluster client you could use something like `UUID` strings 
 
 Some special events expect no response, hence `cid` for them is not required and ignored if present.  
 
----
 
 ## Handshake
 
@@ -118,7 +115,6 @@ If `cid` was not specified, `rid` will be omitted.
 }
 ```
 
----
 
 ## Connection health check (ping/pong)
 
@@ -137,7 +133,6 @@ For example, if a user's internet drops out suddenly, there would be no way to t
 
 \* \- In Protocol V2 `#disconnect` event is deprecated and no longer in use.
 
----
 
 ## Event layer
 
@@ -192,7 +187,7 @@ for await (const request of socket.procedure('procedureName')) {
 
 Transmitted events and RPC are similar in structure. They share the same property `event` for their names, but they are different entities.  
 In order to invoke a RPC, a SocketCluster client should send a RPC request.  
-Unlike transmitted events, every RPC request must include a unique `cid` (Call ID), because every RPC expects a RPC response with matching `rid` (Response ID) from another side of communication.  
+Unlike transmitted events, every RPC request must include a unique `cid` (Call ID), because every RPC request expects a RPC response with matching `rid` (Response ID) from another side of communication.  
 
 #### **RPC request** is a JSON-encoded string with the following structure:
 ```js
@@ -258,7 +253,6 @@ If no response with matching `rid` will be received from a client, the `socket.i
 Most of the [SocketCluster clients](https://github.com/SocketCluster/client-drivers) follow the same logic.  
 A SocketCluster client sets a timer (alike `setTimeout`) for each RPC sent, with consideration of `cid`. Those timers expose a `TimeoutError` when are finished. And if the client receives a RPC response with `rid` matching `cid` of one of the ongoing timers, the client destroys the timer before it fires up.
 
----
 
 ## Pub/Sub layer
 
@@ -432,7 +426,6 @@ In that case a SocketCluster client will receive a special `#kickOut` event. Or 
 }
 ```
 
----
 
 ## Authentication layer
 
