@@ -16,7 +16,7 @@ Pub/Sub and Authentication layers are completely optional.
 ### Contrast between Protocol V1 and V2
 
 - SocketCluster <=v14 uses Protocol v1.  
-  SocketCluster >=v15 uses Protocol v2 by default and supports `protocolVersion` configuration option, which allows it to work with clients which use Protocol v1.  
+  SocketCluster >=v15 uses Protocol v2 by default and supports `protocolVersion` configuration option, which allows it to work with Protocol v1.  
 
 - SocketCluster <=v14 doesn't send back Handshake event response, if `cid` is not specified in Handshake event.  
   SocketCluster >=v15 always sends back Handshake event response, regardles of `cid` presence. If `cid` is not present in Handshake event, `rid` is omitted from Handshake event response.  
@@ -26,15 +26,15 @@ Pub/Sub and Authentication layers are completely optional.
 - Protocol V1 uses `'#1'` and `'#2'` for [ping/pong](#Connection-health-check-pingpong)  
   Protocol V2 uses empty strings `''` for both.  
 
-- In Protocol V1 all event names starting with `'#'` are considered reserved for special control events.  
-  In Protocol V2 only a handful of event names starting with `'#'` are considered reserved.  
+- In Protocol V1 all event names starting with symbol `#` are considered reserved for special control events.  
+  In Protocol V2 only a handful of event names starting with symbol `#` are considered reserved.  
 
 
 ### Reserved event names
 
 Protocol V1:  
 
-- All event names starting with `'#'`  
+- All event names starting with symbol `#`  
 
 Protocol V2:  
 - [`#handshake`](#Handshake)
@@ -86,15 +86,6 @@ Clients are not allowed to interact with the server before Handshake.
 }
 ```
 
-`socketcluster-server` <=v14:  
-- If `cid` was specified in the Handshake event, `socketcluster-server` will send back Handshake event response with matching `rid`.  
-If `cid` was not specified, no Handshake event response will be sent.  
-
-`socketcluster-server` >=v15:  
-- Whether or not `cid` was specified in the Handshake event, `socketcluster-server` will always send back Handshake event response.  
-If `cid` was specified in the Handshake event, Handshake event response will include matching `rid`.  
-If `cid` was not specified, `rid` will be omitted.  
-
 #### **Handshake event response** is a JSON-encoded string with the following structure:
 
 ```js
@@ -114,6 +105,15 @@ If `cid` was not specified, `rid` will be omitted.
   rid: 1,
 }
 ```
+
+`socketcluster-server` <=v14:  
+- If `cid` was specified in the Handshake event, `socketcluster-server` will send back Handshake event response with matching `rid`.  
+If `cid` was not specified, no Handshake event response will be sent.  
+
+`socketcluster-server` >=v15:  
+- Whether or not `cid` was specified in the Handshake event, `socketcluster-server` will always send back Handshake event response.  
+If `cid` was specified in the Handshake event, Handshake event response will include matching `rid`.  
+If `cid` was not specified, `rid` will be omitted.  
 
 
 ## Connection health check (ping/pong)
@@ -142,10 +142,10 @@ Event layer is responsible for `one-to-one` communication between a particular s
 Basic part of the Event layer is responsible for transmitting and receiving user-defined events.  
 API example from JavaScript `socketcluster-client` v17:
 ```js
-// transmit an event to the server
+// Transmit an event to the server
 socket.transmit('eventName', data)
 
-// receive events from the server
+// Receive events from the server
 for await (const data of socket.receiver('eventName')) {
   console.info('received data', data)
 }
@@ -175,10 +175,10 @@ Even if `action.TRANSMIT` was blocked within `agServer.MIDDLEWARE_INBOUND`, no r
 Advanced part of the Event layer is responsible for invoking and processing **Remote Procedure Calls**.  
 API example from JavaScript `socketcluster-client` v17:
 ```js
-// invoke a remote procedure on the server
+// Invoke a remote procedure on the server
 const responseData = await socket.invoke('procedureName', data)
 
-// process remote procedure calls from the server
+// Process remote procedure calls from the server
 for await (const request of socket.procedure('procedureName')) { 
   console.info('received data', request.data)
   request.end(dataToReturnToServer)
@@ -268,6 +268,7 @@ for await (const message of channel) {
   console.info(message)
 }
 ```
+For more in depth knowledge on API visit https://socketcluster.io/docs/basic-usage  
 
 #### **Subscription request** is a JSON-encoded string with the following structure:
 
@@ -276,7 +277,7 @@ for await (const message of channel) {
   event: '#subscribe',
 
   data: {
-    // Arbitrary name of the channel to subscribe to
+    // Arbitrary name of a Pub/Sub channel to subscribe to
     channel: 'channelName'
   },
 
@@ -316,10 +317,10 @@ If no argument was provided to the `action.block()` method, the `error` will con
 In order to publish a message to a Pub/Sub channel, a SocketCluster client should send to server a publish request.  
 API example from JavaScript `socketcluster-client` v17:  
 ```js
-// transmitPublish will not include `cid`
+// transmitPublish includes `cid`
 socket.transmitPublish('channelName', messageData)
 
-// invokePublish will include `cid`
+// invokePublish does not include `cid`
 const responseData = await socket.invokePublish('channelName', messageData)
 ```
 
@@ -336,7 +337,7 @@ const responseData = await socket.invokePublish('channelName', messageData)
     data: messageData
   },
 
-  // [optional]
+  // [optional] Call ID
   cid: 12345
 }
 ```
@@ -373,7 +374,7 @@ If `cid` was not specified in the publish request, no publish response will be s
 
 ### Unsubscribe
 
-In order to unsubscribe a socket connection from a Pub/Sub channel, a SocketCluster client should send to server unsubscription event.  
+In order to unsubscribe a socket connection from a Pub/Sub channel, a SocketCluster client should send to server an unsubscription event.  
 
 #### **Unsubscription event** is a JSON-encoded string with the following structure:  
 
@@ -381,7 +382,7 @@ In order to unsubscribe a socket connection from a Pub/Sub channel, a SocketClus
 {
   event: '#unsubscribe',
 
-  // Name of a channel to unsubscribe from
+  // Name of a Pub/Sub channel to unsubscribe from
   data: 'channelName',
 
   // [optional] Call ID
@@ -399,7 +400,7 @@ When unsubscription event will be processed, `socketcluster-server` will send ba
 }
 ```
 
-If no `cid` was specified in the unsubscription event, no unsubscription event response will be sent.  
+If no `cid` was specified in the unsubscription event, no unsubscription event response will be sent back.  
 
 ### Kick out
 
@@ -417,10 +418,10 @@ In that case a SocketCluster client will receive a special `#kickOut` event. Or 
   event: '#kickOut',
 
   data: {
-    // Name of the channel the socket connection was kicked from
+    // Name of the Pub/Sub channel the socket connection was kicked from
     channel: 'channelName',
 
-    // [optional] a message provided to the socket.kickOut method
+    // [optional] If a message has been provided to the socket.kickOut method
     message: 'custom message'
   }
 }
@@ -432,11 +433,11 @@ In that case a SocketCluster client will receive a special `#kickOut` event. Or 
 Authentication layer is responsible for means of acquiring and storing an authentication token on client side, as well as for transfering previously acquired authentication token to server for processing.  
 
 Authentication process in SocketCluster is deeply customizable. You could implement and use in your SocketCluster client virtually any authentication strategy for your application.  
-Here let's review the default SocketCluster authentication strategy, which uses JWT as the authentication token and transfers it to server via WebSockets connection within [Handshake](#Handshake) event.  
+Here let's review the default SocketCluster authentication strategy, which uses JWT as the authentication token and transfers it to server via WebSockets connection within Handshake event.  
 
 ### Token acquisition
 
-For more in depth knowledge how to initiate authentication process visit https://socketcluster.io/docs/authentication  
+For more in depth knowledge on authentication process visit https://socketcluster.io/docs/authentication  
 API example from `socketcluster-server` v17:
 ```js
 socket.setAuthToken({username: 'Alice', channels: []})
@@ -462,7 +463,7 @@ In the default authentication strategy this could be done in two ways:
 
 ### Authentication within Handshake
 
-The most practical way is to include previously acquired authentication token within the [Handshake](#Handshake) event.  
+The most practical way is to include previously acquired authentication token within the Handshake event.  
 This way `socketcluster-server` will automatically pick up the token and your client will become authenticated right away.
 
 #### **Handshake event** is a JSON-encoded string with the following structure:
@@ -479,15 +480,6 @@ This way `socketcluster-server` will automatically pick up the token and your cl
   cid: 1
 }
 ```
-
-`socketcluster-server` <=v14:  
-- If `cid` was specified in the Handshake event, `socketcluster-server` will send back Handshake event response with matching `rid`.  
-If `cid` was not specified, no Handshake event response will be sent.  
-
-`socketcluster-server` >=v15:  
-- Whether or not `cid` was specified in the Handshake event, `socketcluster-server` will always send back Handshake event response.  
-If `cid` was specified in the Handshake event, Handshake event response will include matching `rid`.  
-If `cid` was not specified, `rid` will be omitted.  
 
 Depending on success of authentication process, Handshake event response may include different information.  
 If provided `authToken` is valid and not expired, a SocketCluster client will receive Handshake event response with no `authError` property included.  
@@ -506,8 +498,7 @@ If provided `authToken` is valid and not expired, a SocketCluster client will re
     // Value of `pingTimeout` configuration option of the server
     pingTimeout: 20000, // ms
 
-    // todo: WILL IT REALLY BE SENT BACK JUST BECAUSE OF HANDSHAKE?
-    // if true, then `#setAuthToken` event will be received promptly after Handshake
+    // If true, then `#setAuthToken` event will be received immediately after
     isAuthenticated: true
   }
 }
@@ -529,7 +520,7 @@ If any errors will occur during authentication process, for example the provided
     // Value of `pingTimeout` configuration option of the server
     pingTimeout: 20000, // ms
 
-    // if false, server will not send `#setAuthToken` event
+    // If false, then `#removeAuthToken` event will be received immediately after
     isAuthenticated: false,
 
     authError: {
@@ -545,7 +536,7 @@ If any errors will occur during authentication process, for example the provided
 
 Instead of including authentication token within Handshake event, a SocketCluster client could send special Authentication event any time after Handshake.  
 This could be useful if authentication token somehow becomes available in your client after Handshake.  
-As an example, if you use JavaScript `socketcluster-client` in a web browser and get multiple tabs opened, you could acquire authentication token in one tab and, when `authToken` becomes available in the `localStorage`, other tabs would send to server Authentication event, for their socket connections to also become authenticated, without need for page reload.
+As an example, if you use JavaScript `socketcluster-client` in a web browser and get multiple tabs opened, you could acquire authentication token in one tab and, when `authToken` becomes available in the `localStorage`, other tabs would send to server the `authToken` within Authentication event, for their socket connections to also become authenticated, without need for page reload.
 
 #### **Authentication event** is a JSON-encoded string with the following structure:
 ```js
@@ -560,7 +551,7 @@ As an example, if you use JavaScript `socketcluster-client` in a web browser and
 }
 ```
 
-Depending on success of authentication process, the Authentication event response may include different information.  
+Depending on success of authentication process, Authentication event response may include different information.  
 If `authToken` is valid and not expired, a SocketCluster client will receive successful Authentication event response, which means socket connection is now authenticated.  
 If `cid` was specified in Authentication event, Authentication event response will also include matching `rid`.
 
@@ -586,6 +577,7 @@ If any errors will occur during authentication process, for example authenticati
   // [optional] Response ID
   rid: 12345,
 
+  // If error is present, then `#removeAuthToken` event will be received immediately after
   error: {
     name: 'ErrorName',
     message: 'error message',
@@ -597,6 +589,7 @@ If any errors will occur during authentication process, for example authenticati
 ### Deathentication
 
 When you deauthenticate a socket connection from server side, a SocketCluster client will receive special `#removeAuthToken` event. It means the socket connection is no longer authenticated.  
+Also Deauthentication event could be received immediately after sending Handshake or Authentication event, if `authToken` provided within Handshake or Authentication event is invalid.  
 API example from `socketcluster-server` v17:
 ```js
 socket.deauthenticate()
@@ -613,7 +606,7 @@ No response is expected for Deauthentication event.
 
 If a SocketCluster client intends to deauthenticate, it should send to server identical Deauthentication event.  
 
-In both cases the client should remove previously stored authentication token, as well as to perform any other operations you deem necessary, like routing client to login screen, etc.
+In both cases the client should remove previously stored authentication token, as well as to perform any other operations you deem necessary, like routing client to login screen to start over the [token acquisition process](#Token-acquisition)  
 
 ---
 
@@ -641,7 +634,6 @@ List of all the possible error `message`s is hard to come by, but some of them y
 
 `isBadToken:`  
 If an authentication error was caused by an expired or invalid or malformed JWT or by incorrect JWT signature, `isBadToken` will be `true`. If the authentication error was caused by any other reason, it will be `false`.  
-If a SocketCluster client encounters an authentication error with `isBadToken === true`, it should just start over the [token acquisition process](#Token-acquisition)  
 
 As an example, the two most frequently occurring errors are:
 ```js
@@ -658,6 +650,8 @@ authError: {
   isBadToken: true
 }
 ```
+
+Any authentication error will always cause a SocketCluster client to receive [`#removeAuthToken`](#Deathentication) event immediately after the event response, which contained the error.  
 
 ---
 
