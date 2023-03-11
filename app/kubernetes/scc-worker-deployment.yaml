@@ -15,7 +15,7 @@ spec:
       containers:
         -
           name: scc-worker
-          image: 'socketcluster/socketcluster:v16.0.3'
+          image: 'socketcluster/socketcluster:v17.3.2'
           ports:
             -
               name: scc-worker
