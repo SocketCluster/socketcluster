@@ -1,8 +1,7 @@
 /**
- * SocketCluster JavaScript client v17.2.0
+ * SocketCluster JavaScript client v17.2.2
  */
  (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.socketClusterClient = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-(function (global){(function (){
 function AuthEngine() {
   this._internalStorage = {};
   this.isLocalStorageEnabled = this._checkLocalStorageEnabled();
@@ -11,13 +10,10 @@ function AuthEngine() {
 AuthEngine.prototype._checkLocalStorageEnabled = function () {
   let err;
   try {
-    // Some browsers will throw an error here if localStorage is disabled.
-    global.localStorage;
-
     // Safari, in Private Browsing Mode, looks like it supports localStorage but all calls to setItem
     // throw QuotaExceededError. We're going to detect this and avoid hard to debug edge cases.
-    global.localStorage.setItem('__scLocalStorageTest', 1);
-    global.localStorage.removeItem('__scLocalStorageTest');
+    localStorage.setItem('__scLocalStorageTest', 1);
+    localStorage.removeItem('__scLocalStorageTest');
   } catch (e) {
     err = e;
   }
@@ -25,8 +21,8 @@ AuthEngine.prototype._checkLocalStorageEnabled = function () {
 };
 
 AuthEngine.prototype.saveToken = function (name, token, options) {
-  if (this.isLocalStorageEnabled && global.localStorage) {
-    global.localStorage.setItem(name, token);
+  if (this.isLocalStorageEnabled) {
+    localStorage.setItem(name, token);
   } else {
     this._internalStorage[name] = token;
   }
@@ -36,8 +32,8 @@ AuthEngine.prototype.saveToken = function (name, token, options) {
 AuthEngine.prototype.removeToken = function (name) {
   let loadPromise = this.loadToken(name);
 
-  if (this.isLocalStorageEnabled && global.localStorage) {
-    global.localStorage.removeItem(name);
+  if (this.isLocalStorageEnabled) {
+    localStorage.removeItem(name);
   } else {
     delete this._internalStorage[name];
   }
@@ -48,8 +44,8 @@ AuthEngine.prototype.removeToken = function (name) {
 AuthEngine.prototype.loadToken = function (name) {
   let token;
 
-  if (this.isLocalStorageEnabled && global.localStorage) {
-    token = global.localStorage.getItem(name);
+  if (this.isLocalStorageEnabled) {
+    token = localStorage.getItem(name);
   } else {
     token = this._internalStorage[name] || null;
   }
@@ -59,9 +55,7 @@ AuthEngine.prototype.loadToken = function (name) {
 
 module.exports = AuthEngine;
 
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],2:[function(require,module,exports){
-(function (global){(function (){
 const StreamDemux = require('stream-demux');
 const AsyncStreamEmitter = require('async-stream-emitter');
 const AGChannel = require('ag-channel');
@@ -237,7 +231,7 @@ function AGClientSocket(socketOptions) {
     this.options.query = queryObject;
   }
 
-  if (isBrowser && this.disconnectOnUnload && global.addEventListener && global.removeEventListener) {
+  if (isBrowser && this.disconnectOnUnload && typeof addEventListener !== 'undefined' && typeof removeEventListener !== 'undefined') {
     this._handleBrowserUnload();
   }
 
@@ -286,14 +280,14 @@ AGClientSocket.prototype._handleBrowserUnload = async function () {
   let attachUnloadHandler = () => {
     if (!isUnloadHandlerAttached) {
       isUnloadHandlerAttached = true;
-      global.addEventListener('beforeunload', unloadHandler, false);
+      addEventListener('beforeunload', unloadHandler, false);
     }
   };
 
   let detachUnloadHandler = () => {
     if (isUnloadHandlerAttached) {
       isUnloadHandlerAttached = false;
-      global.removeEventListener('beforeunload', unloadHandler, false);
+      removeEventListener('beforeunload', unloadHandler, false);
     }
   };
 
@@ -1566,21 +1560,19 @@ AGClientSocket.prototype.processPendingSubscriptions = function () {
 
 module.exports = AGClientSocket;
 
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./auth":1,"./transport":4,"./wait":5,"ag-channel":7,"async-stream-emitter":9,"buffer/":12,"clone-deep":13,"linked-list":20,"sc-errors":22,"sc-formatter":23,"stream-demux":26}],3:[function(require,module,exports){
-(function (global){(function (){
 const AGClientSocket = require('./clientsocket');
 const uuid = require('uuid');
 const scErrors = require('sc-errors');
 const InvalidArgumentsError = scErrors.InvalidArgumentsError;
 
 function isUrlSecure() {
-  return global.location && location.protocol === 'https:';
+  return typeof location !== 'undefined' && location.protocol === 'https:';
 }
 
 function getPort(options, isSecureDefault) {
   let isSecure = options.secure == null ? isSecureDefault : options.secure;
-  return options.port || (global.location && location.port ? location.port : isSecure ? 443 : 80);
+  return options.port || (typeof location !== 'undefined' && location.port ? location.port : isSecure ? 443 : 80);
 }
 
 function create(options) {
@@ -1614,7 +1606,7 @@ function create(options) {
   let opts = {
     clientId: uuid.v4(),
     port: getPort(options, isSecureDefault),
-    hostname: global.location && location.hostname || 'localhost',
+    hostname: typeof location !== 'undefined' && location.hostname || 'localhost',
     secure: isSecureDefault
   };
 
@@ -1627,9 +1619,7 @@ module.exports = {
   create
 };
 
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./clientsocket":2,"sc-errors":22,"uuid":27}],4:[function(require,module,exports){
-(function (global){(function (){
 const AGRequest = require('ag-request');
 
 let createWebSocket;
@@ -1637,10 +1627,6 @@ let createWebSocket;
 if (typeof WebSocket !== 'undefined') {
   createWebSocket = function (uri, options) {
     return new WebSocket(uri);
-  };
-} else if (typeof global !== 'undefined' && global.WebSocket) {
-  createWebSocket = function (uri, options) {
-    return new global.WebSocket(uri);
   };
 } else {
   let WebSocket = require('ws');
@@ -2123,7 +2109,6 @@ AGTransport.prototype.sendObject = function (object) {
 
 module.exports = AGTransport;
 
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"ag-request":8,"sc-errors":22,"ws":6}],5:[function(require,module,exports){
 function wait(duration) {
   return new Promise((resolve) => {
@@ -7383,7 +7368,7 @@ module.exports.hydrateError = function hydrateError(error) {
 module.exports.decycle = decycle;
 
 },{"./decycle":21}],23:[function(require,module,exports){
-(function (global){(function (){
+(function (Buffer){(function (){
 const base64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 const validJSONStartRegex = /^[ \n\r\t]*[{\[]/;
 
@@ -7409,13 +7394,13 @@ let arrayBufferToBase64 = function (arraybuffer) {
 };
 
 let binaryToBase64Replacer = function (key, value) {
-  if (global.ArrayBuffer && value instanceof global.ArrayBuffer) {
+  if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
     return {
       base64: true,
       data: arrayBufferToBase64(value)
     };
-  } else if (global.Buffer) {
-    if (value instanceof global.Buffer){
+  } else if (typeof Buffer !== 'undefined') {
+    if (value instanceof Buffer){
       return {
         base64: true,
         data: value.toString('base64')
@@ -7426,10 +7411,10 @@ let binaryToBase64Replacer = function (key, value) {
     // before we can convert them to base64 strings.
     if (value && value.type === 'Buffer' && Array.isArray(value.data)) {
       let rehydratedBuffer;
-      if (global.Buffer.from) {
-        rehydratedBuffer = global.Buffer.from(value.data);
+      if (Buffer.from) {
+        rehydratedBuffer = Buffer.from(value.data);
       } else {
-        rehydratedBuffer = new global.Buffer(value.data);
+        rehydratedBuffer = new Buffer(value.data);
       }
       return {
         base64: true,
@@ -7479,8 +7464,8 @@ module.exports.encode = function (rawData) {
   return JSON.stringify(rawData, binaryToBase64Replacer);
 };
 
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],24:[function(require,module,exports){
+}).call(this)}).call(this,require("buffer").Buffer)
+},{"buffer":11}],24:[function(require,module,exports){
 (function (Buffer){(function (){
 /*!
  * shallow-clone <https://github.com/jonschlinkert/shallow-clone>
@@ -8900,7 +8885,7 @@ module.exports = WritableConsumableStream;
 },{"./consumer":42,"consumable-stream":14}],"socketcluster-client":[function(require,module,exports){
 const AGClientSocket = require('./lib/clientsocket');
 const factory = require('./lib/factory');
-const version = '17.2.0';
+const version = '17.2.1';
 
 module.exports.factory = factory;
 module.exports.AGClientSocket = AGClientSocket;
