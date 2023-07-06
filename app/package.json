@@ -16,7 +16,7 @@
     "sc-errors": "^2.0.1",
     "scc-broker-client": "^9.0.0",
     "serve-static": "^1.13.2",
-    "socketcluster-client": "^17.1.1",
+    "socketcluster-client": "^17.2.0",
     "socketcluster-server": "^17.3.1",
     "uuid": "^8.3.2"
   },
