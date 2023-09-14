@@ -15,7 +15,7 @@ spec:
       containers:
         -
           name: scc-state
-          image: 'socketcluster/scc-state:v9.0.0'
+          image: 'socketcluster/scc-state:v9.0.1'
           ports:
             -
               name: scc-state
