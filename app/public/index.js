@@ -1,4 +1,4 @@
-import { create } from '/socketcluster-client.js';
+import { create } from '/socketcluster-client.min.js';
 
 // Initiate the connection to the server
 let socket = create();
