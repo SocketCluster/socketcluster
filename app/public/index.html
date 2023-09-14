@@ -2,8 +2,12 @@
 <html>
   <head>
     <title>SocketCluster</title>
+
     <link rel="icon" type="image/png" href="/favicon.ico">
-    <script type="text/javascript" src="/socketcluster-client.js"></script>
+    <link rel="modulepreload" href="/socketcluster-client.js" />
+
+    <script src="/index.js" type="module" defer></script>
+
     <style>
       @font-face {
         font-family: 'Roboto';
@@ -74,21 +78,5 @@
         </p>
       </div>
     </div>
-    <script type="text/javascript">
-      // Initiate the connection to the server
-      let socket = socketClusterClient.create();
-
-      (async () => {
-        for await (let {error} of socket.listener('error')) {
-          console.error(error);
-        }
-      })();
-
-      (async () => {
-        for await (let event of socket.listener('connect')) {
-          console.log('Socket is connected');
-        }
-      })();
-    </script>
   </body>
 </html>

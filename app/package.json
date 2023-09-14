@@ -16,8 +16,8 @@
     "sc-errors": "^2.0.1",
     "scc-broker-client": "^9.0.1",
     "serve-static": "^1.13.2",
-    "socketcluster-client": "^17.2.2",
-    "socketcluster-server": "^17.4.1",
+    "socketcluster-client": "^18.0.0",
+    "socketcluster-server": "^18.0.0",
     "uuid": "^8.3.2"
   },
   "keywords": [
