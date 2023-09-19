@@ -15,7 +15,7 @@ spec:
       containers:
         -
           name: scc-broker
-          image: 'socketcluster/scc-broker:v9.0.1'
+          image: 'socketcluster/scc-broker:v9.1.0'
           ports:
             -
               name: scc-broker
