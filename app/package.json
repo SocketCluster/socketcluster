@@ -13,10 +13,10 @@
     "express": "^4.16.3",
     "morgan": "^1.7.0",
     "nodemon": "^2.0.22",
-    "scc-broker-client": "^9.0.2",
+    "scc-broker-client": "^9.0.3",
     "serve-static": "^1.13.2",
-    "socketcluster-client": "^18.1.1",
-    "socketcluster-server": "^18.1.1",
+    "socketcluster-client": "^18.1.2",
+    "socketcluster-server": "^18.1.2",
     "uuid": "^8.3.2"
   },
   "keywords": [

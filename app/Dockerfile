@@ -1,7 +1,7 @@
 FROM node:18.15.0-slim
 
 LABEL maintainer="Jonathan Gros-Dubois"
-LABEL version="18.1.1"
+LABEL version="18.1.2"
 LABEL description="Docker file for SocketCluster with support for clustering."
 
 RUN mkdir -p /usr/src/
