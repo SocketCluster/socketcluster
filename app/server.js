@@ -1,12 +1,16 @@
-const http = require('http');
-const eetase = require('eetase');
-const socketClusterServer = require('socketcluster-server');
-const express = require('express');
-const serveStatic = require('serve-static');
-const path = require('path');
-const morgan = require('morgan');
-const uuid = require('uuid');
-const sccBrokerClient = require('scc-broker-client');
+import http from 'http';
+import eetase from 'eetase';
+import socketClusterServer from 'socketcluster-server';
+import express from 'express';
+import serveStatic from 'serve-static';
+import path from 'path';
+import morgan from 'morgan';
+import { v4 as uuidv4 } from 'uuid';
+import sccBrokerClient from 'scc-broker-client';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const ENVIRONMENT = process.env.ENV || 'dev';
 const SOCKETCLUSTER_PORT = process.env.SOCKETCLUSTER_PORT || 8000;
@@ -14,7 +18,7 @@ const SOCKETCLUSTER_WS_ENGINE = process.env.SOCKETCLUSTER_WS_ENGINE || 'ws';
 const SOCKETCLUSTER_SOCKET_CHANNEL_LIMIT = Number(process.env.SOCKETCLUSTER_SOCKET_CHANNEL_LIMIT) || 1000;
 const SOCKETCLUSTER_LOG_LEVEL = process.env.SOCKETCLUSTER_LOG_LEVEL || 2;
 
-const SCC_INSTANCE_ID = uuid.v4();
+const SCC_INSTANCE_ID = uuidv4();
 const SCC_STATE_SERVER_HOST = process.env.SCC_STATE_SERVER_HOST || null;
 const SCC_STATE_SERVER_PORT = process.env.SCC_STATE_SERVER_PORT || null;
 const SCC_MAPPING_ENGINE = process.env.SCC_MAPPING_ENGINE || null;
@@ -60,7 +64,8 @@ expressApp.get('/health-check', (req, res) => {
 
 // SocketCluster/WebSocket connection handling loop.
 (async () => {
-  for await (let {socket} of agServer.listener('connection')) {
+  for await (let { socket } of agServer.listener('connection')) {
+    console.log('NEW CONNECTION', socket.id);
     // Handle socket connection.
   }
 })();
@@ -69,7 +74,7 @@ httpServer.listen(SOCKETCLUSTER_PORT);
 
 if (SOCKETCLUSTER_LOG_LEVEL >= 1) {
   (async () => {
-    for await (let {error} of agServer.listener('error')) {
+    for await (let { error } of agServer.listener('error')) {
       console.error(error);
     }
   })();
@@ -81,7 +86,7 @@ if (SOCKETCLUSTER_LOG_LEVEL >= 2) {
   );
 
   (async () => {
-    for await (let {warning} of agServer.listener('warning')) {
+    for await (let { warning } of agServer.listener('warning')) {
       console.warn(warning);
     }
   })();
@@ -115,7 +120,7 @@ if (SCC_STATE_SERVER_HOST) {
 
   if (SOCKETCLUSTER_LOG_LEVEL >= 1) {
     (async () => {
-      for await (let {error} of sccClient.listener('error')) {
+      for await (let { error } of sccClient.listener('error')) {
         error.name = 'SCCError';
         console.error(error);
       }

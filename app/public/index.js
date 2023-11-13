@@ -5,7 +5,7 @@ let socket = create();
 window.socket = socket;// TODO 000
 
 (async () => {
-  for await (let {error} of socket.listener('error')) {
+  for await (let { error } of socket.listener('error')) {
     console.error(error);
   }
 })();
