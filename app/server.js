@@ -65,7 +65,6 @@ expressApp.get('/health-check', (req, res) => {
 // SocketCluster/WebSocket connection handling loop.
 (async () => {
   for await (let { socket } of agServer.listener('connection')) {
-    console.log('NEW CONNECTION', socket.id);
     // Handle socket connection.
   }
 })();
