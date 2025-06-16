@@ -16,7 +16,7 @@
     "nodemon": "^3.1.10",
     "scc-broker-client": "^9.2.0",
     "serve-static": "^1.13.2",
-    "socketcluster-client": "^19.2.5",
+    "socketcluster-client": "^19.2.6",
     "socketcluster-server": "^19.1.2",
     "uuid": "^9.0.1"
   },
