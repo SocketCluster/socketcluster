@@ -1,6 +1,6 @@
 const fs = require('fs-extra');
 const { spawn } = require('child_process');
-const YAML = require('yamljs');
+const YAML = require('yaml');
 
 const {
   destDir,
@@ -161,7 +161,7 @@ const create = async function (app, options) {
           command: ['cp', '-a', '/usr/src/.', '/usr/dest/'],
         });
         let formattedYAMLString = sanitizeYAML(
-          YAML.stringify(deploymentConfSCCWorker, Infinity, 2),
+          YAML.stringify(deploymentConfSCCWorker, null, { indent: 2, lineWidth: 0 }),
         );
         fs.writeFileSync(kubeConfSCCWorker, formattedYAMLString);
       } catch (err) {

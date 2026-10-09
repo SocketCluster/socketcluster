@@ -1,7 +1,7 @@
 const path = require('path');
 const { execSync } = require('child_process');
 const fs = require('fs-extra');
-const YAML = require('yamljs');
+const YAML = require('yaml');
 
 const {
   parsePackageFile,
@@ -205,7 +205,7 @@ const k8sDeployAndDeployUpdate = async function (arg1, options, updateRequest) {
       });
 
       let formattedYAMLStringSCCWorker = sanitizeYAML(
-        YAML.stringify(deploymentConfSCCWorker, Infinity, 2),
+        YAML.stringify(deploymentConfSCCWorker, null, { indent: 2, lineWidth: 0 }),
       );
       fs.writeFileSync(kubeConfSCCWorker, formattedYAMLStringSCCWorker);
 
@@ -217,7 +217,7 @@ const k8sDeployAndDeployUpdate = async function (arg1, options, updateRequest) {
       let deploymentConfSCCBroker = YAML.parse(kubeConfContentSCCBroker);
 
       let formattedYAMLStringSCCBroker = sanitizeYAML(
-        YAML.stringify(deploymentConfSCCBroker, Infinity, 2),
+        YAML.stringify(deploymentConfSCCBroker, null, { indent: 2, lineWidth: 0 }),
       );
       fs.writeFileSync(kubeConfSCCBroker, formattedYAMLStringSCCBroker);
 

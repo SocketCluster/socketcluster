@@ -10,14 +10,14 @@
     }
   ],
   "dependencies": {
-    "eetase": "^7.0.1",
+    "eetase": "^7.1.0",
     "express": "^4.16.3",
     "morgan": "^1.7.0",
     "nodemon": "^3.1.10",
-    "scc-broker-client": "^10.0.0",
+    "scc-broker-client": "^11.0.0",
     "serve-static": "^1.13.2",
-    "socketcluster-client": "^20.0.2",
-    "socketcluster-server": "^20.0.1",
+    "socketcluster-client": "^21.0.0",
+    "socketcluster-server": "^21.0.2",
     "uuid": "^14.0.2"
   },
   "keywords": [

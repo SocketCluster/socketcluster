@@ -1,6 +1,6 @@
 {
   "name": "socketcluster",
-  "version": "20.1.0",
+  "version": "21.0.0",
   "description": "Highly scalable realtime framework with support for async/await",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -24,7 +24,7 @@
   "dependencies": {
     "@maartennnn/cli-builder": "^2.3.0",
     "fs-extra": "^7.0.1",
-    "yamljs": "^0.3.0"
+    "yaml": "^2.9.1"
   },
   "bin": {
     "socketcluster": "bin/cli.js"
